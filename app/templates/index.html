@@ -1,0 +1,609 @@
+
+{% extends "base.html" %}
+
+{% block title %}YeTi OJ{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
+{% endblock %}
+
+{% block wide_content %}
+    <div class="row" style="height: 92vh">
+        <!-- left panel column -->
+        <div class="col-md-4 col-lg-4" style="height: 99%">
+
+            <!-- search bar row -->
+            <div class="row">
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-8 col-lg-8">
+                    <div class="row">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search for what you need...">
+                            <span class="input-group-btn"><button id="search-field" class="btn btn-info" type="button">Search</button></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- choose variable row -->
+            <div class="row">
+                <br>
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-3 col-lg-3">
+                    <div class="row">
+                        <label for="syntax">Group</label>
+                    </div>
+                    <div class="row">
+                        <select id="group-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
+                    </div>
+                </div>
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-3 col-lg-3">
+                    <div class="row">
+                        <label for="syntax">Sub-Group</label>
+                    </div>
+                    <div class="row">
+                        <select id="subgroup-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
+                    </div>
+                </div>
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-3 col-lg-3">
+                    <div class="row">
+                        <label for="syntax">Variable</label>
+                    </div>
+                    <div class="row">
+                        <select id="variable-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- variable infomation table row -->
+            <div class="row" style="height: 30%">
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-11 col-lg-11" style="height: 100%">
+                    <div class="row" style="height: 100%">
+                        <br>
+                        <!-- Variable Table -->
+                        <table class="table table-scroll table-striped" style="height: 100%">
+                            <p><b id="variable-table-title">[Group] - [SubGroup] - [Variable]</b></p>
+                            <tbody>
+                                <tr>
+                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Variable</i></b></td>
+                                    <td id="var-variable" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Usage</i></b></td>
+                                    <td id="var-usage" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Type</i></b></td>
+                                    <td id="var-type" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Multi Choice</i></b></td>
+                                    <td class="col-md-10 col-lg-10">
+                                        <!-- Multi Choice table -->
+                                        <table id="multi-choice-table" class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="col-md-4 col-lg-5" style="font-family:Arial"><i>Value</i></th>
+                                                    <th class="col-md-8 col-lg-7" style="font-family:Arial"><i>Text</i></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_1</td>
+                                                    <td class="col-md-8 col-lg-7">Client Asset</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_2</td>
+                                                    <td class="col-md-8 col-lg-7">Liability</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_3</td>
+                                                    <td class="col-md-8 col-lg-7">Enable Income</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_4</td>
+                                                    <td class="col-md-8 col-lg-7">Disable Section</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- pick snippet row -->
+            <div class="row">
+                <div class="row">
+                    <hr>
+                    <div class="col-md-1 col-lg-1"></div>
+                    <div class="col-md-11 col-lg-11"><p><b>Code Snippet</b></p></div>
+                </div>
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-4 col-lg-4">
+                    <div class="row">
+                        <label for="syntax">Group</label>
+                    </div>
+                    <div class="row">
+                        <select id="snippet-group-selector" class="selectpicker" data-size="15" data-width="100%" data-live-search="true">
+                            <option value="a">a</option>
+                            <option value="b">b</option>
+                            <option value="c">c</option>
+                            <option value="d">d</option>
+                            <option value="e">e</option>
+                            <option value="f">f</option>
+                            <option value="g">g</option>
+                            <option value="h">h</option>
+                            <option value="i">i</option>
+                            <option value="j">j</option>
+                            <option value="k">k</option>
+                            <option value="l">l</option>
+                            <option value="m">m</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-4 col-lg-4">
+                    <div class="row">
+                        <label for="syntax">Snippet Scenario</label>
+                    </div>
+                    <div class="row">
+                        <select id="snippet-selector" class="selectpicker" data-size="15" data-width="100%" data-live-search="true">
+                            <option value="a">a</option>
+                            <option value="b">b</option>
+                            <option value="c">c</option>
+                            <option value="d">d</option>
+                            <option value="e">e</option>
+                            <option value="f">f</option>
+                            <option value="g">g</option>
+                            <option value="h">h</option>
+                            <option value="i">i</option>
+                            <option value="j">j</option>
+                            <option value="k">k</option>
+                            <option value="l">l</option>
+                            <option value="m">m</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- snippet code editor row -->
+            <div class="row" style="height: 40%">
+                <div class="col-md-1 col-lg-1"></div>
+                <div class="col-md-11 col-lg-11" style="height: 100%">
+                    <br>
+                    <div class="row" style="height: 100%">
+<div id="snippet-section" style="height: 100%">
+waiting for selecting scenario
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- coding column -->
+        <div class="col-md-8 col-lg-8" style="height: 99%">
+            <div class="row" style="height: 100%">
+                <div class="col-md-10 col-lg-10" style="height: 100%">
+<div id="code-section" style="height: 100%">
+waiting for input
+</div>
+                </div>
+                <div class="col-md-2 col-lg-2">
+                    <div class="row">
+                        <button class="btn btn-danger" id="judge">Judge</button>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="btn-group-vertical">
+                            <button id="indent" type="button" class="btn btn-success">Indent Code</button>
+                            <button id="dedent" type="button" class="btn btn-info">Dedent Code</button>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <p><b>Change Entity</b></p>
+                        <div class="btn-group-vertical">
+                            <button id="client" type="button" class="btn btn-primary">Client</button>
+                            <button id="partner" type="button" class="btn btn-primary">Partner</button>
+                            <button id="trust" type="button" class="btn btn-primary">Trust</button>
+                            <button id="superfund" type="button" class="btn btn-primary">Superfund</button>
+                            <button id="company" type="button" class="btn btn-primary">Company</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <hr>
+                        <label for="syntax">Syntax</label>
+                    </div>
+                    <div class="row">
+                        <select class="selectpicker" id="syntax" data-width="75%">
+                            <option value="python">Python</option>
+                            <option value="html" selected="selected">HTML</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <label for="theme">Theme</label>
+                    </div>
+                    <div class="row">
+                        <select class="selectpicker" id="theme" data-width="75%">
+                            <optgroup label="Bright">
+                                <option value="github">GitHub</option>
+                                <option value="solarized_light">Solarized Light</option>
+                                <option value="xcode">XCode</option>
+                            </optgroup>
+                            <optgroup label="Dark">
+                                <option value="monokai" selected="selected">Monokai</option>
+                                <option value="solarized_dark">Solarized Dark</option>
+                                <option value="twilight">Twilight</option>
+                            </optgroup>
+                        </select>
+
+                    </div>
+                    <div class="row">
+                        <label for="font-family">Font Family</label>
+                    </div>
+                    <div class="row">
+                        <select class="selectpicker" id="font-family" data-width="75%">
+                            <option value="arial">Arial</option>
+                            <option value="consolas" selected="selected">Consolas</option>
+                            <option value="courier">Courier</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <label for="font-size">Font Size</label>
+                    </div>
+                    <div class="row">
+                        <select class="selectpicker" id="font-size" data-width="75%">
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option selected="selected">16</option>
+                            <option>18</option>
+                            <option>20</option>
+                            <option>24</option>
+                            <option>30</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="checkbox">
+                            <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
+                        </div>
+                        <div class="checkbox">
+                            <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
+                        </div>
+                        <div class="checkbox">
+                            <label><input id="save-session" type="checkbox" value="">Save Session & Setting</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_script %}
+    <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script>
+        var save_session = true;
+        var show_invisibles = false;
+        var wrap_text = false;
+        var initial_syntax = $('#syntax option:selected').val();
+        var initial_theme = $('#theme option:selected').val();
+        var initial_font_size = $('#font-size option:selected').val();
+        var initial_font_family = $('#font-family option:selected').val();
+        var code_section = ace.edit("code-section");
+        var template_section = ace.edit("snippet-section");
+        code_section.setTheme("ace/theme/" + initial_theme);
+        code_section.session.setMode("ace/mode/" + initial_syntax);
+        code_section.setOption("showInvisibles", show_invisibles);
+        code_section.setOption("fontFamily", initial_font_family);
+        code_section.setOption("fontSize", parseInt(initial_font_size));
+        code_section.getSession().setUseWrapMode(wrap_text);
+        template_section.setTheme("ace/theme/" + initial_theme);
+        template_section.session.setMode("ace/mode/" + initial_syntax);
+        template_section.setOption("showInvisibles", show_invisibles);
+        template_section.setOption("fontFamily", initial_font_family);
+        template_section.setOption("fontSize", 14);
+        // get selected code: code_section.getSelectedText()
+
+        $(document).ready(function() {
+
+            function send_for_formatting(sent_info){
+                $.ajax({
+                    contentType: "application/json",
+                    data: JSON.stringify(sent_info),
+                    type: 'POST',
+                    url: '/code/code_formatting',
+                    dataType: 'json',
+                    success: function(data, status, request) {
+                        code_section.setValue(data.code);
+                    },
+                    error: function() {
+                        alert('Unexpected error');
+                    }
+                });
+            }
+
+            // right panel
+            // judge button
+            $('#judge').on('click', function(){
+                var sent_info = {
+                    message: 'judge',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // indent button
+            $('#indent').on('click', function(){
+                var sent_info = {
+                    message: 'indent',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // dedent button
+            $('#dedent').on('click', function(){
+                var sent_info = {
+                    message: 'dedent',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+
+            // client button
+            $('#client').on('click', function(){
+                var sent_info = {
+                    message: 'client',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // partner button
+            $('#partner').on('click', function(){
+                var sent_info = {
+                    message: 'partner',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // trust button
+            $('#trust').on('click', function(){
+                var sent_info = {
+                    message: 'trust',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // superfund button
+            $('#superfund').on('click', function(){
+                var sent_info = {
+                    message: 'superfund',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // company button
+            $('#company').on('click', function(){
+                var sent_info = {
+                    message: 'company',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+
+            // syntax dropdown
+            $('#syntax').on('change', function(){
+                code_section.session.setMode("ace/mode/" + $('#syntax').val());
+                template_section.session.setMode("ace/mode/" + $('#syntax').val());
+            });
+            // theme dropdown
+            $('#theme').on('change', function(){
+                code_section.setTheme("ace/theme/" + $('#theme').val());
+                template_section.setTheme("ace/theme/" + $('#theme').val());
+            });
+            // font dropdown
+            $('#font-family').on('change', function(){
+                code_section.setOption("fontFamily", $('#font-family').val());
+                template_section.setOption("fontFamily", $('#font-family').val());
+            });
+            // dont size dropdown
+            $('#font-size').on('change', function(){
+                code_section.setOption("fontSize", parseInt($('#font-size').val()));
+            });
+            // show invisibles tick
+            $('#show-invisibles').click(function() {
+                show_invisibles = this.checked;
+                if(show_invisibles) {
+                    code_section.setOption("showInvisibles", true);
+                    template_section.setOption("showInvisibles", true);
+                }
+                else {
+                    code_section.setOption("showInvisibles", false);
+                    template_section.setOption("showInvisibles", false);
+                }
+            });
+            // wrap text tick
+            $('#wrap-text').click(function() {
+                wrap_text = this.checked;
+                if(wrap_text) {
+                    code_section.getSession().setUseWrapMode(wrap_text);
+                    template_section.getSession().setUseWrapMode(wrap_text);
+                }
+                else {
+                    code_section.getSession().setUseWrapMode(wrap_text);
+                    template_section.getSession().setUseWrapMode(wrap_text);
+                }
+            });
+            // save session tick
+            $('#save-session').click(function() {
+                save_session = this.checked;
+                if(save_session) {
+                    alert('session saved (test)')
+                }
+                else {
+                    alert('save session unticked (test)')
+                }
+            });
+
+            // left panel
+            // search bar
+
+
+            /* when page is loaded AJAX send GET to a route requesting a full list of Groups,
+               and in which 'Entity' is selected by default, loaded at the very beginning
+            */
+            // group - subgroup - variable
+            // initialize the group selector at very beginning
+            var selected_group;
+            var selected_subgroup;
+            var selected_var_name;
+            var local_var_cache = {};
+            $.ajax({
+                type: 'GET',
+                url: '/code/group',
+                dataType: 'json',
+                success: function(data, status, request) {
+                    var groups = data.group;
+                    var group_selector = $('#group-selector');
+                    var flag = 1;
+                    for (obj in groups) {
+                        // loop in each object pair ({key: value}) from JSON
+                        for (key in groups[obj]) {
+                            // loop in key - value pair of each object
+                            var group_var = key;
+                            var group_name = groups[obj][key];
+                            if (flag) {
+                                group_selector.append('<option value="' + group_var + '" selected="selected">' + group_name + '</option>');
+                                selected_group = group_name;
+                                flag = 0;
+                            }
+                            else {
+                                group_selector.append('<option value="' + group_var + '">' + group_name + '</option>');
+                            }
+                        }
+                    }
+                    group_selector.selectpicker('refresh');
+                },
+                error: function() {
+                    alert('Unexpected error');
+                }
+            });
+
+            function variable_initialization(subgroup_id, local_var_cache) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/code/variable/' + subgroup_id,
+                    dataType: 'json',
+                    success: function(data, status, request) {
+                        var variables = data.variable;
+                        var variable_selector = $('#variable-selector');
+                        variable_selector.empty();
+                        var flag = 1;
+                        if (typeof variables[0] === 'undefined') {
+                            $('#variable-table-title').text('[Group] - [SubGroup] - [Variable]');
+                            $('#var-variable').text('/');
+                            $('#var-usage').text('/');
+                            $('#var-type').text('/');
+                        }
+                        for (obj in variables) {
+                            for (key in variables[obj]) {
+                                var variable_var = key;
+                                var variable_detail = variables[obj][key];
+                                local_var_cache[variable_var] = [variable_detail[1], variable_detail[2], variable_detail[3]];
+                                // variable_detail == ["Variable Name", "$entity.usage", "Type", "Multi (null or list)"]
+                                if (flag) {
+                                    variable_selector.append('<option value="' + variable_var + '" selected="selected">' + variable_detail[0] + '</option>');
+                                    $('#variable-table-title').text('[' + selected_group + '] - [' + selected_subgroup + '] - [' + variable_detail[0] + ']');
+                                    $('#var-variable').text(variable_var);
+                                    $('#var-usage').text(variable_detail[1]);
+                                    $('#var-type').text(variable_detail[2]);
+                                    flag = 0;
+                                }
+                                else {
+                                    variable_selector.append('<option value="' + variable_var + '">' + variable_detail[0] + '</option>');
+                                }
+                            }
+                        }
+                        variable_selector.selectpicker('refresh');
+                    },
+                    error: function() {
+                        alert('Unexpected error');
+                    }
+                });
+            }
+
+            function subgroup_initialization(group_var) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/code/subgroup/' + group_var,
+                    dataType: 'json',
+                    success: function(data, status, request) {
+                        var subgroups = data.subgroup;
+                        var subgroup_selector = $('#subgroup-selector');
+                        var variable_selector = $('#variable-selector');
+                        subgroup_selector.empty();
+                        variable_selector.empty();
+                        var flag = 1;
+                        for (obj in subgroups) {
+                            for (key in subgroups[obj]) {
+                                var subgroup_id = key;
+                                var subgroup_name = subgroups[obj][key];
+                                if (flag) {
+                                    subgroup_selector.append('<option value="' + subgroup_id + '" selected="selected">' + subgroup_name + '</option>');
+                                    variable_initialization(subgroup_id, local_var_cache);
+                                    selected_subgroup = subgroup_name;
+                                    flag = 0
+                                }
+                                else {
+                                    subgroup_selector.append('<option value="' + subgroup_id + '">' + subgroup_name + '</option>');
+                                }
+                            }
+                        }
+                        subgroup_selector.selectpicker('refresh');
+                        variable_selector.selectpicker('refresh');
+                    },
+                    error: function() {
+                        alert('Unexpected error');
+                    }
+                });
+            }
+
+            // display subgroup when select a group
+            $('#group-selector').on('change', function(){
+                var group_var = $('#group-selector option:selected').val();
+                selected_group = $('#group-selector option:selected').text();
+                subgroup_initialization(group_var);
+            });
+            // display variable when select a subgroup
+            $('#subgroup-selector').on('change', function(){
+                var subgroup_id = $('#subgroup-selector option:selected').val();
+                selected_subgroup = $('#subgroup-selector option:selected').text();
+                variable_initialization(subgroup_id, local_var_cache);
+            });
+            // update table when a variable is selected
+            $('#variable-selector').on('change', function(){
+                selected_var_name = $('#variable-selector option:selected').text();
+                var var_detail = local_var_cache[$('#variable-selector option:selected').val()];
+                $('#variable-table-title').text('[' + selected_group + '] - [' + selected_subgroup + '] - [' + selected_var_name + ']');
+                $('#var-variable').text($('#variable-selector option:selected').val());
+                $('#var-usage').text(var_detail[0]);
+                $('#var-type').text(var_detail[1]);
+            });
+
+            // code snippet group - snippet scenario
+
+
+        });
+
+    </script>
+{% endblock %}

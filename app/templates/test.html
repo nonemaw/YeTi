@@ -1,0 +1,147 @@
+<style>a{cursor:pointer;}</style>
+<div class="container" id="entry_finder">
+  <div class="row">
+    <div class="col-sm-4">
+      <div class="list-group" id="group_list">
+        <a herf="#" data-key="cl" data-label="group" class="group list-group-item">Client</a>
+        <a herf="#" data-key="pa" data-label="group" class="group list-group-item">Partner</a>
+        <a herf="#" data-key="ws" data-label="group" class="group list-group-item">Wealthsolver</a>
+
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="list-group" id="field_list" data-key="">
+
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="list-group" id="value_list">
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script>
+// Sample Layer labels
+var label = [
+  'group',
+  'field',
+  'value'
+]
+
+// Sample dummy data
+var data = {
+  cl:{
+    list:["Cras_1","justo_1"],
+    name:"client"
+  },
+  ws:{
+    list:["ac_1","facili_1","in_1"],
+    name:"wealthsolver"
+  },
+  pa:{
+    list:["Morbi_1","leo_1","risus_1","Porta_1"],
+    name:"partner"
+  },
+  Cras_1:{
+    list:['saf_2','dgh_2','ty_2'],
+    name:'Cras-1'
+  },
+  justo_1:{
+    list:['vrtsy_2','gbyu_2'],
+    name:'justo_1'
+  },
+  ac_1:{
+    list:['sadf_2','asdf_2','po_2','ijio_2','asdf_2'],
+    name:'ac_1'
+  },
+  facili_1:{
+    list:['dverts_2','csetr_2','oiyho_2','jio_2'],
+    name:'facili_1'
+  },
+  in_1:{
+    list:['wqrw_2','qwe_2','crstuv_2','asdf_2','po_2'],
+    name:'in_1'
+  },
+  Morbi_1:{
+    list:['sadf_2','earvyt_2','edastrv_2','oi_2'],
+    name:'Morbi_1'
+  },
+  leo_1:{
+    list:['dvsgdf_2','yuosgvt_2'],
+    name:'leo_1'
+  },
+  risus_1:{
+    list:['rtuye_2','rteu_2','qwer_2','ezrt_2'],
+    name:'risus_1'
+  },
+  Porta_1:{
+    list:['sdvyr_2','ikuogh_2','ejryio_2','sedfy_2','iuyf_2'],
+    name:'Porta_1'
+  },
+};
+
+
+// Callback Handlers
+var clickShowDetail = function(e){
+  e.preventDefault();
+  var item = $(this);
+  var key = item.data('key');
+  var curLabel = item.data('label');
+  var nxtLabel = getNextLabel(curLabel);
+
+  // Get field list data[key] via ajax
+  var children = data[key];
+  //
+
+  //Use updateChild() callback after data is loaded
+  var updateChild = function(children){
+    var children_list_html = _.map(children.list,function(item){
+      var name = getItemName(item);
+      var key = getItemKey(item);
+      return `<a herf="#" data-key="${key}" data-label=${nxtLabel} class="${nxtLabel} list-group-item">${name}</a>`;
+    });
+    console.debug(children_list_html);
+    $(`#${nxtLabel}_list`).html(children_list_html.join("")).trigger('listupdated');
+  }
+  updateChild(children);
+}
+
+var updateClickHandler = function(e){
+  var col = $(this);
+  col.find('.list-group-item').on('click',clickShowDetail);
+  col.on('click',activeHandler);
+}
+
+var activeHandler = function(e){
+  $(this).find('.list-group-item').removeClass('active');
+  $(e.target).addClass('active');
+}
+
+// Bind handlers to DOM
+$(function(){
+  $("#group_list .list-group-item").on('click',clickShowDetail);
+  $("#group_list").on('click',activeHandler);
+  $('#field_list').on('listupdated',updateClickHandler);
+});
+
+// Util
+function getItemName(item){return item;}
+
+function getItemKey(item){return item;}
+
+function getNextLabel(l){
+  for(let i = 0; i < label.length; i++){
+    console.log(i);
+    if(label[i] === l && i < label.length - 1){
+      return label[i+1];
+    }
+  }
+  return '';
+}
+</script>
+

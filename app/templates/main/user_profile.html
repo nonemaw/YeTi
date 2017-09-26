@@ -1,0 +1,52 @@
+
+{% extends "base.html" %}
+
+{% block title %}{{ user_utl.username }}{% endblock %}
+
+{% block narrow_content %}
+    <div class="container">
+        <div class="page-header">
+            <img class="img-thumbnail profile-thumbnail" src="{{ user_utl.gravatar(size=256) }}">
+            <div class="profile-header">
+                {% if user_utl.is_administrator() %}
+                    <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
+                {% elif not user_utl.is_confirmed %}
+                    <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
+                {% else %}
+                    <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
+                {% endif %}
+                {% if user_utl.name or user_utl.location %}
+                <p>
+                    {% if user_utl.name %}
+                        <strong>Real Name:</strong> {{ user_utl.name }}
+                        <br>
+                    {% endif %}
+                    {% if user_utl.location %}
+                        <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
+                        <br>
+                    {% endif %}
+                {% endif %}
+                <p>
+                    <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
+                    <br>
+                    <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
+                    <br>
+                    <strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>
+                </p>
+                {% if user_utl.about_me %}
+                    <p>
+                        <strong>About Me:</strong> {{ user_utl.about_me }}
+                    </p>
+                {% endif %}
+                <p>
+                    {% if user_utl.id == current_user.id %}
+                        <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
+                    {% endif %}
+                    {% if current_user.is_administrator() %}
+                        <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

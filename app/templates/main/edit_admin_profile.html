@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block narrow_content %}
+    <div class="page-header">
+        {% if user_utl.id == current_user.id %}
+            <h1>&lt;/ Modify Your Admin Profile&gt;</h1>
+        {% else %}
+            <h1>&lt;/ Modify Profile (Admin)&gt;</h1>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+    </div>
+{% endblock %}
