@@ -48,8 +48,15 @@ def code_formatting():
             for index, line in enumerate(code):
                 if line.startswith('<:'):
                     if line.startswith('<:for') or line.startswith('<:if'):
-                        code[index] = indent(line, level)
-                        level += 1
+                        if '<:end:>' in line:
+                            if len(re.findall(r'<:if', line) + re.findall(r'<:for', line)) == len(re.findall(r'<:end:>', line)):
+                                code[index] = indent(line, level)
+                            else:
+                                code[index] = indent(line, level)
+                                level += 1
+                        else:
+                            code[index] = indent(line, level)
+                            level += 1
                     elif line.startswith('<:else'):
                         code[index] = indent(line, level - 1)
                     elif line.startswith('<:end'):
