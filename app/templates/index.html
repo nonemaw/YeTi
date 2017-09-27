@@ -65,7 +65,7 @@
                     <div class="row" style="height: 100%">
                         <br>
                         <!-- Variable Table -->
-                        <table class="table table-scroll table-striped" style="height: 100%">
+                        <table class="table table-scroll" style="height: 100%">
                             <p><b id="variable-table-title">[Group] - [SubGroup] - [Variable]</b></p>
                             <tbody>
                                 <tr>
@@ -81,32 +81,20 @@
                                     <td id="var-type" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
                                 </tr>
                                 <tr>
-                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Multi Choice</i></b></td>
+                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Choices</i></b></td>
                                     <td class="col-md-10 col-lg-10">
                                         <!-- Multi Choice table -->
-                                        <table id="multi-choice-table" class="table">
+                                        <table class="table">
                                             <thead>
                                                 <tr>
-                                                    <th class="col-md-4 col-lg-5" style="font-family:Arial"><i>Value</i></th>
-                                                    <th class="col-md-8 col-lg-7" style="font-family:Arial"><i>Text</i></th>
+                                                    <th id="choice-value-title" class="col-md-4 col-lg-5" style="font-family:Arial"><i>Value</i></th>
+                                                    <th id="choice-text-title" class="col-md-8 col-lg-7" style="font-family:Arial"><i>Text</i></th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody id="multi-choice-table">
                                                 <tr>
-                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_1</td>
-                                                    <td class="col-md-8 col-lg-7">Client Asset</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_2</td>
-                                                    <td class="col-md-8 col-lg-7">Liability</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_3</td>
-                                                    <td class="col-md-8 col-lg-7">Enable Income</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">option_4</td>
-                                                    <td class="col-md-8 col-lg-7">Disable Section</td>
+                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">null</td>
+                                                    <td class="col-md-8 col-lg-7">null</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -527,6 +515,18 @@ waiting for input
                                     $('#var-variable').text(variable_var);
                                     $('#var-usage').text(variable_detail[1]);
                                     $('#var-type').text(variable_detail[2]);
+                                    var multi_choice_table = $('#multi-choice-table');
+                                    multi_choice_table.empty();
+                                    if (variable_detail[3]) {
+                                        $('#choice-value-title').text('Value');
+                                        $('#choice-text-title').text('Text');
+                                        for (index in variable_detail[3]) {
+                                            multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-8 col-lg-7">' + variable_detail[3][index][1] + '</td></tr>');
+                                        }
+                                    }
+                                    else {
+                                        multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">null</td><td class="col-md-8 col-lg-7">null</td></tr>');
+                                    }
                                     flag = 0;
                                 }
                                 else {
@@ -598,6 +598,18 @@ waiting for input
                 $('#var-variable').text($('#variable-selector option:selected').val());
                 $('#var-usage').text(var_detail[0]);
                 $('#var-type').text(var_detail[1]);
+                var multi_choice_table = $('#multi-choice-table');
+                multi_choice_table.empty();
+                if (var_detail[2]) {
+                    $('#choice-value-title').text('Value');
+                    $('#choice-text-title').text('Text');
+                    for (index in var_detail[2]) {
+                        multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-8 col-lg-7">' + var_detail[2][index][1] + '</td></tr>');
+                    }
+                }
+                else {
+                    multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">null</td><td class="col-md-8 col-lg-7">null</td></tr>');
+                }
             });
 
             // code snippet group - snippet scenario
