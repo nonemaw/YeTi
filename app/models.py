@@ -63,32 +63,6 @@ class SubGroup:
         db.SubGroup.update({'_id': ObjectId(id)}, {'$set': {'variables': variables}})
 
 
-# class Variable:
-#     def __init__(self, var, name, type, multi, usage):
-#         self.var = var
-#         self.name = name
-#         self.type = type
-#         self.multi = multi
-#         self.usage = usage
-#
-#     def __repr__(self):
-#         return '<Variable {} - {}>'.format(self.var, self.name)
-#
-#     def insert_doc(self):
-#         document = {
-#             'var': self.var,
-#             'name': self.name,
-#             'type': self.type,
-#             'multi': self.multi,
-#             'usage': self.usage
-#         }
-#         legacy = db.Variables.find_one({'var': self.var})
-#         if not legacy:
-#             return str(db.Variables.insert(document))
-#         else:
-#             return str(legacy.get('_id'))
-
-
 class AnonymousUser(AnonymousUserMixin):
     """
     add permission check method to the default AnonymousUse (no login)
@@ -112,10 +86,10 @@ class Role:
         self.default = role.get('default')
 
     def __repr__(self):
-        return '<Role %r>' % self.type
+        return '<Role {}>'.format(self.type)
 
     def __str__(self):
-        return '<Role %r>' % self.type
+        return '<Role {}>'.format(self.type)
 
     def add_role(self):
         document = {
@@ -159,17 +133,17 @@ class User:
                                .hexdigest()
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User {}>'.format(self.username)
 
     def __str__(self):
-        return '<User %r>' % self.username
+        return '<User {}>'.format(self.username)
 
     def new(self):
         document = {
             'email': self.email,
             'username': self.username,
             'password': self.password,  # store hash result
-            'is_confirmed': False,       # FIXME: for test
+            'is_confirmed': True,       # FIXME: for test
             'role': self.role,
             'name': '',
             'location': self.location,
@@ -178,7 +152,7 @@ class User:
             'member_since': datetime.utcnow(),
             'last_login': datetime.utcnow(),
         }
-        db.User.insert(document)
+        return str(db.User.insert(document))
 
 
 class UserUtl(UserMixin):
@@ -205,10 +179,10 @@ class UserUtl(UserMixin):
         self.member_since = user.get('member_since')
 
     def __repr__(self):
-        return '<CurrentUser %r>' % self.username
+        return '<CurrentUser {}>'.format(self.username)
 
     def __str__(self):
-        return '<CurrentUser %r>' % self.username
+        return '<CurrentUser {}>'.format(self.username)
 
     def get_id(self):
         """
@@ -249,6 +223,54 @@ class UserUtl(UserMixin):
     def generate_email_change_token(self, new_email, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'ID': self.id, 'new_email': new_email})
+
+
+class Snippet():
+    def __init__(self, group, scenario, code):
+        self.group = group
+        self.scenario = scenario
+        self.code = code
+
+    def __repr__(self):
+        return '<Snippet Scenario {}>'.format(self.scenario)
+
+    def __str__(self):
+        return '<Snippet Scenario {}>'.format(self.scenario)
+
+    def new(self):
+        snippet_dict = db.Snippet.find_one({'group': self.group})
+        if snippet_dict:
+            db.Snippet.update({'group': ObjectId(snippet_dict.get('group'))},
+                              {'$push': {'scenarios': dict(scenario=self.scenario, code=self.code)}})
+            return str(snippet_dict.get('_id'))
+        else:
+            document = {
+                'group': self.group,
+                'scenarios': [dict(scenario=self.scenario, code=self.code)],
+            }
+            return str(db.Snippet.insert(document))
+
+
+class Ticket():
+    def __init__(self, ticket, description):
+        self.ticket = ticket
+        self.description = description
+
+    def __repr__(self):
+        return '<Ticket {}>'.format(self.ticket)
+
+    def __str__(self):
+        return '<Ticket {}>'.format(self.ticket)
+
+    def new(self):
+        document = {
+            'ticket': self.ticket,
+            'description': self.ticket,
+            'timestamp': datetime.utcnow(),
+            'solved_timestamp': None,
+            'solved': False
+        }
+        return str(db.Ticket.insert(document))
 
 
 """

@@ -158,13 +158,6 @@ div.crawler-button {
     width: 500px;
     height: 400px;
 }
-select {
-    width:80%;
-    box-sizing:border-box;
-    background: #202836;
-    color: #c1ccd3;
-    text-shadow:0 1px 0 rgba(0,0,0,0.4);
-}
 .table-scroll tbody {
     position: absolute;
     overflow-y: scroll;
