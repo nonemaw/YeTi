@@ -3,14 +3,20 @@ login into a specified XPLAN site, fetch all data to local database
 """
 import requests
 import re
+import os
+import logging
+import json
+
+from . import global_vars
 from bson import ObjectId
-from .db import mongo_connect
-from .models import Group, SubGroup
+from app.db import mongo_connect
+from app.models import Group, SubGroup
 
 
 class Fetcher:
-    def __init__(self, username, password, company='ytml', debug=False):
+    def __init__(self, username, password, company='ytml', debug=False, mode='w'):
         self.debug = debug
+        self.mode = mode
         self.db = mongo_connect(company)
         self.USERNAME = username
         self.PASSWORD = password
@@ -21,6 +27,15 @@ class Fetcher:
         self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(company)
 
     def run(self):
+        this_path = os.path.dirname(os.path.realpath(__file__))
+        logger = logging.getLogger('my_logger')
+        hdlr = logging.FileHandler(os.path.join(this_path, 'fetcher.log'), 'w')
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr)
+        logger.setLevel(logging.INFO)
+
+        to_json = {}
         with requests.session() as session:
             try:
                 # login payload
@@ -46,6 +61,8 @@ class Fetcher:
                     former_sub_group = ''
                     former_sub_group_id = ''
                     former_sub_group_variables = []
+                    variables_to_json = []
+                    sub_group_to_json = {}
 
                     # logged in, loop in drop-down options
                     dropdown_options = re.search(r'<select\b[^>]*>(?P<option_tags>.*)<\/select>', fields.text).group('option_tags').split('</option>')
@@ -57,22 +74,26 @@ class Fetcher:
                             # update both former group and former sub_group
                             self.db.Group.update({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
                             self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': { 'variables': former_sub_group_variables}})
+                            # sub_group_to_json[self.db.SubGroup.find_one({'_id': ObjectId(former_sub_group_id)}).get('name')] = variables_to_json
                             break
                         try:
                             # for each group (option)
                             match = re.search(r'value="(?P<group>[^>]*)">(?P<obj_name>.*$)', option)
                             group_var = match.group('group').strip()
                             group_name = match.group('obj_name').strip()
+
                             if group_var != former_group:
+                                # record former group
                                 if former_group and former_group_id and len(sub_group_list):
                                     self.db.Group.update({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
                                     sub_group_list = []
                                 former_group_id = Group(group_var, group_name).new()
+
                                 former_group = group_var
 
-                            print('### Processing {} - {} ###'.format(group_var, group_name))
+                            logger.info('Processing {} - {}'.format(group_var, group_name))
 
-                            # loop in each option's variables (subgroup - variable)
+                            # loop in each option's variables (sub_group - variable)
                             sub = re.sub(r'<td align.+<\/td>\n', '', session.get(self.URL_WALKER.format(group_var), headers=dict(referer=self.URL_WALKER.format(group_var))).text)
                             for href_name_type in re.findall(r'<a href=\"([^=]+)\" .+\">(.+)<\/a><\/td>\n\s+<td>(.+)<\/td>', sub):
                                 """ sub loop in sub groups - variables
@@ -89,12 +110,18 @@ class Fetcher:
                                         # updating former SubGroup's variables, then insert new SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
                                             self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
+                                            sub_group_to_json[former_sub_group] = variables_to_json
+                                            if group_var in to_json:
+                                                to_json[group_var].append(sub_group_to_json)
+                                            else:
+                                                to_json[group_var] = [sub_group_to_json]
                                             former_sub_group_variables = []
+                                            variables_to_json = []
                                         former_sub_group_id = SubGroup(sub_group).new()
                                         former_sub_group = sub_group
                                         sub_group_list.append(former_sub_group_id)
 
-                                    print('Fetching ' + self.BASE + href)
+                                    logger.info('Fetching ' + self.BASE + href)
                                     if '/ufield/edit/entity_' in href:
                                         usage = '$entity.' + href.split('/ufield/edit/entity_')[1].replace('/', '.')
                                     elif '/ufield/edit/entity' in href:
@@ -129,11 +156,16 @@ class Fetcher:
                                     else:
                                         multi = None
                                     former_sub_group_variables.append(dict(var=var, name=name, type=type, multi=multi, usage=usage))
+                                    variables_to_json.append({var: name})
                         except Exception as e:
-                            print('Error message: ' + str(e))
+                            logger.warning('Error message: ' + str(e))
                             continue
 
                 # logout
                 session.get(self.URL_LOGOUT)
             except KeyboardInterrupt:
+                logger.info('Received KeyboardInterrupt, logging out ...')
                 session.get(self.URL_LOGOUT)
+
+        with open(os.path.join(this_path, global_vars.company + '.json'), self.mode) as J:
+            json.dump(to_json, J)

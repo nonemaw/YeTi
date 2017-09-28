@@ -8,7 +8,7 @@ from gevent.pywsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
 from app import create_app
 from app.models import Role
-from app.fetcher import Fetcher
+from common.fetcher import Fetcher
 
 
 yeti = create_app(os.getenv('FLASK_CONFIG') or 'default')
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     if args.debug:
         yeti.run(debug=True)
     elif args.fetcher:
-        username, password = input('Please input username and password: ')
+        username, password = input('Please input username and password: ').split(' ')
         Fetcher(username, password, debug=True).run()
     else:
         http_server = WSGIServer((args.host, args.port), yeti, log=None,
