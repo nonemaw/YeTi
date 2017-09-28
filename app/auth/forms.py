@@ -3,7 +3,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, Valid
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 
 from ..db import mongo_connect
-from ..general import get_company
+from common.general import get_company_list
 
 
 db = mongo_connect('ytml')

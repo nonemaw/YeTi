@@ -10,7 +10,7 @@ from . import auth
 from .forms import LoginForm, RegForm, ChangeEmailForm, ChangePasswordForm
 from ..db import mongo_connect
 from ..models import User, UserUtl
-from ..general import send_email, verify_password
+from common.general import send_email, verify_password
 from ..decorators import admin_required
 
 import time

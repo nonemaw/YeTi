@@ -11,17 +11,17 @@ from flask_mail import Message
 from werkzeug.security import check_password_hash
 from config import Config
 
-from . import mail
-from .db import mongo_connect
+from app import mail
+from app.db import mongo_connect
 
 
-def get_company():
+def get_company_list():
     db = mongo_connect('ytml')
     companies = db.Company.find({}).sort([('name', 1)])
-    company = []
+    company_list = []
     for company_dict in companies:
-        company.append(company_dict.get('name'))
-    return company
+        company_list.append(company_dict.get('name'))
+    return company_list
 
 
 def verify_password(password_hash, password):
