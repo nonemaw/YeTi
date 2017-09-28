@@ -55,6 +55,7 @@ class Fetcher:
                     # login failed
                     print('Currently there is another user using this XPLAN account.')
                 else:
+                    print('Start working ... ')
                     sub_group_list = []
                     former_group = ''
                     former_group_id = ''
@@ -62,7 +63,6 @@ class Fetcher:
                     former_sub_group_id = ''
                     former_sub_group_variables = []
                     variables_to_json = []
-                    sub_group_to_json = {}
 
                     # logged in, loop in drop-down options
                     dropdown_options = re.search(r'<select\b[^>]*>(?P<option_tags>.*)<\/select>', fields.text).group('option_tags').split('</option>')
@@ -83,12 +83,11 @@ class Fetcher:
                             group_name = match.group('obj_name').strip()
 
                             if group_var != former_group:
-                                # record former group
+                                # if moved to a new group, update the former group's subgroup list to DB, then change former_group to current group
                                 if former_group and former_group_id and len(sub_group_list):
                                     self.db.Group.update({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
                                     sub_group_list = []
                                 former_group_id = Group(group_var, group_name).new()
-
                                 former_group = group_var
 
                             logger.info('Processing {} - {}'.format(group_var, group_name))
@@ -107,14 +106,13 @@ class Fetcher:
                                         sub_group, name = re.search(r'&#x5B;(.+)&#x5D; (.+)', name).groups()
 
                                     if sub_group != former_sub_group:
-                                        # updating former SubGroup's variables, then insert new SubGroup to DB
+                                        # if moved to a new subgroup, updating former SubGroup's variables, then insert new current SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
                                             self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
-                                            sub_group_to_json[former_sub_group] = variables_to_json
                                             if group_var in to_json:
-                                                to_json[group_var].append(sub_group_to_json)
+                                                to_json[group_var].append({former_sub_group: variables_to_json})
                                             else:
-                                                to_json[group_var] = [sub_group_to_json]
+                                                to_json[group_var] = [{former_sub_group: variables_to_json}]
                                             former_sub_group_variables = []
                                             variables_to_json = []
                                         former_sub_group_id = SubGroup(sub_group).new()
