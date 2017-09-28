@@ -27,7 +27,8 @@ if __name__ == '__main__':
     if args.debug:
         yeti.run(debug=True)
     elif args.fetcher:
-        Fetcher(debug=True).run()
+        username, password = input('Please input username and password: ')
+        Fetcher(username, password, debug=True).run()
     else:
         http_server = WSGIServer((args.host, args.port), yeti, log=None,
                                  handler_class=WebSocketHandler)

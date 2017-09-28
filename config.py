@@ -13,7 +13,7 @@ class Config:
     MAIL_PORT = 465
     MAIL_USE_SSL = True
     MAIL_USERNAME = 'michaelxuchj@gmail.com'
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'Pwd:2978Bury7845'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_SENDER = 'YeTi Admin <michaelxuchj@gmail.com>'
     SITE_ADMIN = os.environ.get('SITE_ADMIN') or 'michaelxuchj@gmail.com'
     CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'

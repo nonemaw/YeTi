@@ -9,16 +9,16 @@ from .models import Group, SubGroup
 
 
 class Fetcher:
-    def __init__(self, USERNAME="ytmlai2", PASSWORD="Passw0rd1", COMPANY = 'ytml', debug=False):
+    def __init__(self, username, password, company='ytml', debug=False):
         self.debug = debug
-        self.db = mongo_connect(COMPANY)
-        self.USERNAME = USERNAME
-        self.PASSWORD = PASSWORD
-        self.BASE = "https://{}.xplan.iress.com.au".format(COMPANY)
-        self.URL_LOGIN = "https://{}.xplan.iress.com.au/home".format(COMPANY)
-        self.URL_LIST = "https://{}.xplan.iress.com.au/ufield/list".format(COMPANY)
-        self.URL_WALKER = "https://{}.xplan.iress.com.au/ufield/list_iframe?group=".format(COMPANY) + '{}'
-        self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(COMPANY)
+        self.db = mongo_connect(company)
+        self.USERNAME = username
+        self.PASSWORD = password
+        self.BASE = "https://{}.xplan.iress.com.au".format(company)
+        self.URL_LOGIN = "https://{}.xplan.iress.com.au/home".format(company)
+        self.URL_LIST = "https://{}.xplan.iress.com.au/ufield/list".format(company)
+        self.URL_WALKER = "https://{}.xplan.iress.com.au/ufield/list_iframe?group=".format(company) + '{}'
+        self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(company)
 
     def run(self):
         with requests.session() as session:

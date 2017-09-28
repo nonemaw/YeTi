@@ -19,8 +19,8 @@
                 <div class="col-md-8 col-lg-8">
                     <div class="row">
                         <div class="input-group">
-                            <input type="text" class="form-control" placeholder="Search for what you need...">
-                            <span class="input-group-btn"><button id="search-field" class="btn btn-info" type="button">Search</button></span>
+                            <input id="search-field" type="text" class="form-control" placeholder="Search for what you need...">
+                            <span class="input-group-btn"><button id="search-button" class="btn btn-info" type="button">Search</button></span>
                         </div>
                     </div>
                 </div>
@@ -67,7 +67,7 @@
                         <!-- Variable Table -->
                         <table class="table table-scroll" style="height: 100%">
                             <p><b id="variable-table-title">[Group] - [SubGroup] - [Variable]</b></p>
-                            <tbody>
+                            <tbody id="variable-table-selector">
                                 <tr>
                                     <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Variable</i></b></td>
                                     <td id="var-variable" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
@@ -100,6 +100,9 @@
                                         </table>
                                     </td>
                                 </tr>
+                            </tbody>
+                            <tbody id="variable-table-search" style="display:none">
+
                             </tbody>
                         </table>
                     </div>
@@ -445,7 +448,11 @@ waiting for input
 
             // left panel
             // search bar
-
+            $('#search-button').click(function() {
+                $('#variable-table-search').css('display', '');
+                $('#variable-table-selector').css('display', 'none');
+                $('#variable-table-title').text('Search result to ' + 'XXXXXXXXXXX')
+            });
 
             /* when page is loaded AJAX send GET to a route requesting a full list of Groups,
                and in which 'Entity' is selected by default, loaded at the very beginning
@@ -499,6 +506,7 @@ waiting for input
                         var flag = 1;
                         if (typeof variables[0] === 'undefined') {
                             $('#variable-table-title').text('[Group] - [SubGroup] - [Variable]');
+                            $('#variable-table-selector').css('display', '');
                             $('#var-variable').text('/');
                             $('#var-usage').text('/');
                             $('#var-type').text('/');
@@ -511,6 +519,8 @@ waiting for input
                                 // variable_detail == ["Variable Name", "$entity.usage", "Type", "Multi (null or list)"]
                                 if (flag) {
                                     variable_selector.append('<option value="' + variable_var + '" selected="selected">' + variable_detail[0] + '</option>');
+                                    $('#variable-table-search').css('display', 'none');
+                                    $('#variable-table-selector').css('display', '');
                                     $('#variable-table-title').text('[' + selected_group + '] - [' + selected_subgroup + '] - [' + variable_detail[0] + ']');
                                     $('#var-variable').text(variable_var);
                                     $('#var-usage').text(variable_detail[1]);
@@ -592,6 +602,8 @@ waiting for input
             });
             // update table when a variable is selected
             $('#variable-selector').on('change', function(){
+                $('#variable-table-search').css('display', 'none');
+                $('#variable-table-selector').css('display', '');
                 selected_var_name = $('#variable-selector option:selected').text();
                 var var_detail = local_var_cache[$('#variable-selector option:selected').val()];
                 $('#variable-table-title').text('[' + selected_group + '] - [' + selected_subgroup + '] - [' + selected_var_name + ']');
