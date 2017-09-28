@@ -84,10 +84,13 @@ def code_formatting():
 @code.route('/group', methods=['GET', 'POST'])
 def group():
     result = []
-    groups = db.Group.find({}).sort([('name', 1)])
-    for group_dict in groups:
-        result.append({group_dict.get('var'): group_dict.get('name')})
-    return json.dumps({'group': result}), 200
+    try:
+        groups = db.Group.find({}).sort([('name', 1)])
+        for group_dict in groups:
+            result.append({group_dict.get('var'): group_dict.get('name')})
+        return json.dumps({'group': result}), 200
+    except:
+        return json.dumps({'group': []}), 500
 
 
 @login_required
@@ -97,14 +100,17 @@ def subgroup(var):
     :param var: the 'var' name of parent group
     :return:
     """
-    subgroup_ids = db.Group.find_one({'var': var}).get('sub_groups')
-    result = []
-    if subgroup_ids:
-        for id in subgroup_ids:
-            result.append({id: db.SubGroup.find_one({'_id': ObjectId(id)}).get('name')})
-        return json.dumps({'subgroup': result}), 200
-    else:
-        return json.dumps({'subgroup': []})
+    try:
+        subgroup_ids = db.Group.find_one({'var': var}).get('sub_groups')
+        result = []
+        if subgroup_ids:
+            for id in subgroup_ids:
+                result.append({id: db.SubGroup.find_one({'_id': ObjectId(id)}).get('name')})
+            return json.dumps({'subgroup': result}), 200
+        else:
+            return json.dumps({'subgroup': []})
+    except:
+        return json.dumps({'subgroup': []}), 500
 
 
 @login_required
@@ -114,11 +120,14 @@ def variable(id):
     :param var: the 'var' name of parent group
     :return:
     """
-    variables = db.SubGroup.find_one({'_id': ObjectId(id)}).get('variables')
-    result = []
-    if variables:
-        for var in variables:
-            result.append({var.get('var'): [var.get('name'), var.get('usage'), var.get('type'), var.get('multi')]})
-        return json.dumps({'variable': result}), 200
-    else:
-        return json.dumps({'variable': []})
+    try:
+        variables = db.SubGroup.find_one({'_id': ObjectId(id)}).get('variables')
+        result = []
+        if variables:
+            for var in variables:
+                result.append({var.get('var'): [var.get('name'), var.get('usage'), var.get('type'), var.get('multi')]})
+            return json.dumps({'variable': result}), 200
+        else:
+            return json.dumps({'variable': []})
+    except:
+        return json.dumps({'variable': []}), 500

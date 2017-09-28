@@ -35,7 +35,6 @@ class Fetcher:
         logger.addHandler(hdlr)
         logger.setLevel(logging.INFO)
 
-        to_json = {}
         with requests.session() as session:
             try:
                 # login payload
@@ -45,39 +44,33 @@ class Fetcher:
                     "rolename": "User",
                     "redirecturl": ''
                 }
-
                 # send POST to login page
                 session.post(self.URL_LOGIN, data=payload, headers=dict(referer=self.URL_LOGIN))
-
                 # try to get main list page content
                 fields = session.get(self.URL_LIST, headers = dict(referer = self.URL_LIST))
                 if re.search(r'permission_error', fields.text):
                     # login failed
                     print('Currently there is another user using this XPLAN account.')
                 else:
+                    # start working
                     print('Start working ... ')
+
+                    dropdown_options = re.search(r'<select\b[^>]*>(?P<option_tags>.*)<\/select>', fields.text).group('option_tags').split('</option>')
+                    dropdown_options[-1] = '_loop_end'  # original dropdown_options[-1] is an empty string ''
                     sub_group_list = []
                     former_group = ''
                     former_group_id = ''
-                    former_sub_group = ''
-                    former_sub_group_id = ''
-                    former_sub_group_variables = []
-                    variables_to_json = []
+                    to_json = {}
 
-                    # logged in, loop in drop-down options
-                    dropdown_options = re.search(r'<select\b[^>]*>(?P<option_tags>.*)<\/select>', fields.text).group('option_tags').split('</option>')
-                    dropdown_options[-1] = '_loop_end'  # original dropdown_options[-1] is an empty string ''
+                    # for each group (option), the main loop
                     for option in dropdown_options:
-                        """ main loop in options (groups)
-                        """
                         if option == '_loop_end':
-                            # update both former group and former sub_group
+                            # update former group
                             self.db.Group.update({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
-                            self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': { 'variables': former_sub_group_variables}})
                             # sub_group_to_json[self.db.SubGroup.find_one({'_id': ObjectId(former_sub_group_id)}).get('name')] = variables_to_json
                             break
+
                         try:
-                            # for each group (option)
                             match = re.search(r'value="(?P<group>[^>]*)">(?P<obj_name>.*$)', option)
                             group_var = match.group('group').strip()
                             group_name = match.group('obj_name').strip()
@@ -91,19 +84,21 @@ class Fetcher:
                                 former_group = group_var
 
                             logger.info('Processing {} - {}'.format(group_var, group_name))
+                            all_subgroup_variable = re.sub(r'<td align.+<\/td>\n', '', session.get(self.URL_WALKER.format(group_var), headers=dict(referer=self.URL_WALKER.format(group_var))).text)
 
-                            # loop in each option's variables (sub_group - variable)
-                            sub = re.sub(r'<td align.+<\/td>\n', '', session.get(self.URL_WALKER.format(group_var), headers=dict(referer=self.URL_WALKER.format(group_var))).text)
-                            for href_name_type in re.findall(r'<a href=\"([^=]+)\" .+\">(.+)<\/a><\/td>\n\s+<td>(.+)<\/td>', sub):
-                                """ sub loop in sub groups - variables
-                                """
-                                # for each variable
+                            former_sub_group = ''
+                            former_sub_group_id = ''
+                            former_sub_group_variables = []
+                            variables_to_json = []
+
+                            # for each option's entry ([sub_group] - variable pair), analysis sub_group and variable
+                            for href_name_type in re.findall(r'<a href=\"([^=]+)\" .+\">(.+)<\/a><\/td>\n\s+<td>(.+)<\/td>', all_subgroup_variable):
                                 if len(href_name_type):
-                                    href, name, type = href_name_type
+                                    href, var_name, var_type = href_name_type
                                     var = href.split('/')[-1]
                                     sub_group = 'empty'
-                                    if '&#x5B;' in name:
-                                        sub_group, name = re.search(r'&#x5B;(.+)&#x5D; (.+)', name).groups()
+                                    if '&#x5B;' in var_name:
+                                        sub_group, var_name = re.search(r'&#x5B;(.+)&#x5D; (.+)', var_name).groups()
 
                                     if sub_group != former_sub_group:
                                         # if moved to a new subgroup, updating former SubGroup's variables, then insert new current SubGroup to DB
@@ -127,8 +122,8 @@ class Fetcher:
                                     else:
                                         usage = '$entity.' + href.split('/ufield/edit/')[1].replace('/', '.')
 
-                                    # information collection to a variable finished: var / name / sub_group / type / usage
-                                    if type == 'Multi' or type == 'Choice':
+                                    # information collection to a variable finished: var / var_name / sub_group / var_type / usage
+                                    if var_type == 'Multi' or var_type == 'Choice':
                                         multi = {}
                                         session.get(self.BASE + href, headers=dict(referer=self.BASE + href))
                                         multi_content = session.get(self.BASE + '/ufield/list_options', headers=dict(referer=self.BASE + href))
@@ -140,8 +135,7 @@ class Fetcher:
                                              [('1', ' align="center"'),
                                               ('car', '>Increase Assessable Assets</td'),
                                               ('2', ' align="center"'),
-                                              ('trunk', '>Decrease Assessable Assets</td')
-                                             ]
+                                              ('trunk', '>Decrease Assessable Assets</td')]
                                              multi: {1: [choice_value, choice_text], 2:[choice_value, choice_text], ...}
                                             """
                                             index = str(m[0])
@@ -153,8 +147,17 @@ class Fetcher:
                                             multi[index] = [next_item[0], choice_text]
                                     else:
                                         multi = None
-                                    former_sub_group_variables.append(dict(var=var, name=name, type=type, multi=multi, usage=usage))
-                                    variables_to_json.append({var: name})
+
+                                    former_sub_group_variables.append(dict(var=var, name=var_name, type=var_type, multi=multi, usage=usage))
+                                    variables_to_json.append({var: var_name})
+
+                            # end of loop in current group's [sub_group] - variable pairs, update last subgroup's variabls
+                            self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
+                            if group_var in to_json:
+                                to_json[group_var].append({former_sub_group: variables_to_json})
+                            else:
+                                to_json[group_var] = [{former_sub_group: variables_to_json}]
+
                         except Exception as e:
                             logger.warning('Error message: ' + str(e))
                             continue
