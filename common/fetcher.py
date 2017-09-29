@@ -28,13 +28,15 @@ class Fetcher:
 
     def run(self):
         this_path = os.path.dirname(os.path.realpath(__file__))
+        parent_path = os.path.abspath(os.path.join(this_path,os.pardir))
         logger = logging.getLogger('my_logger')
-        hdlr = logging.FileHandler(os.path.join(this_path, 'fetcher.log'), 'w')
+        file_hdlr = logging.FileHandler(os.path.join(this_path, 'fetcher.log'), 'w')
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        hdlr.setFormatter(formatter)
-        logger.addHandler(hdlr)
+        file_hdlr.setFormatter(formatter)
+        logger.addHandler(file_hdlr)
         logger.setLevel(logging.INFO)
 
+        to_json = {}
         with requests.session() as session:
             try:
                 # login payload
@@ -60,7 +62,6 @@ class Fetcher:
                     sub_group_list = []
                     former_group = ''
                     former_group_id = ''
-                    to_json = {}
 
                     # for each group (option), the main loop
                     for option in dropdown_options:
@@ -151,7 +152,7 @@ class Fetcher:
                                     former_sub_group_variables.append(dict(var=var, name=var_name, type=var_type, multi=multi, usage=usage))
                                     variables_to_json.append({var: var_name})
 
-                            # end of loop in current group's [sub_group] - variable pairs, update last subgroup's variabls
+                            # end of loop in current group's [sub_group] - variable pairs, update last subgroup's variables
                             self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
                             if group_var in to_json:
                                 to_json[group_var].append({former_sub_group: variables_to_json})
@@ -165,8 +166,8 @@ class Fetcher:
                 # logout
                 session.get(self.URL_LOGOUT)
             except KeyboardInterrupt:
-                logger.info('Received KeyboardInterrupt, logging out ...')
+                logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(this_path, global_vars.company + '.json'), self.mode) as J:
+        with open(os.path.join(parent_path, 'fuzzier', 'json', 'ytml' + '.json'), self.mode) as J:
             json.dump(to_json, J)
