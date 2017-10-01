@@ -10,6 +10,7 @@ from . import code
 from ..db import mongo_connect
 from ..models import UserUtl
 from ..decorators import admin_required
+import fuzzier.fuzzier as fuzzier
 
 
 db = mongo_connect('ytml')
@@ -131,3 +132,11 @@ def variable(id):
             return json.dumps({'variable': []})
     except:
         return json.dumps({'variable': []}), 500
+
+
+@login_required
+@code.route('/ratio', methods=['GET', 'POST'])
+def ratio():
+    a = 1
+
+
