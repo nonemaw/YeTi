@@ -17,6 +17,7 @@ class Fetcher:
     def __init__(self, username, password, company='ytml', debug=False, mode='w'):
         self.debug = debug
         self.mode = mode
+        self.company = company
         self.db = mongo_connect(company)
         self.USERNAME = username
         self.PASSWORD = password
@@ -27,10 +28,10 @@ class Fetcher:
         self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(company)
 
     def run(self):
-        this_path = os.path.dirname(os.path.realpath(__file__))
-        parent_path = os.path.abspath(os.path.join(this_path,os.pardir))
+        c
+        parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
         logger = logging.getLogger('my_logger')
-        file_hdlr = logging.FileHandler(os.path.join(this_path, 'fetcher.log'), 'w')
+        file_hdlr = logging.FileHandler(os.path.join(this_path,'log', 'fetcher.log'), 'w')
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         file_hdlr.setFormatter(formatter)
         logger.addHandler(file_hdlr)
@@ -169,5 +170,5 @@ class Fetcher:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(parent_path, 'fuzzier', 'json', 'ytml' + '.json'), self.mode) as J:
+        with open(os.path.join(parent_path, 'fuzzier', 'json', self.company + '.json'), self.mode) as J:
             json.dump(to_json, J)
