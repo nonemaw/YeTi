@@ -2,6 +2,9 @@
 from common import global_vars
 
 
+
+
+
 class Json:
     NONE = 0
     CURLY_OPEN = 1
@@ -16,12 +19,20 @@ class Json:
     FALSE = 10
     NULL = 11
 
-    def __init__(self, json_string, search):
+    def __init__(self, json_string, **kwargs):
         self.index = 0
         self.success = True
         self.json = json_string
         self.length = len(json_string)
-        self.search = search
+        self.search = None
+        if len(kwargs):
+            self.search = kwargs.get('search')
+            self.pattern = kwargs.get('pattern')
+            self.result_length = kwargs.get('result_length')
+            self.result = []  # [[ratio1, gr1, sub1, va1], [ratio2, gr2, sub2, va2], ...]
+            self.deep = 0
+            self.group = {}
+            self.sub = {}
 
     def parse(self):
         if self.json:
@@ -41,8 +52,10 @@ class Json:
             return self.parse_number()
         if token == self.CURLY_OPEN:
             # '{'
+            self.deep += 1
             return self.parse_object()
         if token == self.SQUARED_OPEN:
+            self.deep += 1
             # '['
             return self.parse_array()
         if token == self.TRUE:
@@ -77,12 +90,15 @@ class Json:
             elif token == self.COMMA:
                  self.go_to_next_token()
             elif token == self.CURLY_CLOSE:
+                self.deep -= 1
+                if self.deep == 2:
+                    self.sub = {}
                 self.go_to_next_token()
                 return table
             else:
                 # all other token types:
-                # a name
-                name = self.parse_string()
+                # a key
+                key = self.parse_string()
                 if not self.success:
                     return None
                 # a ':'
@@ -95,7 +111,7 @@ class Json:
                 if not self.success:
                     self.success = False
                     return None
-                table[name] = value
+                table[key] = value
         return table
 
     def parse_array(self):
@@ -113,6 +129,9 @@ class Json:
             elif token == self.COMMA:
                  self.go_to_next_token()
             elif token == self.SQUARED_CLOSE:
+                self.deep -= 1
+                if self.deep == 1:
+                    self.group = {}
                 self.go_to_next_token()
                 break
             else:
@@ -173,7 +192,35 @@ class Json:
         if not done:
             self.success = False
             return None
-        self.search(string, global_vars.pattern)
+        # if self.search:
+        # TODO: calculate ratio
+        #     self.search(string, self.pattern)
+        if self.deep == 1:  # i am the group
+            # TODO: calculate ratio, assume is 0.1
+            ratio = 0.1
+            self.group[string] = ratio
+
+        elif self.deep == 3:
+            # TODO: calculate ratio, assume is 0.2
+            ratio = 0.4
+            self.sub[string] = ratio
+
+        elif self.deep == 4:
+            # TODO: calculate ratio, assume is 0.3
+            ratio = 0.3
+            max_current_ratio = max(ratio, next(iter(self.group.values())), next(iter(self.sub.values())))
+            if len(self.result) == self.result_length:
+                stored_ratio_result = [i[0] for i in self.result]
+                min_ratio = min(stored_ratio_result)
+                if max_current_ratio >= max(stored_ratio_result):
+                    for index, item in enumerate(self.result):
+                        if item[0] == min_ratio:
+                            self.result[index] = [max_current_ratio, next(iter(self.group.keys())), next(iter(self.sub.keys())), string]
+                            break
+                else:
+                    pass
+            else:
+                self.result.append([max_current_ratio, next(iter(self.group.keys())), next(iter(self.sub.keys())), string])
         return string
 
     def parse_number(self):
@@ -271,3 +318,8 @@ class Json:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t'\
                                            or self.json[self.index] == '\n':
             self.index += 1
+
+if __name__ == '__main__':
+    j = Json('{"gr1":[{"sub1":["v1","v2","v3"]},{"sub2":["vv1","vv2","vv3"]}], "gr2":[{"sub3":["vvv1"]}]}', search=True, result_length=5)
+    print(j.parse())
+    print(j.result)

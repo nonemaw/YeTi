@@ -1,16 +1,12 @@
 
-
-"""
-Levenshtein distance (LD) algorithm is used for calculating similarity between
-searched pattern and target string
-"""
-
 import os
 from common import global_vars
 from fuzzier.parser import Json
 
 
 def ratio(target:str, pattern:str):
+    """ a modified Levenshtein Distance (LD) algorithm
+    """
     width = len(target)
     height = len(pattern)
     if width == 0:
@@ -56,5 +52,5 @@ def run(pattern:str):
 
     with open(os.path.join(this_path, 'json', global_vars.company + '.json')) as F:
         for line in F:
-            Json(line, search).parse()
+            Json(line, pattern=pattern, search=search).parse()
 
