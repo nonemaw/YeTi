@@ -9,6 +9,7 @@ from geventwebsocket.handler import WebSocketHandler
 from app import create_app
 from app.models import Role
 from common.fetcher import Fetcher
+from fuzzier.fuzzier import run_fuzzier
 
 
 yeti = create_app(os.getenv('FLASK_CONFIG') or 'default')
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--host', '-H', default='127.0.0.1',help='Host address (default: 127.0.0.1)')
     parser.add_argument('--debug', '-D', required=False, action='store_true', help='Debug Mode')
     parser.add_argument('--fetcher', '-F', required=False, action='store_true', help='Run Fetcher')
+    parser.add_argument('--test', '-T', required=False, action='store_true', help='Test')
     args = parser.parse_args()
 
     Role.insert_roles()
@@ -29,6 +31,9 @@ if __name__ == '__main__':
     elif args.fetcher:
         username, password = input('Please input username and password: ').split(' ')
         Fetcher(username, password, debug=True).run()
+    elif args.test:
+        pattern = input('Input test pattern: ')
+        run_fuzzier(pattern=pattern)
     else:
         http_server = WSGIServer((args.host, args.port), yeti, log=None,
                                  handler_class=WebSocketHandler)
