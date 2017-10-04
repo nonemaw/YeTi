@@ -53,12 +53,12 @@
             </div>
 
             <!-- variable infomation table row -->
-            <div class="row" style="height: 30%">
+            <div class="row" style="height: 35%">
                 <!-- Variable Table -->
                 <br>
                 <div class="col-md-12" style="height: 100%">
                     <table class="table table-scroll left-column-table" style="height: 100%">
-                        <p><b id="variable-table-title left-column-title" style="font-size: 16px">[Group] - [SubGroup] - [Variable]</b></p>
+                        <p><b id="variable-table-title" style="font-size: 16px">[Group] -- [SubGroup] -- [Variable]</b></p>
                         <tbody id="variable-table-selector">
                             <tr>
                                 <td class="col-md-2" style="font-family:Arial"><b><i>Variable</i></b></td>
@@ -101,10 +101,6 @@
 
             <!-- pick snippet row -->
             <div class="row">
-                <div class="row">
-                    <br>
-                    <div class="col-md-12 left-column-title"><h4><b>Code Snippet</b></h4></div>
-                </div>
                 <div class="row">
                     <div class="col-md-5 selection-field">
                             <label for="syntax" style="font-size: 16px">Group</label>
@@ -493,7 +489,7 @@ waiting for input
                         variable_selector.empty();
                         var flag = 1;
                         if (typeof variables[0] === 'undefined') {
-                            $('#variable-table-title').text('[Group] - [SubGroup] - [Variable]');
+                            $('#variable-table-title').text('[Group] -- [SubGroup] -- [Variable]');
                             $('#variable-table-selector').css('display', '');
                             $('#var-variable').text('/');
                             $('#var-usage').text('/');
@@ -509,7 +505,7 @@ waiting for input
                                     variable_selector.append('<option value="' + variable_var + '" selected="selected">' + variable_detail[0] + '</option>');
                                     $('#variable-table-search').css('display', 'none');
                                     $('#variable-table-selector').css('display', '');
-                                    $('#variable-table-title').text('[' + selected_group + '] - [' + selected_subgroup + '] - [' + variable_detail[0] + ']');
+                                    $('#variable-table-title').text('[' + selected_group + '] -- [' + selected_subgroup + '] -- [' + variable_detail[0] + ']');
                                     $('#var-variable').text(variable_var);
                                     $('#var-usage').text(variable_detail[1]);
                                     $('#var-type').text(variable_detail[2]);
