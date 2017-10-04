@@ -153,15 +153,12 @@ div.crawler-button {
      right:249px;
      top:10px;
 }
-#myeditor {
-    position: absolute;
-    width: 500px;
-    height: 400px;
-}
 .table-scroll tbody {
     position: absolute;
     overflow-y: scroll;
     height: 85%;
+    font-size: 16px;
+    color: #C6C6C6;
 }
 .table-scroll tr {
     width: 100%;
@@ -171,4 +168,19 @@ div.crawler-button {
 
 .table-scroll thead > tr > th {
     border: none;
+}
+.dropdown-menu li a,
+.dropdown-toggle span{
+    color: #c6c6c6;
+    font-size: 16px;
+}
+.selection-field,
+#search-field,
+.left-column-title,
+#snippet-section,
+.left-column-table{
+    padding-left: 30px
+}
+.form-control {
+    font-size: 16px;
 }

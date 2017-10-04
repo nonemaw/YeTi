@@ -11,17 +11,14 @@
 {% block wide_content %}
     <div class="row" style="height: 92vh">
         <!-- left panel column -->
-        <div class="col-md-4 col-lg-4" style="height: 99%">
+        <div class="col-md-4" style="height: 99%">
 
             <!-- search bar row -->
             <div class="row">
-                <div class="col-md-1 col-lg-1"></div>
-                <div class="col-md-8 col-lg-8">
-                    <div class="row">
-                        <div class="input-group">
-                            <input id="search-field" type="text" class="form-control" placeholder="Search for what you need...">
-                            <span class="input-group-btn"><button id="search-button" class="btn btn-info" type="button">Search</button></span>
-                        </div>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <input id="search-field" type="text" class="form-control" placeholder="Search for what you need...">
+                        <span class="input-group-btn"><button id="search-button" class="btn btn-info" type="button">Search</button></span>
                     </div>
                 </div>
             </div>
@@ -29,28 +26,25 @@
             <!-- choose variable row -->
             <div class="row">
                 <br>
-                <div class="col-md-1 col-lg-1"></div>
-                <div class="col-md-3 col-lg-3">
+                <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax">Group</label>
+                        <label for="syntax" style="font-size: 16px">Group</label>
                     </div>
                     <div class="row">
                         <select id="group-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
                     </div>
                 </div>
-                <div class="col-md-1 col-lg-1"></div>
-                <div class="col-md-3 col-lg-3">
+                <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax">Sub-Group</label>
+                        <label for="syntax" style="font-size: 16px">Sub-Group</label>
                     </div>
                     <div class="row">
                         <select id="subgroup-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
                     </div>
                 </div>
-                <div class="col-md-1 col-lg-1"></div>
-                <div class="col-md-3 col-lg-3">
+                <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax">Variable</label>
+                        <label for="syntax" style="font-size: 16px">Variable</label>
                     </div>
                     <div class="row">
                         <select id="variable-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -60,52 +54,48 @@
 
             <!-- variable infomation table row -->
             <div class="row" style="height: 30%">
-                <div class="col-md-1 col-lg-1"></div>
-                <div class="col-md-11 col-lg-11" style="height: 100%">
-                    <div class="row" style="height: 100%">
-                        <br>
-                        <!-- Variable Table -->
-                        <table class="table table-scroll" style="height: 100%">
-                            <p><b id="variable-table-title">[Group] - [SubGroup] - [Variable]</b></p>
-                            <tbody id="variable-table-selector">
-                                <tr>
-                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Variable</i></b></td>
-                                    <td id="var-variable" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
-                                </tr>
-                                <tr>
-                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Usage</i></b></td>
-                                    <td id="var-usage" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
-                                </tr>
-                                <tr>
-                                    <td class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Type</i></b></td>
-                                    <td id="var-type" class="col-md-10 col-lg-10" style="font-family:Consolas">/</td>
-                                </tr>
-                                <tr>
-                                    <td id="choice-type" class="col-md-2 col-lg-2" style="font-family:Arial"><b><i>Choice(s)</i></b></td>
-                                    <td class="col-md-10 col-lg-10">
-                                        <!-- Multi Choice table -->
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th id="choice-value-title" class="col-md-4 col-lg-5" style="font-family:Arial"><i>Value</i></th>
-                                                    <th id="choice-text-title" class="col-md-8 col-lg-7" style="font-family:Arial"><i>Text</i></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="multi-choice-table">
-                                                <tr>
-                                                    <td class="col-md-4 col-lg-5" style="font-family:Consolas">null</td>
-                                                    <td class="col-md-8 col-lg-7">null</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tbody id="variable-table-search" style="display:none">
-
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- Variable Table -->
+                <br>
+                <div class="col-md-12" style="height: 100%">
+                    <table class="table table-scroll left-column-table" style="height: 100%">
+                        <p><b id="variable-table-title left-column-title" style="font-size: 16px">[Group] - [SubGroup] - [Variable]</b></p>
+                        <tbody id="variable-table-selector">
+                            <tr>
+                                <td class="col-md-2" style="font-family:Arial"><b><i>Variable</i></b></td>
+                                <td id="var-variable" class="col-md-10" style="font-family:Consolas">/</td>
+                            </tr>
+                            <tr>
+                                <td class="col-md-2" style="font-family:Arial"><b><i>Usage</i></b></td>
+                                <td id="var-usage" class="col-md-10" style="font-family:Consolas">/</td>
+                            </tr>
+                            <tr>
+                                <td class="col-md-2" style="font-family:Arial"><b><i>Type</i></b></td>
+                                <td id="var-type" class="col-md-10" style="font-family:Consolas">/</td>
+                            </tr>
+                            <tr>
+                                <td id="choice-type" class="col-md-2" style="font-family:Arial"><b><i>Choice(s)</i></b></td>
+                                <td class="col-md-10">
+                                    <!-- Multi Choice table -->
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th id="choice-value-title" class="col-md-4" style="font-family:Arial"><i>Value</i></th>
+                                                <th id="choice-text-title" class="col-md-8" style="font-family:Arial"><i>Text</i></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="multi-choice-table">
+                                            <tr>
+                                                <td class="col-md-4" style="font-family:Consolas">null</td>
+                                                <td class="col-md-8">null</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="variable-table-search" style="display:none">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -113,21 +103,19 @@
             <div class="row">
                 <div class="row">
                     <br>
-                    <div class="col-md-1 col-lg-1"></div>
-                    <div class="col-md-11 col-lg-11"><h4><b>Code Snippet</b></h4></div>
+                    <div class="col-md-12 left-column-title"><h4><b>Code Snippet</b></h4></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-1 col-lg-1"></div>
-                    <div class="col-md-4 col-lg-4">
-                            <label for="syntax">Group</label>
+                    <div class="col-md-5 selection-field">
+                            <label for="syntax" style="font-size: 16px">Group</label>
                     </div>
-                    <div class="col-md-4 col-lg-4">
-                            <label for="syntax">Snippet Scenario</label>
+                    <div class="col-md-5 selection-field">
+                            <label for="syntax" style="font-size: 16px">Snippet Scenario</label>
                     </div>
+                    <div class="col-md-2"></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-1 col-lg-1"></div>
-                    <div class="col-md-4 col-lg-4">
+                    <div class="col-md-5 selection-field">
                         <select id="snippet-group-selector" class="selectpicker" data-size="15" data-width="100%" data-live-search="true">
                             <option value="a">a</option>
                             <option value="b">b</option>
@@ -144,7 +132,7 @@
                             <option value="m">m</option>
                         </select>
                     </div>
-                    <div class="col-md-4 col-lg-4">
+                    <div class="col-md-5 selection-field">
                         <select id="snippet-selector" class="selectpicker" data-size="15" data-width="100%" data-live-search="true">
                             <option value="a">a</option>
                             <option value="b">b</option>
@@ -161,8 +149,7 @@
                             <option value="m">m</option>
                         </select>
                     </div>
-                    <div class="col-md-1 col-lg-1"></div>
-                    <div class="col-md-2 col-lg-2">
+                    <div class="col-md-2">
                         <button class="btn btn-danger" id="insert">Insert</button>
                     </div>
                 </div>
@@ -170,27 +157,24 @@
 
             <!-- snippet code editor row -->
             <div class="row" style="height: 40%">
-                <div class="col-md-1 col-lg-1"></div>
-                <div class="col-md-11 col-lg-11" style="height: 100%">
+                <div class="col-md-12" style="height: 100%">
                     <br>
-                    <div class="row" style="height: 100%">
 <div id="snippet-section" style="height: 100%">
 waiting for selecting scenario
 </div>
-                    </div>
                 </div>
             </div>
         </div>
 
         <!-- coding column -->
-        <div class="col-md-8 col-lg-8" style="height: 99%">
+        <div class="col-md-8" style="height: 99%">
             <div class="row" style="height: 100%">
-                <div class="col-md-10 col-lg-10" style="height: 100%">
+                <div class="col-md-10" style="height: 100%">
 <div id="code-section" style="height: 100%">
 waiting for input
 </div>
                 </div>
-                <div class="col-md-2 col-lg-2">
+                <div class="col-md-2">
                     <div class="row">
                         <button class="btn btn-danger" id="judge">Judge</button>
                     </div>
@@ -535,11 +519,11 @@ waiting for input
                                         $('#choice-value-title').text('Value');
                                         $('#choice-text-title').text('Text');
                                         for (index in variable_detail[3]) {
-                                            multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-8 col-lg-7">' + variable_detail[3][index][1] + '</td></tr>');
+                                            multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-8">' + variable_detail[3][index][1] + '</td></tr>');
                                         }
                                     }
                                     else {
-                                        multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">null</td><td class="col-md-8 col-lg-7">null</td></tr>');
+                                        multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">null</td><td class="col-md-8">null</td></tr>');
                                     }
                                     flag = 0;
                                 }
@@ -620,11 +604,11 @@ waiting for input
                     $('#choice-value-title').text('Value');
                     $('#choice-text-title').text('Text');
                     for (index in var_detail[2]) {
-                        multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-8 col-lg-7">' + var_detail[2][index][1] + '</td></tr>');
+                        multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-8">' + var_detail[2][index][1] + '</td></tr>');
                     }
                 }
                 else {
-                    multi_choice_table.append('<tr><td class="col-md-4 col-lg-5" style="font-family:Consolas">null</td><td class="col-md-8 col-lg-7">null</td></tr>');
+                    multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">null</td><td class="col-md-8">null</td></tr>');
                 }
             });
 
