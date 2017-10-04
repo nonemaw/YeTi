@@ -23,8 +23,10 @@ class Fson:
             self.ratio_method = kwargs.get('ratio_method')
             self.pattern = kwargs.get('pattern')
             self.result_length = kwargs.get('result_length') if kwargs.get('result_length') else 5
-            self.result = []  # [[ratio1, gr1, sub1, va1], [ratio2, gr2, sub2, va2], ...]
+            self.result = []  # [[ratio1, gr1, sub1, var1, var_name1], [ratio2, gr2, sub2, var2, var_name2], ...]
             self.deep = 0
+            self.var_val = 0
+            self.var_name = ''
             self.group = ''
             self.sub = ''
 
@@ -91,8 +93,6 @@ class Fson:
             elif token == self.CURLY_CLOSE:
                 if self.ratio_method:
                     self.deep -= 1
-                    if self.deep == 2:
-                        self.sub = ''
                 self.go_to_next_token()
                 return table
             else:
@@ -131,8 +131,6 @@ class Fson:
             elif token == self.SQUARED_CLOSE:
                 if self.ratio_method:
                     self.deep -= 1
-                    if self.deep == 1:
-                        self.group = ''
                 self.go_to_next_token()
                 break
             else:
@@ -200,21 +198,25 @@ class Fson:
             elif self.deep == 3:
                 # I am the subgroup
                 self.sub = string
-            elif self.deep == 5:
+            elif self.deep == 5 and self.var_val:
                 # I am a variable
                 current_ratio = self.ratio_method(string, self.pattern)
+                self.var_val = 0
                 if len(self.result) == self.result_length:
                     stored_ratio_result = [i[0] for i in self.result]
                     min_ratio = min(stored_ratio_result)
                     if current_ratio >= max(stored_ratio_result):
                         for index, item in enumerate(self.result):
                             if item[0] == min_ratio:
-                                self.result[index] = [current_ratio, self.group, self.sub, string]
+                                self.result[index] = [current_ratio, self.group, self.sub, self.var_name, string]
                                 break
                     else:
                         pass
-                else:
-                    self.result.append([current_ratio, self.group, self.sub, string])
+                elif current_ratio > 0.15:
+                    self.result.append([current_ratio, self.group, self.sub, self.var_name, string])
+            elif self.deep == 5 and not self.var_val:
+                self.var_name = string
+                self.var_val = 1
         return string
 
     def parse_number(self):
@@ -312,58 +314,3 @@ class Fson:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t'\
                                            or self.json[self.index] == '\n':
             self.index += 1
-
-
-# if __name__ == '__main__':
-#     def distance(target:str, pattern:str):
-#         """ a modified Levenshtein Distance (LD) algorithm
-#         """
-#         width = len(target)
-#         height = len(pattern)
-#         if width == 0:
-#             return height
-#         if height == 0:
-#             return width
-#
-#         # initialize the matrix
-#         d_matrix = [[0 for n in range(width + 1)] for m in range(height + 1)]
-#         # first row set to all `0` for fuzzy substring match
-#         # for i in range(width + 1):
-#         #     d_matrix[0][i] = i
-#         for j in range(height + 1):
-#             d_matrix[j][0] = j
-#
-#         for i in range(1, width + 1):
-#             t_char = target[i - 1]
-#             for j in range(1, height + 1):
-#                 p_char = pattern[j - 1]
-#                 cost = 0 if (p_char == t_char) else 1
-#                 d_matrix[j][i] = min(d_matrix[j - 1][i] + 1,
-#                                      d_matrix[j][i - 1] + 1,
-#                                      d_matrix[j - 1][i - 1] + cost)
-#         return d_matrix[height][width], d_matrix[height]
-#
-#
-#     def ratio(target:str, pattern:str):
-#         width = len(target)
-#         # acquire the maximum distance of the pattern, on both normal string and an inverse string
-#         dis, dis_list = max(distance(target, pattern), distance(target[::-1], pattern[::-1]))
-#
-#         if dis >= width:
-#             return 0
-#
-#         weight = 1 - dis / width
-#         if 0 in dis_list and distance != 0:
-#             # there is a full match to the substring, increase weight based on distance
-#             weight += dis / width / 2
-#         ratio = (1 - dis / width) * weight
-#         return ratio
-#
-#
-#     import os
-#
-#     ##print(Fson('{"gr1":[{"sub1":["v1","v2","v3"]},{"sub2":["vv1","vv2","vv3"]}], "gr2":[{"sub3":["vvv1"]}]}', ratio_method=ratio, pattern='entty').parse())
-#
-#     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'json', 'ytml.json')) as F:
-#         for line in F:
-#             print(Fson(line, ratio_method=ratio, pattern='entty').parse())

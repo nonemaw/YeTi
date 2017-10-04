@@ -8,7 +8,6 @@ from bson import ObjectId
 
 from . import code
 from ..db import mongo_connect
-from ..models import UserUtl
 from ..decorators import admin_required
 import fuzzier.fuzzier as fuzzier
 
@@ -135,8 +134,22 @@ def variable(id):
 
 
 @login_required
-@code.route('/ratio', methods=['GET', 'POST'])
-def ratio():
-    a = 1
-
-
+@code.route('/search/<pattern>', methods=['GET', 'POST'])
+def ratio(pattern):
+    """
+    :param pattern: the pattern string to be searched
+    :return:
+    """
+    result_list = sorted(fuzzier.search(pattern), key=lambda item: item[0], reverse=True)
+    returned_list = []
+    try:
+        for item in result_list:
+            group_var = item[1]
+            subgroup = item[2]
+            var_var = item[3]
+            var_name = item[4]
+            group_name = db.Group.find_one({'var': group_var}).get('name')
+            returned_list.append([group_var, group_name, subgroup, var_var, var_name])
+        return json.dumps({'search_result': returned_list}), 200
+    except:
+        return json.dumps({'search_result': []}), 500
