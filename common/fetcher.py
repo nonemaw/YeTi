@@ -1,3 +1,4 @@
+
 """
 login into a specified XPLAN site, fetch all data to local database
 """
@@ -14,21 +15,20 @@ from app.models import Group, SubGroup
 
 
 class Fetcher:
-    def __init__(self, username, password, company='ytml', debug=False, mode='w'):
+    def __init__(self, username, password, debug=False, mode='w'):
         self.debug = debug
         self.mode = mode
-        self.company = company
-        self.db = mongo_connect(company)
+        self.db = mongo_connect(global_vars.company)
         self.USERNAME = username
         self.PASSWORD = password
-        self.BASE = "https://{}.xplan.iress.com.au".format(company)
-        self.URL_LOGIN = "https://{}.xplan.iress.com.au/home".format(company)
-        self.URL_LIST = "https://{}.xplan.iress.com.au/ufield/list".format(company)
-        self.URL_WALKER = "https://{}.xplan.iress.com.au/ufield/list_iframe?group=".format(company) + '{}'
-        self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(company)
+        self.BASE = "https://{}.xplan.iress.com.au".format(global_vars.company)
+        self.URL_LOGIN = "https://{}.xplan.iress.com.au/home".format(global_vars.company)
+        self.URL_LIST = "https://{}.xplan.iress.com.au/ufield/list".format(global_vars.company)
+        self.URL_WALKER = "https://{}.xplan.iress.com.au/ufield/list_iframe?group=".format(global_vars.company) + '{}'
+        self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(global_vars.company)
 
     def run(self):
-        c
+        this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
         logger = logging.getLogger('my_logger')
         file_hdlr = logging.FileHandler(os.path.join(this_path,'log', 'fetcher.log'), 'w')

@@ -62,20 +62,3 @@ def clean_tags(body):
                     'h2', 'h3', 'p']
     return bleach.linkify(bleach.clean(markdown(body, output_format='html'),
                                             tags=allowed_tags, strip=True))
-
-
-def encrypt(clear_text):
-    # a simple password encryption method, better to keep it safe
-    enc_secret = AES.new(Config.MASTER_KEY)
-    tag_string = (str(clear_text) + (AES.block_size -
-                  len(str(clear_text)) % AES.block_size) * "\0")
-    cipher_text = base64.b64encode(enc_secret.encrypt(tag_string))
-    return cipher_text
-
-
-def decrypt(cipher_text):
-    # a simple password decryption method, better better and better to keep it safe
-    dec_secret = AES.new(Config.MASTER_KEY)
-    raw_decrypted = dec_secret.decrypt(base64.b64decode(cipher_text))
-    clear_text = raw_decrypted.decode('utf-8').rstrip("\0")
-    return clear_text
