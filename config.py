@@ -6,8 +6,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     # MASTER_KEY: for password encryption / decryption
     # SECRET_KEY: for token encryption / decryption
-    MASTER_KEY = os.environ.get('MASTER_KEY') or 'QnpNp9A5tUFJKnQtWXRBHSnknRil24JmH=='
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'JuFhrkPDQ3y5P1ad6lREcQ=='
+    MASTER_KEY = os.environ.get('MASTER_KEY') or 'QnpNp9A5tUFJKnQtWXRBHSnknRil24JmH'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'JuFhrkPDQ3y5P1ad6lREcQ'
     MAIL_SUBJECT_PREFIX = '[YeTi OJ]'
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 465

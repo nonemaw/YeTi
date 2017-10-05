@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, ValidationError, SelectField
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 
-from ..db import mongo_connect
+from app.db import mongo_connect
 from common.general import get_company_list
 
 
@@ -16,10 +16,11 @@ cities = [('New South Wales', 'New South Wales'),
 
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Length(1, 64),
-                                             Email()])
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
-    # company = SelectField('Company for Access', choices=get_company())
+    company = StringField('Company for Access (Case Insensitive)', default='ytml', validators=[DataRequired()])
+    # company_username = StringField('Company\'s XPLAN Username', validators=[DataRequired()])
+    # company_password = PasswordField('Company\'s XPLAN Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Login')
 

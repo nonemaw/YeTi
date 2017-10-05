@@ -1,4 +1,6 @@
 
+import time
+import hashlib
 
 from flask import render_template, redirect, request, url_for, flash, current_app, abort
 from flask_login import login_user, logout_user, login_required, current_user
@@ -8,13 +10,13 @@ from bson import ObjectId
 
 from . import auth
 from .forms import LoginForm, RegForm, ChangeEmailForm, ChangePasswordForm
-from ..db import mongo_connect
-from ..models import User, UserUtl
+from app.db import mongo_connect
+from app.models import User, UserUtl
 from common.general import send_email, verify_password
-from ..decorators import admin_required
+from app.decorators import admin_required
 
-import time
-import hashlib
+from common import global_vars
+from common.crypto import AESCipher
 
 
 db = mongo_connect('ytml')
@@ -40,8 +42,12 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user_dict = db.User.find_one({'email': form.email.data})
-        if user_dict is not None and verify_password(user_dict.get('password'),
-                                                form.password.data):
+        global_vars.company = form.company.data
+        # global_vars.crypto = AESCipher()
+        # global_vars.company_username = form.company_username.data
+        # global_vars.company_password = global_vars.crypto.encrypt(form.company_password.data)
+        print(global_vars.company_password)
+        if user_dict is not None and verify_password(user_dict.get('password'), form.password.data):
             # convert 'user_dict' to UserLogin(UserMixin) as 'current_user'
             user = UserUtl(user_dict)
             login_user(user, form.remember_me.data)

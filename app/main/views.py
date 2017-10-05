@@ -5,9 +5,9 @@ from bson import ObjectId
 
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm
-from ..db import mongo_connect
-from ..models import UserUtl
-from ..decorators import admin_required
+from app.db import mongo_connect
+from app.models import UserUtl
+from app.decorators import admin_required
 
 
 db = mongo_connect('ytml')
@@ -77,6 +77,12 @@ def edit_profile_admin(id):
     return render_template('/main/edit_admin_profile.html', form=form, user_utl=user_utl)
 
 
-@main.route('/test', methods=['GET', 'POST'])
-def test():
-    return render_template('test.html')
+@main.route('/snippet', methods=['GET', 'POST'])
+def snippet():
+    a = 1
+
+
+@main.route('/edit_snippet/<id>', methods=['GET', 'POST'])
+@login_required
+def edit_snippet(id):
+    a = 1

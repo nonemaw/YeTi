@@ -7,8 +7,8 @@ from flask_login import current_user, login_required
 from bson import ObjectId
 
 from . import code
-from ..db import mongo_connect
-from ..decorators import admin_required
+from app.db import mongo_connect
+from app.decorators import admin_required
 import fuzzier.fuzzier as fuzzier
 
 
