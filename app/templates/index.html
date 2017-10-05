@@ -53,13 +53,11 @@
             </div>
 
             <!-- variable infomation table row -->
-            <div class="row" style="height: 35%">
+            <div class="row" style="height: 35%;padding-top: 15px">
                 <!-- Variable Table -->
-                <br>
                 <div class="col-md-12" style="height: 100%">
                     <table class="table table-scroll left-column-table" style="height: 100%">
-                        <p><b id="variable-table-title" style="font-size: 16px">Group --- [SubGroup] Variable</b></p>
-                        <tbody id="variable-table-selector">
+                        <tbody id="variable-selector-table">
                             <tr>
                                 <td class="col-md-2" style="font-family:Arial"><b><i>Variable</i></b></td>
                                 <td id="var-variable" class="col-md-10" style="font-family:Consolas">/</td>
@@ -79,21 +77,29 @@
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th id="choice-value-title" class="col-md-4" style="font-family:Arial"><i>Value</i></th>
-                                                <th id="choice-text-title" class="col-md-8" style="font-family:Arial"><i>Text</i></th>
+                                                <th id="choice-value-title" class="col-md-5" style="font-family:Arial"><i>Value</i></th>
+                                                <th id="choice-text-title" class="col-md-7" style="font-family:Arial"><i>Text</i></th>
                                             </tr>
                                         </thead>
                                         <tbody id="multi-choice-table">
                                             <tr>
-                                                <td class="col-md-4" style="font-family:Consolas">null</td>
-                                                <td class="col-md-8">null</td>
+                                                <td class="col-md-5" style="font-family:Consolas">/</td>
+                                                <td class="col-md-7">/</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </td>
                             </tr>
                         </tbody>
-                        <tbody id="variable-table-search" style="display:none">
+                        <thead id="variable-search-table-head" style="display:none">
+                            <tr>
+                                <th id="choice-value-title" class="col-md-3" style="font-family:Arial;font-size:16px"><i>Group</i></th>
+                                <th id="choice-text-title" class="col-md-3" style="font-family:Arial;font-size:16px"><i>Sub-Group</i></th>
+                                <th id="choice-text-title" class="col-md-6" style="font-family:Arial;font-size:16px"><i>Variable (Search Result)</i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="variable-search-table" style="display:none">
+                            <tr><td class="col-md-3">/</td><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-6" style="font-family:Arial">/</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -291,6 +297,10 @@ waiting for input
         template_section.setOption("fontSize", 14);
         // get selected code: code_section.getSelectedText()
 
+        $('#subgroup-selector').prop('disabled', true);
+        $('#variable-selector').prop('disabled', true);
+        $('#snippet-selector').prop('disabled', true);
+
         $(document).ready(function() {
 
             function send_for_formatting(sent_info){
@@ -304,7 +314,7 @@ waiting for input
                         code_section.setValue(data.code);
                     },
                     error: function() {
-                        alert('Unexpected error');
+                        alert('Unexpected error in sending code text');
                     }
                 });
             }
@@ -432,39 +442,95 @@ waiting for input
 
             // left panel
             // search bar
+            var local_search_cache = {};
             $('#search-button').click(function() {
-                $('#variable-table-search').css('display', '');
-                $('#variable-table-selector').css('display', 'none');
+                $('#variable-search-table').css('display', '');
+                $('#variable-search-table-head').css('display', '');
+                $('#variable-selector-table').css('display', 'none');
                 var pattern = $('#search-field').val();
-                $('#variable-table-title').text('Search result to \'' + pattern + '\'');
+                if (pattern) {
+                    $.ajax({
+                        type: 'GET',
+                        url: '/code/search/' + pattern,
+                        dataType: 'json',
+                        success: function (data, status, request) {
+                            var search_result = data.search_result;
+                            var variable_table_search = $('#variable-search-table');
+                            variable_table_search.empty();
+                            if (search_result.length == 0) {
+                                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-6" style="font-family:Arial">(No Search Result)</td></tr>');
+                            }
+                            else {
+                                local_search_cache = {};
+                                var id = 0;
+                                for (obj in search_result) {
+                                    ++id;
+                                    var group_var = search_result[obj][0];
+                                    var group_name = search_result[obj][1];
+                                    var subgroup_id = search_result[obj][2];
+                                    var subgroup = search_result[obj][3];
+                                    var var_var = search_result[obj][4];
+                                    var var_name = search_result[obj][5];
+                                    variable_table_search.append('<tr class="x" id="search-result' + String(id) + '"><td class="col-md-3" style="font-family:Arial">' + group_name + '</td><td class="col-md-3" style="font-family:Arial">' + subgroup + '</td><td class="col-md-6" style="font-family:Arial">' + var_name + '</td></tr>');
+                                    local_search_cache[id] = [group_var, subgroup_id, var_var]
+                                }
+                            }
+
+                        },
+                        error: function () {
+                            alert('Unexpected error in searching context');
+                        }
+                    });
+                }
+            });
+
+            // click on search result
+            $('#variable-search-table').on('click','.x',function(event){
+                // replace all leading non-digits with nothing
+                var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
+                var subgroup_id = local_search_cache[result_row_id][1];
+                var var_var = local_search_cache[result_row_id][2];
+                sent_info = {
+                    subgroup_id : subgroup_id,
+                    var_var : var_var
+                };
                 $.ajax({
-                    type: 'GET',
-                    url: '/code/search/' + pattern,
+                    contentType: "application/json",
+                    data: JSON.stringify(sent_info),
+                    type: 'POST',
+                    url: '/code/get_search',
                     dataType: 'json',
                     success: function(data, status, request) {
-                        var search_result = data.search_result;
-                        if (search_result.length == 0) {
-                            alert('no search result')
-
-
-
+                        var variable = data.variable;
+                        $('#variable-search-table').css('display', 'none');
+                        $('#variable-search-table-head').css('display', 'none');
+                        $('#variable-selector-table').css('display', '');
+                        $('#var-variable').text(var_var);
+                        $('#var-usage').text(variable[0]);
+                        $('#var-type').text(variable[1]);
+                        var multi_choice_table = $('#multi-choice-table');
+                        multi_choice_table.empty();
+                        if (variable[2] && (Object.keys(variable[2]).length)) {
+                            $('#choice-value-title').text('Value');
+                            $('#choice-text-title').text('Text');
+                            for (index in variable[2]) {
+                                multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(variable[2][index][0]) + '</td><td class="col-md-7">' + variable[2][index][1] + '</td></tr>');
+                            }
                         }
                         else {
-                            for (obj in search_result) {
-                                var group_var = search_result[obj][0];
-                                var group_name = search_result[obj][1];
-                                var subgroup = search_result[obj][2];
-                                var var_var = search_result[obj][3];
-                                var var_name = search_result[obj][4];
-
-
-                            }
+                            multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
                         }
                     },
                     error: function() {
-                        alert('Unexpected error');
+                        alert('Unexpected error in sending code text');
                     }
                 });
+{#                $('#group-selector').selectpicker('val', group_var);#}
+{#                $('#group-selector').trigger('change');#}
+{#                $('#subgroup-selector').selectpicker('val', subgroup_id);#}
+{#                $('#subgroup-selector').trigger('change');#}
+{#                $('#variable-selector').selectpicker('val', var_var);#}
+{#                $('#variable-selector').trigger('change');#}
             });
 
             /* when page is loaded AJAX send GET to a route requesting a full list of Groups,
@@ -503,7 +569,7 @@ waiting for input
                     group_selector.selectpicker('refresh');
                 },
                 error: function() {
-                    alert('Unexpected error');
+                    alert('Unexpected error in group selector');
                 }
             });
 
@@ -518,8 +584,7 @@ waiting for input
                         variable_selector.empty();
                         var flag = 1;
                         if (typeof variables[0] === 'undefined') {
-                            $('#variable-table-title').text('Group --- [SubGroup] Variable');
-                            $('#variable-table-selector').css('display', '');
+                            $('#variable-selector-table').css('display', '');
                             $('#var-variable').text('/');
                             $('#var-usage').text('/');
                             $('#var-type').text('/');
@@ -532,23 +597,23 @@ waiting for input
                                 // variable_detail == ["Variable Name", "$entity.usage", "Type", "Multi (null or list)"]
                                 if (flag) {
                                     variable_selector.append('<option value="' + variable_var + '" selected="selected">' + variable_detail[0] + '</option>');
-                                    $('#variable-table-search').css('display', 'none');
-                                    $('#variable-table-selector').css('display', '');
-                                    $('#variable-table-title').text(selected_group + ' --- [' + selected_subgroup + '] ' + variable_detail[0]);
+                                    $('#variable-search-table').css('display', 'none');
+                                    $('#variable-search-table-head').css('display', 'none');
+                                    $('#variable-selector-table').css('display', '');
                                     $('#var-variable').text(variable_var);
                                     $('#var-usage').text(variable_detail[1]);
                                     $('#var-type').text(variable_detail[2]);
                                     var multi_choice_table = $('#multi-choice-table');
                                     multi_choice_table.empty();
-                                    if (variable_detail[3]) {
+                                    if (variable_detail[3] && (Object.keys(variable_detail[3]).length)) {
                                         $('#choice-value-title').text('Value');
                                         $('#choice-text-title').text('Text');
                                         for (index in variable_detail[3]) {
-                                            multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-8">' + variable_detail[3][index][1] + '</td></tr>');
+                                            multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-7">' + variable_detail[3][index][1] + '</td></tr>');
                                         }
                                     }
                                     else {
-                                        multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">null</td><td class="col-md-8">null</td></tr>');
+                                        multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
                                     }
                                     flag = 0;
                                 }
@@ -560,7 +625,7 @@ waiting for input
                         variable_selector.selectpicker('refresh');
                     },
                     error: function() {
-                        alert('Unexpected error');
+                        alert('Unexpected error in variable selector');
                     }
                 });
             }
@@ -596,13 +661,15 @@ waiting for input
                         variable_selector.selectpicker('refresh');
                     },
                     error: function() {
-                        alert('Unexpected error');
+                        alert('Unexpected error in subgroup selector');
                     }
                 });
             }
 
             // display subgroup when select a group
             $('#group-selector').on('change', function(){
+                $('#subgroup-selector').prop('disabled', false);
+                $('#variable-selector').prop('disabled', false);
                 var group_var = $('#group-selector option:selected').val();
                 selected_group = $('#group-selector option:selected').text();
                 subgroup_initialization(group_var);
@@ -615,31 +682,33 @@ waiting for input
             });
             // update table when a variable is selected
             $('#variable-selector').on('change', function(){
-                $('#variable-table-search').css('display', 'none');
-                $('#variable-table-selector').css('display', '');
+                $('#variable-search-table').css('display', 'none');
+                $('#variable-search-table-head').css('display', 'none');
+                $('#variable-selector-table').css('display', '');
                 selected_var_name = $('#variable-selector option:selected').text();
                 var var_detail = local_var_cache[$('#variable-selector option:selected').val()];
-                $('#variable-table-title').text('[' + selected_group + '] - [' + selected_subgroup + '] - [' + selected_var_name + ']');
                 $('#var-variable').text($('#variable-selector option:selected').val());
                 $('#var-usage').text(var_detail[0]);
                 $('#var-type').text(var_detail[1]);
                 var multi_choice_table = $('#multi-choice-table');
                 multi_choice_table.empty();
-                if (var_detail[2]) {
+                if (var_detail[2] && (Object.keys(var_detail[2]).length)) {
                     $('#choice-value-title').text('Value');
                     $('#choice-text-title').text('Text');
                     for (index in var_detail[2]) {
-                        multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-8">' + var_detail[2][index][1] + '</td></tr>');
+                        multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-7">' + var_detail[2][index][1] + '</td></tr>');
                     }
                 }
                 else {
-                    multi_choice_table.append('<tr><td class="col-md-4" style="font-family:Consolas">null</td><td class="col-md-8">null</td></tr>');
+                    multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
                 }
             });
 
             // code snippet group - snippet scenario
+            $('#snippet-group-selector').on('change', function() {
+                $('#snippet-selector').prop('disabled', false);
 
-
+            });
         });
 
     </script>

@@ -149,7 +149,25 @@ def ratio(pattern):
             var_var = item[3]
             var_name = item[4]
             group_name = db.Group.find_one({'var': group_var}).get('name')
-            returned_list.append([group_var, group_name, subgroup, var_var, var_name])
+            subgroup_id = str(db.SubGroup.find_one({'name': subgroup}).get('_id'))
+            returned_list.append([group_var, group_name, subgroup_id, subgroup, var_var, var_name])
         return json.dumps({'search_result': returned_list}), 200
     except:
         return json.dumps({'search_result': []}), 500
+
+
+@login_required
+@code.route('/get_search', methods=['GET', 'POST'])
+def get_search():
+    received_json = request.json
+    if received_json:
+        subgroup_id = received_json.get('subgroup_id')
+        var_var = received_json.get('var_var')
+        var_list = db.SubGroup.find_one({'_id': ObjectId(subgroup_id)}).get('variables')
+        for item in var_list:
+            if item.get('var') == var_var:
+                result = [item.get('usage'), item.get('type'), item.get('multi')]
+                return json.dumps({'variable': result}), 200
+        return json.dumps({'variable': ''}), 500
+    else:
+        return json.dumps({'variable': ''}), 500
