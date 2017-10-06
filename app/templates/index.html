@@ -166,10 +166,11 @@ waiting for input
                     <div class="row">
                         <p><b>Change Entity</b></p>
                         <div class="btn-group-vertical">
-                            <button id="client" type="button" class="btn btn-primary">Client</button>
+                            <button id="client" type="button" class="btn btn-warning">Client</button>
                             <button id="partner" type="button" class="btn btn-primary">Partner</button>
+                            <button id="partner" type="button" class="btn btn-warning">Joint</button>
                             <button id="trust" type="button" class="btn btn-primary">Trust</button>
-                            <button id="superfund" type="button" class="btn btn-primary">Superfund</button>
+                            <button id="superfund" type="button" class="btn btn-warning">Superfund</button>
                             <button id="company" type="button" class="btn btn-primary">Company</button>
                         </div>
                     </div>
@@ -422,20 +423,23 @@ waiting for input
                 $('#variable-search-table').css('display', '');
                 $('#variable-search-table-head').css('display', '');
                 $('#variable-selector-table').css('display', 'none');
+                var variable_table_search = $('#variable-search-table');
+                variable_table_search.empty();
+                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;color:#8DB9CB">Searching ...</td></tr>');
                 var pattern = $('#search-field').val();
                 if (pattern) {
                     $.ajax({
                         type: 'GET',
-                        url: '/code/search/' + pattern,
+                        url: '/code/acquire_search/' + pattern,
                         dataType: 'json',
                         success: function (data, status, request) {
                             var search_result = data.search_result;
-                            var variable_table_search = $('#variable-search-table');
-                            variable_table_search.empty();
                             if (search_result.length == 0) {
-                                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-6" style="font-family:Arial">(No Search Result)</td></tr>');
+                                variable_table_search.empty();
+                                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;color:#8DB9CB">(No Search Result)</td></tr>');
                             }
                             else {
+                                variable_table_search.empty();
                                 local_search_cache = {};
                                 var id = 0;
                                 for (obj in search_result) {
@@ -446,7 +450,7 @@ waiting for input
                                     var subgroup = search_result[obj][3];
                                     var var_var = search_result[obj][4];
                                     var var_name = search_result[obj][5];
-                                    variable_table_search.append('<tr class="x" id="search-result' + String(id) + '"><td class="col-md-3" style="font-family:Arial">' + group_name + '</td><td class="col-md-3" style="font-family:Arial">' + subgroup + '</td><td class="col-md-6" style="font-family:Arial">' + var_name + '</td></tr>');
+                                    variable_table_search.append('<tr class="x" id="search-result' + String(id) + '"><td class="col-md-3" style="font-family:Arial;font-size:15px">' + group_name + '</td><td class="col-md-3" style="font-family:Arial;font-size:15px">' + subgroup + '</td><td class="col-md-6" style="font-family:Arial;color:#8DB9CB">' + var_name + '</td></tr>');
                                     local_search_cache[id] = [group_var, subgroup_id, var_var]
                                 }
                             }
@@ -461,7 +465,7 @@ waiting for input
 
             // click on search result
             $('#variable-search-table').on('click','.x',function(event){
-                // replace all leading non-digits with nothing
+                // get table's row id, replace all leading non-digits with nothing
                 var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
                 var subgroup_id = local_search_cache[result_row_id][1];
                 var var_var = local_search_cache[result_row_id][2];
@@ -473,7 +477,7 @@ waiting for input
                     contentType: "application/json",
                     data: JSON.stringify(sent_info),
                     type: 'POST',
-                    url: '/code/get_search',
+                    url: '/code/acquire_search_result',
                     dataType: 'json',
                     success: function(data, status, request) {
                         var variable = data.variable;
@@ -519,7 +523,7 @@ waiting for input
             var local_var_cache = {};
             $.ajax({
                 type: 'GET',
-                url: '/code/group',
+                url: '/code/acquire_group',
                 dataType: 'json',
                 success: function(data, status, request) {
                     var groups = data.group;
@@ -551,7 +555,7 @@ waiting for input
             function variable_initialization(subgroup_id, local_var_cache) {
                 $.ajax({
                     type: 'GET',
-                    url: '/code/variable/' + subgroup_id,
+                    url: '/code/acquire_variable/' + subgroup_id,
                     dataType: 'json',
                     success: function(data, status, request) {
                         var variables = data.variable;
@@ -608,7 +612,7 @@ waiting for input
             function subgroup_initialization(group_var) {
                 $.ajax({
                     type: 'GET',
-                    url: '/code/subgroup/' + group_var,
+                    url: '/code/acquire_subgroup/' + group_var,
                     dataType: 'json',
                     success: function(data, status, request) {
                         var subgroups = data.subgroup;
@@ -683,7 +687,7 @@ waiting for input
             // initialize the snippet dropdown window
             $.ajax({
                 type: 'GET',
-                url: '/code/require_snippet',
+                url: '/code/acquire_snippet',
                 dataType: 'json',
                 success: function(data, status, request) {
                     var groups = data.group;

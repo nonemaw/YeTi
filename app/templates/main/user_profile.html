@@ -5,48 +5,94 @@
 
 {% block narrow_content %}
     <div class="container">
-        <div class="page-header">
-            <img class="img-thumbnail profile-thumbnail" src="{{ user_utl.gravatar(size=256) }}">
-            <div class="profile-header">
-                {% if user_utl.is_administrator() %}
-                    <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
-                {% elif not user_utl.is_confirmed %}
-                    <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
-                {% else %}
-                    <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
-                {% endif %}
-                {% if user_utl.name or user_utl.location %}
-                <p>
-                    {% if user_utl.name %}
-                        <strong>Real Name:</strong> {{ user_utl.name }}
-                        <br>
-                    {% endif %}
-                    {% if user_utl.location %}
-                        <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
-                        <br>
-                    {% endif %}
-                {% endif %}
-                <p>
-                    <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
-                    <br>
-                    <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
-                    <br>
-                    <strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>
-                </p>
-                {% if user_utl.about_me %}
-                    <p>
-                        <strong>About Me:</strong> {{ user_utl.about_me }}
-                    </p>
-                {% endif %}
-                <p>
-                    {% if user_utl.id == current_user.id %}
-                        <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
-                    {% endif %}
-                    {% if current_user.is_administrator() %}
-                        <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
-                    {% endif %}
-                </p>
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-7">
+                <div class="page-header">
+                    <img class="img-thumbnail profile-thumbnail" src="{{ user_utl.gravatar(size=256) }}">
+                    <div class="profile-header">
+                        {% if user_utl.is_administrator() %}
+                            <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
+                        {% elif not user_utl.is_confirmed %}
+                            <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
+                        {% else %}
+                            <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
+                        {% endif %}
+                        {% if user_utl.name or user_utl.location %}
+                        <p>
+                            {% if user_utl.name %}
+                                <strong>Real Name:</strong> {{ user_utl.name }}
+                                <br>
+                            {% endif %}
+                            {% if user_utl.location %}
+                                <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
+                                <br>
+                            {% endif %}
+                        {% endif %}
+                        <p>
+                            <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
+                            <br>
+                            <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
+                            <br>
+                            <strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>
+                        </p>
+                        {% if user_utl.about_me %}
+                            <p>
+                                <strong>About Me:</strong> {{ user_utl.about_me }}
+                            </p>
+                        {% endif %}
+                        <p>
+                            {% if user_utl.id == current_user.id %}
+                                <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
+                            {% endif %}
+                            {% if current_user.is_administrator() %}
+                                <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
             </div>
+            <div class="col-md-3" style="padding-top: 50px">
+                {% if user_utl.is_administrator() %}
+                    <form id="connect-to-company-form">
+                        <label for="syntax" style="font-size:15px">Company</label>
+                        <input id="company-name" type="text" class="form-control" value="{{ current_company }}">
+                        <label for="syntax" style="font-size:15px">XPLAN Username</label>
+                        <input id="company-username" type="text" class="form-control">
+                        <label for="syntax" style="font-size: 15px">XPLAN Password</label>
+                        <input id="company-password" type="password" class="form-control">
+                        <br>
+                        <button class="btn btn-warning" id="refresh-database">Refresh Database</button>
+                    </form>
+                {% endif %}
+            </div>
+            <div class="col-md-1"></div>
+        </div>
+        <div class="row">
+
         </div>
     </div>
+{% endblock %}
+
+{% block page_script %}
+    <script>
+    $('#refresh-database').click(function(ev){
+        ev.preventDefault();
+        function validate(fields) {
+            var success = true;
+            fields.forEach(function(field) {
+                if (!field.val()) {
+                    success = false;
+                }
+            });
+            return success;
+        }
+
+
+
+
+
+
+    });
+    </script>
 {% endblock %}

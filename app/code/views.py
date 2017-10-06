@@ -81,7 +81,7 @@ def code_formatting():
 
 
 @login_required
-@code.route('/group', methods=['GET', 'POST'])
+@code.route('/acquire_group', methods=['GET', 'POST'])
 def group():
     result = []
     try:
@@ -94,7 +94,7 @@ def group():
 
 
 @login_required
-@code.route('/subgroup/<var>', methods=['GET', 'POST'])
+@code.route('/acquire_subgroup/<var>', methods=['GET', 'POST'])
 def subgroup(var):
     """
     :param var: the 'var' name of parent group
@@ -114,7 +114,7 @@ def subgroup(var):
 
 
 @login_required
-@code.route('/variable/<id>', methods=['GET', 'POST'])
+@code.route('/acquire_variable/<id>', methods=['GET', 'POST'])
 def variable(id):
     """
     :param var: the 'var' name of parent group
@@ -134,7 +134,7 @@ def variable(id):
 
 
 @login_required
-@code.route('/search/<pattern>', methods=['GET', 'POST'])
+@code.route('/acquire_search/<pattern>', methods=['GET', 'POST'])
 def ratio(pattern):
     """
     :param pattern: the pattern string to be searched
@@ -157,8 +157,8 @@ def ratio(pattern):
 
 
 @login_required
-@code.route('/get_search', methods=['GET', 'POST'])
-def get_search():
+@code.route('/acquire_search_result', methods=['GET', 'POST'])
+def acquire_search_result():
     received_json = request.json
     if received_json:
         subgroup_id = received_json.get('subgroup_id')
@@ -171,3 +171,10 @@ def get_search():
         return json.dumps({'variable': ''}), 500
     else:
         return json.dumps({'variable': ''}), 500
+
+
+@login_required
+@code.route('/acquire_snippet', methods=['GET', 'POST'])
+def acquire_snippet():
+    a = 1
+

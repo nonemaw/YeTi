@@ -77,12 +77,28 @@ def edit_profile_admin(id):
     return render_template('/main/edit_admin_profile.html', form=form, user_utl=user_utl)
 
 
-@main.route('/snippet', methods=['GET', 'POST'])
-def snippet():
-    a = 1
+@main.route('/create_snippet', methods=['GET', 'POST'])
+def create_snippet():
+    snippet_code = ''
+    if request.json:
+        received_json = request.json
+        snippet_group = received_json.get('group')
+        snippet_scenario = received_json.get('scenario')
+        snippet_code = received_json.get('code')
+        print(snippet_group)
+        print(snippet_scenario)
+        print(snippet_code)
+        return redirect(url_for('main.user', id=current_user.id))
+
+
+
+
+
+
+    return render_template('/main/snippet.html', snippet_content='you are editing me!')
 
 
 @main.route('/edit_snippet/<id>', methods=['GET', 'POST'])
 @login_required
 def edit_snippet(id):
-    a = 1
+    return render_template('/main/snippet.html', snippet_content='you are editing me!')
