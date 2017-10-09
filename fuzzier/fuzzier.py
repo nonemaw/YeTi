@@ -2,7 +2,7 @@
 import os
 import re
 from common import global_vars
-from fuzzier.parser import Fson
+from fuzzier.parser import Jison
 
 
 def ratio(target:str, pattern:str):
@@ -62,5 +62,5 @@ def search(pattern):
     # current only one line, TODO: update parser for multi-line JSON
     with open(os.path.join(this_path, 'json', global_vars.company + '.json')) as F:
         for line in F:
-            result = Fson(line, pattern=pattern, ratio_method=ratio, result_length=7).parse()
+            result = Jison(line, pattern=pattern, ratio_method=ratio, result_length=7).parse()
     return result
