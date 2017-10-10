@@ -11,18 +11,18 @@
     <div class="row">
         <div class="col-md-10">
             <div class="row" style="height: 89vh">
-<div id="snippet-section" style="height: 100%">{{ snippet_content }}</div>
+<div id="snippet-section" style="height: 100%">{{ snippet_code }}</div>
             </div>
         </div>
         <div class="col-md-2">
             {% if current_user.is_authenticated %}
-                <form id="snippet-info">
+                <form id="snippet-form" method="POST">
                     <label style="font-size:15px">Snippet Group</label>
-                    <input id="snippet-group" type="text" class="form-control" value="{{ current_company }}">
+                    <input id="snippet-group" name="group" type="text" class="form-control">
                     <label style="font-size:15px">Snippet Scenario Name</label>
-                    <input id="snippet-scenario" type="text" class="form-control">
+                    <input id="snippet-scenario" name="scenario" type="text" class="form-control">
                     <br>
-                    <button class="btn btn-warning" id="create-snippet">Create Snippet</button>
+                    <button class="btn btn-success" name="create" id="create-snippet">Create Snippet</button>
                 </form>
             {% endif %}
             <br>
@@ -133,46 +133,27 @@
             }
         });
 
-        $('#create-snippet').on('click', function(){
+        $(document).ready(function() {
             function validate(fields) {
                 var success = true;
-                fields.forEach(function(field) {
+                fields.forEach(function (field) {
                     if (!field.val()) {
                         success = false;
                     }
                 });
                 return success;
             }
-            if (!validate([$('#snippet-group'), $('#snippet-scenario')])) {
-                return false;
-            }
-            else {
-                sent_info = {
-                    group: $('#snippet-group').val(),
-                    scenario: $('#snippet-scenario').val(),
-                    code: code_section.getValue()
-                };
-                $.ajax({
-                    contentType: "application/json",
-                    data: JSON.stringify(sent_info),
-                    type: 'POST',
-                    url: '/create_snippet',
-                    dataType: 'json',
-                    success: function(data, status, request) {
-                        alert('Saved')
 
-
-
-
-
-                    },
-                    error: function() {
-                        alert('Unexpected error in sending code text');
-                    }
-                });
-            }
+            $('#create-snippet').on('click', function () {
+                if (!validate([$('#snippet-group'), $('#snippet-scenario')])) {
+                    return false;
+                }
+                else {
+                    $('#snippet-form').attr('action', '/create_snippet');
+                    $('<input type="hidden" name="code"/>').val(code_section.getValue()).appendTo('#snippet-form');
+                    $("#snippet-form").submit();
+                }
+            });
         });
-
-
     </script>
 {% endblock %}

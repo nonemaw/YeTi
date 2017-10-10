@@ -9,9 +9,11 @@ from bson import ObjectId
 from app import login_manager
 
 from app.db import mongo_connect
+from common import global_vars
 
 
 db = mongo_connect('ytml')
+db_c = mongo_connect(global_vars.company)
 
 
 class Group:
@@ -31,9 +33,9 @@ class Group:
             'name': self.name,
             'sub_groups': []
         }
-        legacy = db.Group.find_one({'var': self.var})
+        legacy = db_c.Group.find_one({'var': self.var})
         if not legacy:
-            return str(db.Group.insert(document))
+            return str(db_c.Group.insert(document))
         else:
             return str(legacy.get('_id'))
 
@@ -53,14 +55,14 @@ class SubGroup:
             'name': self.name,
             'variables': []
         }
-        legacy = db.Variables.find_one({'name': self.name})
+        legacy = db_c.Variables.find_one({'name': self.name})
         if not legacy:
-            return str(db.SubGroup.insert(document))
+            return str(db_c.SubGroup.insert(document))
         else:
             return str(legacy.get('_id'))
 
     def update_doc(self, id, variables:list):
-        db.SubGroup.update({'_id': ObjectId(id)}, {'$set': {'variables': variables}})
+        db_c.SubGroup.update_one({'_id': ObjectId(id)}, {'$set': {'variables': variables}})
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -211,7 +213,7 @@ class UserUtl(UserMixin):
         return self.can(Permission.ADMIN)
 
     def ping(self):
-        db.User.update({'email': self.email},
+        db.User.update_one({'email': self.email},
                                {'$set': {'last_login': datetime.utcnow()}})
 
     def generate_token(self, expiration=3600):
@@ -238,17 +240,21 @@ class Snippet():
         return '<Snippet Scenario {}>'.format(self.scenario)
 
     def new(self):
-        snippet_dict = db.Snippet.find_one({'group': self.group})
-        if snippet_dict:
-            db.Snippet.update({'group': ObjectId(snippet_dict.get('group'))},
-                              {'$push': {'scenarios': dict(scenario=self.scenario, code=self.code)}})
-            return str(snippet_dict.get('_id'))
-        else:
-            document = {
-                'group': self.group,
-                'scenarios': [dict(scenario=self.scenario, code=self.code)],
-            }
-            return str(db.Snippet.insert(document))
+        # insert new scenario
+        document = {
+            'name': self.scenario,
+            'code': self.code
+        }
+        print(document)
+        scenario_id = str(db.SnippetScenario.insert(document))
+        # insert new group for the new scenario
+        document = {
+            'name': self.group,
+            'scenarios': [scenario_id]
+        }
+        print(document)
+        group_id = str(db.SnippetGroup.insert(document))
+        return group_id, scenario_id
 
 
 class Ticket():

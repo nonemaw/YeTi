@@ -2,7 +2,167 @@
 
 {% block title %}Edit Snippet{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
+{% endblock %}
+
 {% block narrow_content %}
+    <div class="row">
+        <div class="col-md-10">
+            <div class="row" style="height: 89vh">
+<div id="snippet-section" style="height: 100%">{{ snippet_code }}</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            {% if current_user.is_authenticated %}
+                <form id="snippet-form" method="POST">
+                    <label style="font-size:15px">Snippet Group</label>
+                    <input id="snippet-group" name="group" type="text" class="form-control" value="{{ snippet_group }}">
+                    <label style="font-size:15px">Snippet Scenario Name</label>
+                    <input id="snippet-scenario" name="scenario" type="text" class="form-control" value="{{ snippet_scenario }}">
+                    <br>
+                    <button class="btn btn-success" name="edit" id="edit-snippet">Edit</button>
+                    <button class="btn btn-warning" name="delete" id="delete-snippet">Delete</button>
+                </form>
+            {% endif %}
+            <br>
+            <label for="syntax">Syntax</label>
+            <select class="selectpicker" id="syntax" data-width="75%">
+                <option value="python">Python</option>
+                <option value="html" selected="selected">HTML</option>
+            </select>
 
+            <label for="theme">Theme</label>
+            <select class="selectpicker" id="theme" data-width="75%">
+                <optgroup label="Bright">
+                    <option value="github">GitHub</option>
+                    <option value="solarized_light">Solarized Light</option>
+                    <option value="xcode">XCode</option>
+                </optgroup>
+                <optgroup label="Dark">
+                    <option value="monokai" selected="selected">Monokai</option>
+                    <option value="solarized_dark">Solarized Dark</option>
+                    <option value="twilight">Twilight</option>
+                </optgroup>
+            </select>
 
+            <label for="font-family">Font Family</label>
+            <select class="selectpicker" id="font-family" data-width="75%">
+                <option value="arial">Arial</option>
+                <option value="consolas" selected="selected">Consolas</option>
+                <option value="courier">Courier</option>
+            </select>
+
+            <label for="font-size">Font Size</label>
+            <select class="selectpicker" id="font-size" data-width="75%">
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+                <option>13</option>
+                <option>14</option>
+                <option selected="selected">16</option>
+                <option>18</option>
+                <option>20</option>
+                <option>24</option>
+                <option>30</option>
+            </select>
+
+            <div class="checkbox">
+                <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
+            </div>
+            <div class="checkbox">
+                <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_script %}
+    <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script>
+        var show_invisibles = false;
+        var wrap_text = false;
+        var initial_syntax = $('#syntax option:selected').val();
+        var initial_theme = $('#theme option:selected').val();
+        var initial_font_size = $('#font-size option:selected').val();
+        var initial_font_family = $('#font-family option:selected').val();
+        var code_section = ace.edit("snippet-section");
+        code_section.setTheme("ace/theme/" + initial_theme);
+        code_section.session.setMode("ace/mode/" + initial_syntax);
+        code_section.setOption("showInvisibles", show_invisibles);
+        code_section.setOption("fontFamily", initial_font_family);
+        code_section.setOption("fontSize", parseInt(initial_font_size));
+        code_section.getSession().setUseWrapMode(wrap_text);
+
+        // syntax dropdown
+        $('#syntax').on('change', function(){
+            code_section.session.setMode("ace/mode/" + $('#syntax').val());
+        });
+        // theme dropdown
+        $('#theme').on('change', function(){
+            code_section.setTheme("ace/theme/" + $('#theme').val());
+        });
+        // font dropdown
+        $('#font-family').on('change', function(){
+            code_section.setOption("fontFamily", $('#font-family').val());
+        });
+        // dont size dropdown
+        $('#font-size').on('change', function(){
+            code_section.setOption("fontSize", parseInt($('#font-size').val()));
+        });
+        // show invisibles tick
+        $('#show-invisibles').click(function() {
+            show_invisibles = this.checked;
+            if(show_invisibles) {
+                code_section.setOption("showInvisibles", true);
+            }
+            else {
+                code_section.setOption("showInvisibles", false);
+            }
+        });
+        // wrap text tick
+        $('#wrap-text').click(function() {
+            wrap_text = this.checked;
+            if(wrap_text) {
+                code_section.getSession().setUseWrapMode(wrap_text);
+            }
+            else {
+                code_section.getSession().setUseWrapMode(wrap_text);
+            }
+        });
+
+        $(document).ready(function() {
+            var group_backup = $('#snippet-group').val();
+            var scenario_backup = $('#snippet-scenario').val();
+
+            function validate(fields) {
+                var success = true;
+                fields.forEach(function (field) {
+                    if (!field.val()) {
+                        success = false;
+                    }
+                });
+                return success;
+            }
+
+            $('#edit-snippet').on('click', function () {
+                if (!validate([$('#snippet-group'), $('#snippet-scenario')])) {
+                    return false;
+                }
+                else {
+                    $('<input type="hidden" name="code"/>').val(code_section.getValue()).appendTo('#snippet-form');
+                    $("#snippet-form").submit();
+                }
+            });
+            $('#delete-snippet').on('click', function () {
+                $('#snippet-group').val(group_backup);
+                $('#snippet-scenario').val(scenario_backup);
+                $('#snippet-form').attr('action', '/delete_snippet');
+                $("#snippet-form").submit();
+            });
+        });
+    </script>
 {% endblock %}
