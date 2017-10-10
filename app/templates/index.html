@@ -167,11 +167,11 @@ waiting for input
                         <p><b>Change Entity</b></p>
                         <div class="btn-group-vertical">
                             <button id="client" type="button" class="btn btn-warning">Client</button>
-                            <button id="partner" type="button" class="btn btn-primary">Partner</button>
+                            <button id="partner" type="button" class="btn btn-warning">Partner</button>
                             <button id="partner" type="button" class="btn btn-warning">Joint</button>
-                            <button id="trust" type="button" class="btn btn-primary">Trust</button>
+                            <button id="trust" type="button" class="btn btn-warning">Trust</button>
                             <button id="superfund" type="button" class="btn btn-warning">Superfund</button>
-                            <button id="company" type="button" class="btn btn-primary">Company</button>
+                            <button id="company" type="button" class="btn btn-warning">Company</button>
                         </div>
                     </div>
                     <div class="row">
@@ -481,6 +481,9 @@ waiting for input
                     dataType: 'json',
                     success: function(data, status, request) {
                         var variable = data.variable;
+
+                        console.log(variable)
+
                         $('#variable-search-table').css('display', 'none');
                         $('#variable-search-table-head').css('display', 'none');
                         $('#variable-selector-table').css('display', '');

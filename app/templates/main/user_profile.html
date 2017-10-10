@@ -56,11 +56,11 @@
                 {% if user_utl.is_administrator() %}
                     <form id="connect-to-company-form">
                         <label for="syntax" style="font-size:15px">Company</label>
-                        <input id="company-name" type="text" class="form-control" value="{{ current_company }}">
+                        <input id="company-name" type="text" class="form-control" value="{{ current_company }}" style="width: 80%">
                         <label for="syntax" style="font-size:15px">XPLAN Username</label>
-                        <input id="company-username" type="text" class="form-control">
+                        <input id="company-username" type="text" class="form-control" style="width: 80%">
                         <label for="syntax" style="font-size: 15px">XPLAN Password</label>
-                        <input id="company-password" type="password" class="form-control">
+                        <input id="company-password" type="password" class="form-control" style="width: 80%">
                         <br>
                         <button class="btn btn-warning" id="refresh-database">Refresh Database</button>
                     </form>

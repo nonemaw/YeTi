@@ -9,6 +9,7 @@ from geventwebsocket.handler import WebSocketHandler
 from app import create_app
 from app.models import Role
 from common.fetcher import Fetcher
+from common import global_vars
 from fuzzier.fuzzier import search
 
 
@@ -29,7 +30,8 @@ if __name__ == '__main__':
     if args.debug:
         yeti.run(debug=True)
     elif args.fetcher:
-        username, password = input('Please input username and password: ').split(' ')
+        company, username, password = input('Please input company, username and password: ').split(' ')
+        global_vars.company = company
         Fetcher(username, password, debug=True).run()
     elif args.test:
         pattern = input('Input test pattern: ')

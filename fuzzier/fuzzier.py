@@ -49,13 +49,12 @@ def ratio(target:str, pattern:str):
         weight += distance / width / 3 * 2
     if 1 in d_matrix_mod[height] and distance != 1:
         # there is nearly a full match to the substring, increase weight moderately based on distance
-        weight += distance / width / 2
+        weight += distance / width / 3
     ratio = (1 - distance / width) * weight
     return ratio
 
 
 def search(pattern):
-    global_vars.pattern = pattern
     this_path = os.path.dirname(os.path.realpath(__file__))
     result = []
 

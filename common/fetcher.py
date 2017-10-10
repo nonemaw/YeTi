@@ -30,11 +30,18 @@ class Fetcher:
     def run(self):
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
+        log_directory = os.path.join(this_path, 'log')
+        json_directory = os.path.join(parent_path, 'fuzzier', 'json')
+
+        if not os.path.exists(log_directory):
+            os.makedirs(log_directory)
+        if not os.path.exists(json_directory):
+            os.makedirs(json_directory)
+
         logger = logging.getLogger('my_logger')
-        file_hdlr = logging.FileHandler(os.path.join(this_path,'log', 'fetcher.log'), 'w')
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        file_hdlr.setFormatter(formatter)
-        logger.addHandler(file_hdlr)
+        logfile_hdlr = logging.FileHandler(os.path.join(log_directory, 'fetcher.log'), 'w')
+        logfile_hdlr.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+        logger.addHandler(logfile_hdlr)
         logger.setLevel(logging.INFO)
 
         to_json = {}
@@ -68,7 +75,7 @@ class Fetcher:
                     for option in dropdown_options:
                         if option == '_loop_end':
                             # update former group
-                            self.db.Group.update({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
+                            self.db.Group.update_one({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
                             # sub_group_to_json[self.db.SubGroup.find_one({'_id': ObjectId(former_sub_group_id)}).get('name')] = variables_to_json
                             break
 
@@ -80,7 +87,7 @@ class Fetcher:
                             if group_var != former_group:
                                 # if moved to a new group, update the former group's subgroup list to DB, then change former_group to current group
                                 if former_group and former_group_id and len(sub_group_list):
-                                    self.db.Group.update({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
+                                    self.db.Group.update_one({'_id': ObjectId(former_group_id)}, {'$set': {'sub_groups': sub_group_list}})
                                     sub_group_list = []
                                 former_group_id = Group(group_var, group_name).new()
                                 former_group = group_var
@@ -105,7 +112,7 @@ class Fetcher:
                                     if sub_group != former_sub_group:
                                         # if moved to a new subgroup, updating former SubGroup's variables, then insert new current SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
-                                            self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
+                                            self.db.SubGroup.update_one({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
                                             if group_var in to_json:
                                                 to_json[group_var].append({former_sub_group: variables_to_json})
                                             else:
@@ -154,7 +161,7 @@ class Fetcher:
                                     variables_to_json.append({var: var_name})
 
                             # end of loop in current group's [sub_group] - variable pairs, update last subgroup's variables
-                            self.db.SubGroup.update({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
+                            self.db.SubGroup.update_one({'_id': ObjectId(former_sub_group_id)}, {'$set': {'variables': former_sub_group_variables}})
                             if group_var in to_json:
                                 to_json[group_var].append({former_sub_group: variables_to_json})
                             else:
@@ -170,5 +177,5 @@ class Fetcher:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(parent_path, 'fuzzier', 'json', self.company + '.json'), self.mode) as J:
+        with open(os.path.join(json_directory, global_vars.company + '.json'), self.mode) as J:
             json.dump(to_json, J)
