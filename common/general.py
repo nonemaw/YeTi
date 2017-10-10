@@ -2,14 +2,13 @@
 """ this file stores methods for a general access across the application
 """
 import bleach
-import base64
-from Crypto.Cipher import AES
+import random
+import string
 from markdown import markdown
 from threading import Thread
 from flask import current_app, render_template, request
 from flask_mail import Message
 from werkzeug.security import check_password_hash
-from config import Config
 
 from app import mail
 from app.db import mongo_connect
@@ -62,3 +61,6 @@ def clean_tags(body):
                     'h2', 'h3', 'p']
     return bleach.linkify(bleach.clean(markdown(body, output_format='html'),
                                             tags=allowed_tags, strip=True))
+
+def random_word(size=8, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))

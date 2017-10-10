@@ -109,10 +109,10 @@
             <div class="row">
                 <div class="row">
                     <div class="col-md-5 selection-field">
-                            <label for="syntax" style="font-size: 16px">Group</label>
+                            <label for="syntax" style="font-size: 16px">Code Snippet Group</label>
                     </div>
                     <div class="col-md-5 selection-field">
-                            <label for="syntax" style="font-size: 16px">Snippet Scenario</label>
+                            <label for="syntax" style="font-size: 16px">Code Snippet Scenario</label>
                     </div>
                     <div class="col-md-2"></div>
                 </div>
@@ -481,9 +481,6 @@ waiting for input
                     dataType: 'json',
                     success: function(data, status, request) {
                         var variable = data.variable;
-
-                        console.log(variable)
-
                         $('#variable-search-table').css('display', 'none');
                         $('#variable-search-table-head').css('display', 'none');
                         $('#variable-selector-table').css('display', '');
@@ -507,12 +504,6 @@ waiting for input
                         alert('Unexpected error in sending code text');
                     }
                 });
-{#                $('#group-selector').selectpicker('val', group_var);#}
-{#                $('#group-selector').trigger('change');#}
-{#                $('#subgroup-selector').selectpicker('val', subgroup_id);#}
-{#                $('#subgroup-selector').trigger('change');#}
-{#                $('#variable-selector').selectpicker('val', var_var);#}
-{#                $('#variable-selector').trigger('change');#}
             });
 
             /* when page is loaded AJAX send GET to a route requesting a full list of Groups,
@@ -520,9 +511,6 @@ waiting for input
             */
             // group - subgroup - variable
             // initialize the group selector at very beginning
-            var selected_group;
-            var selected_subgroup;
-            var selected_var_name;
             var local_var_cache = {};
             $.ajax({
                 type: 'GET',
@@ -540,7 +528,6 @@ waiting for input
                             var group_name = groups[obj][key];
                             if (flag) {
                                 group_selector.append('<option value="' + group_var + '" selected="selected">' + group_name + '</option>');
-                                selected_group = group_name;
                                 flag = 0;
                             }
                             else {
@@ -631,7 +618,6 @@ waiting for input
                                 if (flag) {
                                     subgroup_selector.append('<option value="' + subgroup_id + '" selected="selected">' + subgroup_name + '</option>');
                                     variable_initialization(subgroup_id, local_var_cache);
-                                    selected_subgroup = subgroup_name;
                                     flag = 0
                                 }
                                 else {
@@ -653,13 +639,11 @@ waiting for input
                 $('#subgroup-selector').prop('disabled', false);
                 $('#variable-selector').prop('disabled', false);
                 var group_var = $('#group-selector option:selected').val();
-                selected_group = $('#group-selector option:selected').text();
                 subgroup_initialization(group_var);
             });
             // display variable when select a subgroup
             $('#subgroup-selector').on('change', function(){
                 var subgroup_id = $('#subgroup-selector option:selected').val();
-                selected_subgroup = $('#subgroup-selector option:selected').text();
                 variable_initialization(subgroup_id, local_var_cache);
             });
             // update table when a variable is selected
@@ -667,7 +651,6 @@ waiting for input
                 $('#variable-search-table').css('display', 'none');
                 $('#variable-search-table-head').css('display', 'none');
                 $('#variable-selector-table').css('display', '');
-                selected_var_name = $('#variable-selector option:selected').text();
                 var var_detail = local_var_cache[$('#variable-selector option:selected').val()];
                 $('#var-variable').text($('#variable-selector option:selected').val());
                 $('#var-usage').text(var_detail[0]);
@@ -688,20 +671,30 @@ waiting for input
 
             // code snippet group - snippet scenario
             // initialize the snippet dropdown window
+            var local_scenario_cache = {};
             $.ajax({
                 type: 'GET',
-                url: '/code/acquire_snippet',
+                url: '/acquire_snippet_group',
                 dataType: 'json',
                 success: function(data, status, request) {
                     var groups = data.group;
                     var snippet_group_selector = $('#snippet-group-selector');
                     var flag = 1;
                     for (obj in groups) {
-
-
-
-
-
+                        // loop in each object pair ({id: group}) from JSON
+                        for (key in groups[obj]) {
+                            // loop in key - value pair of each object
+                            var group_id = key;
+                            var group_name = groups[obj][key];
+                            if (flag) {
+                                snippet_group_selector.append('<option value="/" selected="selected">/</option>');
+                                snippet_group_selector.append('<option value="' + group_id + '">' + group_name + '</option>');
+                                flag = 0;
+                            }
+                            else {
+                                snippet_group_selector.append('<option value="' + group_id + '">' + group_name + '</option>');
+                            }
+                        }
                     }
                     snippet_group_selector.selectpicker('refresh');
                 },
@@ -710,17 +703,50 @@ waiting for input
                 }
             });
 
+            function snippet_scenario_initialization(group_id) {
+                local_scenario_cache = {};
+                $.ajax({
+                    type: 'GET',
+                    url: '/acquire_snippet_scenario/' + group_id,
+                    dataType: 'json',
+                    success: function(data, status, request) {
+                        var scenarios = data.scenario;
+                        var snippet_scenario_selector = $('#snippet-scenario-selector');
+                        snippet_scenario_selector.empty();
+                        var flag = 1;
+                        for (obj in scenarios) {
+                            for (key in scenarios[obj]) {
+                                var scenario_id = key;
+                                var scenario_detail = scenarios[obj][key];
+                                local_scenario_cache[scenario_id] = scenario_detail[1];
+                                if (flag) {
+                                    snippet_scenario_selector.append('<option value="' + scenario_id + '">' + scenario_detail[0] + '</option>');
+                                    template_section.setValue(scenario_detail[1]);
+                                    flag = 0
+                                }
+                                else {
+                                    snippet_scenario_selector.append('<option value="' + scenario_id + '">' + scenario_detail[0] + '</option>');
+                                }
+                            }
+                        }
+                        snippet_scenario_selector.selectpicker('refresh');
+                    },
+                    error: function() {
+                        alert('Unexpected error in subgroup selector');
+                    }
+                });
+            }
+
             $('#snippet-group-selector').on('change', function() {
                 $('#snippet-scenario-selector').prop('disabled', false);
                 temp = '<option value="a">a</option>';
-
-
-
-
-
-
-
-
+                var group_id = $('#snippet-group-selector option:selected').val();
+                if (group_id != '/') {
+                    snippet_scenario_initialization(group_id);
+                }
+            });
+            $('#snippet-scenario-selector').on('change', function() {
+                template_section.setValue(local_scenario_cache[$('#snippet-scenario-selector').val()]);
             });
         });
 

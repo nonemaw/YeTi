@@ -106,9 +106,7 @@ def subgroup(var):
         if subgroup_ids:
             for id in subgroup_ids:
                 result.append({id: db.SubGroup.find_one({'_id': ObjectId(id)}).get('name')})
-            return json.dumps({'subgroup': result}), 200
-        else:
-            return json.dumps({'subgroup': []})
+        return json.dumps({'subgroup': result}), 200
     except:
         return json.dumps({'subgroup': []}), 500
 
@@ -176,9 +174,3 @@ def acquire_search_result():
                 return json.dumps({'variable': result}), 200
     else:
         return json.dumps({'variable': ''}), 500
-
-
-@login_required
-@code.route('/acquire_snippet', methods=['GET', 'POST'])
-def acquire_snippet():
-    a = 1

@@ -245,14 +245,12 @@ class Snippet():
             'name': self.scenario,
             'code': self.code
         }
-        print(document)
         scenario_id = str(db.SnippetScenario.insert(document))
         # insert new group for the new scenario
         document = {
             'name': self.group,
             'scenarios': [scenario_id]
         }
-        print(document)
         group_id = str(db.SnippetGroup.insert(document))
         return group_id, scenario_id
 
