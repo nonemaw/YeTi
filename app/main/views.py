@@ -88,11 +88,13 @@ def create_snippet():
         snippet_scenario = request.form.get('scenario')
         group_id, scenario_id = Snippet(snippet_group, snippet_scenario, snippet_code).new()
 
-        # TODO: add condition to models when group/scenario names are same
-
-        flash('New code snippet has been created successfully.', category='success')
-        return redirect(url_for('main.edit_snippet', id_group=group_id, id_scenario=scenario_id))
-    return render_template('main/create_snippet.html', snippet_code='you are editing me!')
+        if group_id and scenario_id:
+            flash('New code snippet has been created successfully.', category='success')
+            return redirect(url_for('main.edit_snippet', id_group=group_id, id_scenario=scenario_id))
+        else:
+            flash('Failed in creating new code snippet, please change Group name or Scenario name.', category='danger')
+            return render_template('main/create_snippet.html', snippet_code=snippet_code)
+    return render_template('main/create_snippet.html', snippet_code='')
 
 
 @main.route('/edit_snippet/<id_group>/<id_scenario>', methods=['GET', 'POST'])

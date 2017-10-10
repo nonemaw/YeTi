@@ -240,19 +240,40 @@ class Snippet():
         return '<Snippet Scenario {}>'.format(self.scenario)
 
     def new(self):
-        # insert new scenario
-        document = {
-            'name': self.scenario,
-            'code': self.code
-        }
-        scenario_id = str(db.SnippetScenario.insert(document))
-        # insert new group for the new scenario
-        document = {
-            'name': self.group,
-            'scenarios': [scenario_id]
-        }
-        group_id = str(db.SnippetGroup.insert(document))
-        return group_id, scenario_id
+        # check duplication, it's ok if only group name or scenario name is same
+        duplicated = False
+        group_dict = db.SnippetGroup.find_one({'name': self.group})
+        if group_dict:
+            # group existing, check scenario name
+            old_scenario_id_list = group_dict.get('scenarios')
+            for id in old_scenario_id_list:
+                if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == self.scenario:
+                    # both group and scenario are duplicated, you are in big trouble, skipped
+                    duplicated = True
+                    break
+
+        if not duplicated:
+            # insert new scenario
+            document = {
+                'name': self.scenario,
+                'code': self.code
+            }
+            scenario_id = str(db.SnippetScenario.insert(document))
+
+            if group_dict:
+                # update new scenario id into existing group
+                group_id = str(group_dict.get('_id'))
+                db.SnippetGroup.update_one({'name': self.group}, {'$push': {'scenarios': scenario_id}})
+            else:
+                # insert new group for the new scenario
+                document = {
+                    'name': self.group,
+                    'scenarios': [scenario_id]
+                }
+                group_id = str(db.SnippetGroup.insert(document))
+            return group_id, scenario_id
+        else:
+            return None, None
 
 
 class Ticket():
