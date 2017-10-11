@@ -22,7 +22,7 @@
                     <label style="font-size:15px">Snippet Scenario Name</label>
                     <input id="snippet-scenario" name="scenario" type="text" class="form-control" value="{{ snippet_scenario }}">
                     <br>
-                    <button class="btn btn-success" name="edit" id="edit-snippet" style="width:40%">Edit</button>
+                    <button class="btn btn-success" name="edit" id="save-snippet" style="width:40%">Save</button>
                     <button class="btn btn-danger" name="delete" id="delete-snippet" style="width:40%">Delete</button>
                 </form>
             {% endif %}
@@ -72,7 +72,7 @@
                 <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
             </div>
             <div class="checkbox">
-                <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
+                <label><input id="wrap-text" type="checkbox" value="" checked>Wrap Text</label>
             </div>
 
         </div>
@@ -84,7 +84,7 @@
     <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var show_invisibles = false;
-        var wrap_text = false;
+        var wrap_text = true;
         var initial_syntax = $('#syntax option:selected').val();
         var initial_theme = $('#theme option:selected').val();
         var initial_font_size = $('#font-size option:selected').val();
@@ -148,7 +148,7 @@
                 return success;
             }
 
-            $('#edit-snippet').on('click', function () {
+            $('#save-snippet').on('click', function () {
                 if (!validate([$('#snippet-group'), $('#snippet-scenario')])) {
                     return false;
                 }
@@ -160,8 +160,11 @@
             $('#delete-snippet').on('click', function () {
                 $('#snippet-group').val(group_backup);
                 $('#snippet-scenario').val(scenario_backup);
-                $('#snippet-form').attr('action', '/delete_snippet');
-                $("#snippet-form").submit();
+                if (confirm("Are you sure?")) {
+                    $('#snippet-form').attr('action', '/delete_snippet');
+                    $("#snippet-form").submit();
+                }
+                return false;
             });
         });
     </script>

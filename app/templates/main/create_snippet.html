@@ -71,7 +71,7 @@
                 <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
             </div>
             <div class="checkbox">
-                <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
+                <label><input id="wrap-text" type="checkbox" value="" checked>Wrap Text</label>
             </div>
 
         </div>
@@ -83,7 +83,7 @@
     <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var show_invisibles = false;
-        var wrap_text = false;
+        var wrap_text = true;
         var initial_syntax = $('#syntax option:selected').val();
         var initial_theme = $('#theme option:selected').val();
         var initial_font_size = $('#font-size option:selected').val();

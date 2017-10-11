@@ -39,44 +39,39 @@ class Pagination:
         for num in range(1, self.pages + 1):
             if num <= left_edge or \
                (num > self.current_page - left_current - 1 and
-                        num < self.current_page + right_current) or \
-                            num > self.pages - right_edge:
+                        num < self.current_page + right_current) or num > self.pages - right_edge:
                 if last + 1 != num:
                     yield None
                 yield num
                 last = num
 
 
+# class PaginationSnippet(Pagination):
+#     def __init__(self, current_page, show_followed_posts_cookie=0, per_page=5):
+#         super(PaginationSnippet, self).__init__(current_page, per_page=per_page)
+#         if not show_followed_posts_cookie:  # all posts
+#             self.posts = db.Post.find({}).sort([('timestamp', -1)])
+#         else:  # posts from followers
+#             following = db.User.\
+#                 find_one({'_id': ObjectId(current_user.id)}).get('following')
+#             following_ids = [id for id,timestamp in following.items()]
+#             self.posts = db.Post.\
+#                 find({'author_id': {'$in': following_ids}}).sort([('timestamp', -1)])
+#         self.total_count = self.posts.count()
+#         self.current_num = self.total_count - (self.per_page *
+#                                                        (self.current_page - 1))
+#         if self.current_num > self.per_page:
+#             self.current_num = self.per_page
+#         self.items = [self.posts[self.prev_num * self.per_page + i] \
+#                       for i in range(self.current_num)]
+
+
 class PaginationSnippet(Pagination):
-    def __init__(self, current_page, show_followed_posts_cookie=0, per_page=5):
+    def __init__(self, current_page, per_page=15):
         super(PaginationSnippet, self).__init__(current_page, per_page=per_page)
-        if not show_followed_posts_cookie:  # all posts
-            self.posts = db.Post.find({}).sort([('timestamp', -1)])
-        else:  # posts from followers
-            following = db.User.\
-                find_one({'_id': ObjectId(current_user.id)}).get('following')
-            following_ids = [id for id,timestamp in following.items()]
-            self.posts = db.Post.\
-                find({'author_id': {'$in': following_ids}}).sort([('timestamp', -1)])
-        self.total_count = self.posts.count()
-        self.current_num = self.total_count - (self.per_page *
-                                                       (self.current_page - 1))
+        self.snippets = db.SnippetScenario.find({}).sort([('name', 1)])
+        self.total_count = self.snippets.count()
+        self.current_num = self.total_count - (self.per_page * (self.current_page - 1))
         if self.current_num > self.per_page:
             self.current_num = self.per_page
-        self.items = [self.posts[self.prev_num * self.per_page + i] \
-                      for i in range(self.current_num)]
-
-
-class PaginationUserSnippet(Pagination):
-    def __init__(self, author_id, current_page, per_page=5):
-        super(PaginationUserSnippet, self).\
-                                      __init__(current_page, per_page=per_page)
-        self.posts = db.Post.find({'author_id': author_id}).\
-                                                      sort([('timestamp', -1)])
-        self.total_count = self.posts.count()
-        self.current_num = self.total_count - \
-                                      (self.per_page * (self.current_page - 1))
-        if self.current_num > self.per_page:
-            self.current_num = self.per_page
-        self.items = [self.posts[self.prev_num * self.per_page + i] \
-                      for i in range(self.current_num)]
+        self.items = [self.snippets[self.prev_num * self.per_page + i] for i in range(self.current_num)]

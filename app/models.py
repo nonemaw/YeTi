@@ -256,6 +256,7 @@ class Snippet():
             # insert new scenario
             document = {
                 'name': self.scenario,
+                'group': self.group,
                 'code': self.code
             }
             scenario_id = str(db.SnippetScenario.insert(document))

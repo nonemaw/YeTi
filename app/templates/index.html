@@ -53,7 +53,7 @@
             </div>
 
             <!-- variable infomation table row -->
-            <div class="row" style="height: 35%;padding-top: 15px">
+            <div class="row" style="height: 32vh;padding-top: 15px">
                 <!-- Variable Table -->
                 <div class="col-md-12" style="height: 100%">
                     <table class="table table-scroll left-column-table" style="height: 100%">
@@ -127,18 +127,16 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button class="btn btn-danger" id="insert">Insert</button>
+                        <button class="btn btn-success" id="edit-snippet" style="width: 80%">Edit</button>
                     </div>
                 </div>
             </div>
 
             <!-- snippet code editor row -->
-            <div class="row" style="height: 40%">
+            <div class="row" style="height: 42%">
                 <div class="col-md-12" style="height: 100%">
                     <br>
-<div id="snippet-section" style="height: 100%">
-waiting for selecting scenario
-</div>
+                    <div id="snippet-section" style="height: 100%"></div>
                 </div>
             </div>
         </div>
@@ -147,9 +145,7 @@ waiting for selecting scenario
         <div class="col-md-8" style="height: 99%">
             <div class="row" style="height: 100%">
                 <div class="col-md-10" style="height: 100%">
-<div id="code-section" style="height: 100%">
-waiting for input
-</div>
+                    <div id="code-section" style="height: 100%"></div>
                 </div>
                 <div class="col-md-2">
                     <div class="row">
@@ -271,6 +267,7 @@ waiting for input
         template_section.setOption("showInvisibles", show_invisibles);
         template_section.setOption("fontFamily", initial_font_family);
         template_section.setOption("fontSize", 14);
+        template_section.getSession().setUseWrapMode(true);
         // get selected code: code_section.getSelectedText()
 
         $('#subgroup-selector').prop('disabled', true);
@@ -398,11 +395,9 @@ waiting for input
                 wrap_text = this.checked;
                 if(wrap_text) {
                     code_section.getSession().setUseWrapMode(wrap_text);
-                    template_section.getSession().setUseWrapMode(wrap_text);
                 }
                 else {
                     code_section.getSession().setUseWrapMode(wrap_text);
-                    template_section.getSession().setUseWrapMode(wrap_text);
                 }
             });
             // save session tick
@@ -716,6 +711,7 @@ waiting for input
                         var flag = 1;
                         for (obj in scenarios) {
                             for (key in scenarios[obj]) {
+                                console.log(key)
                                 var scenario_id = key;
                                 var scenario_detail = scenarios[obj][key];
                                 local_scenario_cache[scenario_id] = scenario_detail[1];
@@ -738,15 +734,27 @@ waiting for input
             }
 
             $('#snippet-group-selector').on('change', function() {
-                $('#snippet-scenario-selector').prop('disabled', false);
-                temp = '<option value="a">a</option>';
                 var group_id = $('#snippet-group-selector option:selected').val();
                 if (group_id != '/') {
+                    $('#snippet-scenario-selector').prop('disabled', false);
                     snippet_scenario_initialization(group_id);
+                }
+                else {
+                    $('#snippet-scenario-selector').empty();
+                    $('#snippet-scenario-selector').selectpicker('refresh');
+                    $('#snippet-scenario-selector').prop('disabled', true);
+                    template_section.setValue('');
                 }
             });
             $('#snippet-scenario-selector').on('change', function() {
                 template_section.setValue(local_scenario_cache[$('#snippet-scenario-selector').val()]);
+            });
+            $('#edit-snippet').on('click', function() {
+                var group_val =$('#snippet-group-selector').val();
+                var scenario_val = $('#snippet-scenario-selector').val();
+                if (group_val != '/') {
+                    location.replace('edit_snippet/' + group_val + '/' + scenario_val);
+                }
             });
         });
 

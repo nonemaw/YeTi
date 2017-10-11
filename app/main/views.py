@@ -10,6 +10,7 @@ from app.db import mongo_connect
 from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from common.general import random_word
+from common.pagination import PaginationSnippet
 
 
 db = mongo_connect('ytml')
@@ -29,7 +30,14 @@ def user(id):
     if not user_dict:
         return render_template('errors/missing_user.html')
     user_utl = UserUtl(user_dict)
-    return render_template('main/user_profile.html', user_utl=user_utl)
+
+    current_page = request.args.get('page', 1, type=int)
+    pagination = PaginationSnippet(current_page)
+    snippets = pagination.items
+
+    return render_template('main/user_profile.html', user_utl=user_utl,
+                                                     pagination=pagination,
+                                                     snippets=snippets)
 
 
 @main.route('/edit_profile', methods=['GET', 'POST'])
@@ -90,26 +98,44 @@ def create_snippet():
 
         if group_id and scenario_id:
             flash('New code snippet has been created successfully.', category='success')
-            return redirect(url_for('main.edit_snippet', id_group=group_id, id_scenario=scenario_id))
+            return redirect(url_for('main.edit_snippet', group=snippet_group, scenario=snippet_scenario))
         else:
             flash('Failed in creating new code snippet, please change Group name or Scenario name.', category='danger')
             return render_template('main/create_snippet.html', snippet_code=snippet_code)
     return render_template('main/create_snippet.html', snippet_code='')
 
 
-@main.route('/edit_snippet/<id_group>/<id_scenario>', methods=['GET', 'POST'])
+@main.route('/edit_snippet/<group>/<scenario>', methods=['GET', 'POST'])
 @login_required
-def edit_snippet(id_group, id_scenario):
-    old_group_dict = db.SnippetGroup.find_one({'_id': ObjectId(id_group)})
-    old_scenario_dict = db.SnippetScenario.find_one({'_id': ObjectId(id_scenario)})
+def edit_snippet(group, scenario):
+    old_group_dict = db.SnippetGroup.find_one({'name': group})
+    if not old_group_dict:
+        try:
+            old_group_dict = db.SnippetGroup.find_one({'_id': ObjectId(group)})
+        except:
+            abort(404)
 
-    if not old_group_dict or not old_scenario_dict:
-        abort(404)
+    old_scenario_id_list = old_group_dict.get('scenarios')
+    old_scenario_dict = {}
+    old_scenario_id = ''
+    old_scenario = scenario
+    for id in old_scenario_id_list:
+        old_scenario_dict = db.SnippetScenario.find_one({'_id': ObjectId(id)})
+        if old_scenario_dict.get('name') == scenario:
+            old_scenario_id = id
+            break
+
+    if not old_scenario_dict or not old_scenario_id:
+        try:
+            old_scenario_dict = db.SnippetScenario.find_one({'_id': ObjectId(scenario)})
+            old_scenario = old_scenario_dict.get('name')
+            old_scenario_id = scenario
+        except:
+            abort(404)
 
     old_code = old_scenario_dict.get('code')
     old_group = old_group_dict.get('name')
-    old_scenario = old_scenario_dict.get('name')
-    group_id = id_group
+    group_id = str(old_group_dict.get('_id'))
 
     if request.form:
         new_code = request.form.get('code')
@@ -117,46 +143,53 @@ def edit_snippet(id_group, id_scenario):
         new_scenario = request.form.get('scenario')
 
         if old_group_dict.get('name') != new_group:
+            # case 1: group changed
             # remove old scenario id from old group, if scenario list after the operation is empty, delete the group
-            old_scenario_id_list = old_group_dict.get('scenarios')
-            old_scenario_id_list.remove(id_scenario)
+            old_scenario_id_list.remove(old_scenario_id)
 
             if not len(old_scenario_id_list):
-                db.SnippetGroup.delete_one({'_id': ObjectId(id_group)})
+                # if group has no scenario anymore after the removal, delete the group directly
+                db.SnippetGroup.delete_one({'_id': ObjectId(group_id)})
             else:
-                db.SnippetGroup.update_one({'_id': ObjectId(id_group)}, {'$set': {'scenarios': old_scenario_id_list}})
+                # otherwise update group's scenario list
+                db.SnippetGroup.update_one({'_id': ObjectId(group_id)}, {'$set': {'scenarios': old_scenario_id_list}})
+
             new_group_dict = db.SnippetGroup.find_one({'name': new_group})
             if new_group_dict:
+                # if new target group already exists
                 # before group change, check whether old/new scenario name is already in target group, if conflict exists then do a rename
                 new_scenario_id_list = db.SnippetGroup.find_one({'_id': ObjectId(new_group_dict.get('_id'))}).get('scenarios')
 
                 if old_scenario != new_scenario:
-                    # check new scenario name conflict
+                    # if scenario name changed, check new scenario name conflict
                     for id in new_scenario_id_list:
                         if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == new_scenario:
-                            db.SnippetScenario.update_one( {'_id': ObjectId(id_scenario)}, {'$set': {'name': new_scenario + ' - ' + random_word()}})
+                            new_scenario += ' - ' + random_word()
                             flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a random suffix.', category='danger')
                             break
                 else:
-                    # check old scenario name conflict
+                    # if scenario name unchanged, check old scenario name conflict
                     for id in new_scenario_id_list:
                         if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == old_scenario:
-                            db.SnippetScenario.update_one( {'_id': ObjectId(id_scenario)}, {'$set': {'name': old_scenario + ' - ' + random_word()}})
+                            new_scenario = old_scenario + ' - ' + random_word()
                             flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a random suffix.', category='danger')
                             break
 
-                # move old scenario id to new group, update group_id
-                db.SnippetGroup.update_one({'name': new_group}, {'$push': {'scenarios': id_scenario}})
-                group_id = str(new_group_dict.get('_id'))
+                # move old scenario id to new group, update group_id, update scenario's group name
+                db.SnippetGroup.update_one({'name': new_group}, {'$push': {'scenarios': old_scenario_id}})
+                db.SnippetScenario.update_one( {'_id': ObjectId(old_scenario_id)}, {'$set': {'name': new_scenario, 'group': new_group}})
+
             else:
+                # target new group does not exist
                 # create new group with the old scenario id, update group_id
                 document = {
                     'name': new_group,
-                    'scenarios': [id_scenario]
+                    'scenarios': [old_scenario_id]
                 }
-                group_id = str(db.SnippetGroup.insert(document))
+                db.SnippetGroup.insert_one(document)
 
         elif old_scenario != new_scenario:
+            # case 2: group not changed but scenario changed
             # if group not changed but scenario changed, check new scenario naming conflict under current group
             scenario_id_list = db.SnippetGroup.find_one({'_id': ObjectId(group_id)}).get('scenarios')
             for id in scenario_id_list:
@@ -164,13 +197,13 @@ def edit_snippet(id_group, id_scenario):
                     new_scenario += ' - ' + random_word()
                     flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a random suffix.', category='danger')
                     break
-            db.SnippetScenario.update_one({'_id': ObjectId(id_scenario)}, {'$set': {'name': new_scenario}})
+            db.SnippetScenario.update_one({'_id': ObjectId(old_scenario_id)}, {'$set': {'name': new_scenario}})
 
         if old_code != new_code:
-            db.SnippetScenario.update_one({'_id': ObjectId(id_scenario)}, {'$set': {'code': new_code}})
+            db.SnippetScenario.update_one({'_id': ObjectId(old_scenario_id)}, {'$set': {'code': new_code}})
 
         flash('Code snippet has been updated successfully.', category='success')
-        return redirect(url_for('main.edit_snippet', id_group=group_id, id_scenario=id_scenario))
+        return redirect(url_for('main.edit_snippet', group=new_group, scenario=new_scenario))
     return render_template('main/edit_snippet.html', snippet_group=old_group, snippet_scenario=old_scenario, snippet_code=old_code)
 
 
@@ -179,6 +212,8 @@ def edit_snippet(id_group, id_scenario):
 def delete_snippet():
     snippet_group = request.form.get('group')
     snippet_scenario = request.form.get('scenario')
+    if not snippet_group or not snippet_scenario:
+        abort(404)
 
     scenario_id_list = db.SnippetGroup.find_one({'name': snippet_group}).get('scenarios')
     for id in scenario_id_list:
@@ -191,10 +226,8 @@ def delete_snippet():
                 db.SnippetGroup.update_one({'name': snippet_group}, {'$set': {'scenarios': scenario_id_list}})
             break
 
-    user_dict = db.User.find_one({'_id': ObjectId(current_user.id)})
-    user_utl = UserUtl(user_dict)
     flash('Code Snippet has been deleted successfully.', category='success')
-    return render_template('main/user_profile.html', user_utl=user_utl)
+    return redirect(url_for('main.index'))
 
 
 @main.route('/acquire_snippet_group', methods=['GET', 'POST'])
@@ -220,6 +253,7 @@ def acquire_snippet_scenario(_id):
             for id in scenario_ids:
                 snippet = db.SnippetScenario.find_one({'_id': ObjectId(id)})
                 result.append({id: [snippet.get('name'), snippet.get('code')]})
+        result = sorted(result, key=lambda item: next(iter(item.values()))[0].lower())
         return json.dumps({'scenario': result}), 200
     except:
         return json.dumps({'scenario': []}), 500
