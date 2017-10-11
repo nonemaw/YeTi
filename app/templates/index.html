@@ -752,7 +752,7 @@
             $('#edit-snippet').on('click', function() {
                 var group_val =$('#snippet-group-selector').val();
                 var scenario_val = $('#snippet-scenario-selector').val();
-                if (group_val != '/') {
+                if (group_val != '/' && group_val != null) {
                     location.replace('edit_snippet/' + group_val + '/' + scenario_val);
                 }
             });

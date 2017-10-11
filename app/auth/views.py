@@ -60,7 +60,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.', category='info')
+    flash('You have been logged out.', category='success')
     return redirect(url_for('main.index'))
 
 
@@ -74,7 +74,7 @@ def register():
         token = user_utl.generate_token()
         send_email(user_utl.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user_utl, token=token)
-        flash('A confirmation email has been sent to your address: {}.'.format(user_utl.email), category='info')
+        flash('A confirmation email has been sent to your address: {}.'.format(user_utl.email), category='success')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
 
@@ -92,7 +92,7 @@ def confirm(token):
     if user is None:
         flash('The confirmation link is invalid or has expired.', category='danger')
     if user.is_confirmed:
-        flash('Your account has already been confirmed.', category='info')
+        flash('Your account has already been confirmed.', category='danger')
         time.sleep(2)
         return redirect(url_for('main.index'))
     db.User.update_one({'_id': ObjectId(id)},
@@ -120,7 +120,7 @@ def resend_confirmation():
     token = current_user.generate_token()
     send_email(current_user.email, 'Confirm Your Account',
                'auth/email/confirm', user=current_user, token=token)
-    flash('A new confirmation email has been sent to you by email.', category='info')
+    flash('A new confirmation email has been sent to you by email.', category='success')
     return redirect(url_for('main.index'))
 
 
@@ -134,7 +134,7 @@ def change_email_request():
             send_email(current_user.email, 'Confirm Your New Email Address',
                        'auth/email/change_email',
                        user=current_user, token=token)
-            flash('An email with instructions to confirm your new email address has been sent to you.', category='info')
+            flash('An email with instructions to confirm your new email address has been sent to you.', category='success')
             return redirect(url_for('main.index'))
         else:
             flash('Current password does not match your account.', category='danger')
@@ -164,7 +164,7 @@ def change_email(token):
                                      {'$set': {'email': new_email,
                                                'avatar_hash': avatar_hash}})
     logout_user()
-    flash('Your email address has been updated to {} successfully, please login again.'.format(current_user.email), category='info')
+    flash('Your email address has been updated to {} successfully, please login again.'.format(current_user.email), category='success')
     return redirect(url_for('auth.login'))
 
 
@@ -177,7 +177,7 @@ def change_password():
             db.User.update_one({'email': current_user.email},
                                              {'$set': {'password': generate_password_hash(form.password_new.data)}})
             logout_user()
-            flash('Your password has been updated, please login again.', category='info')
+            flash('Your password has been updated, please login again.', category='success')
             return redirect(url_for('auth.login'))
         else:
             flash('Current password does not match your account.', category='danger')

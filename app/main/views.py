@@ -49,7 +49,7 @@ def edit_profile():
                                          {'$set': {'name': form.name.data,
                                                    'location': form.location.data,
                                                    'about_me': form.about_me.data}})
-        flash('Your profile has been updated successfully.', category='success')
+        flash('Your profile has been updated successfully.', category='info')
         return redirect(url_for('main.user', id=current_user.id))
     form.name.data = current_user.name
     form.location.data = current_user.location
@@ -75,7 +75,7 @@ def edit_profile_admin(id):
                                                    'name': form.name.data,
                                                    'location': form.location.data,
                                                    'about_me': form.about_me.data}})
-        flash('The profile has been updated successfully.', category='success')
+        flash('The profile has been updated successfully.', category='info')
         return redirect(url_for('main.user', id=user_utl.id))
     form.email.data = user_utl.email
     form.username.data = user_utl.username
@@ -97,10 +97,10 @@ def create_snippet():
         group_id, scenario_id = Snippet(snippet_group, snippet_scenario, snippet_code).new()
 
         if group_id and scenario_id:
-            flash('New code snippet has been created successfully.', category='success')
+            flash('New code snippet has been created successfully.', category='info')
             return redirect(url_for('main.edit_snippet', group=snippet_group, scenario=snippet_scenario))
         else:
-            flash('Failed in creating new code snippet, please change Group name or Scenario name.', category='danger')
+            flash('Naming conflict, please change Group name or Scenario name.', category='danger')
             return render_template('main/create_snippet.html', snippet_code=snippet_code)
     return render_template('main/create_snippet.html', snippet_code='')
 
@@ -202,7 +202,7 @@ def edit_snippet(group, scenario):
         if old_code != new_code:
             db.SnippetScenario.update_one({'_id': ObjectId(old_scenario_id)}, {'$set': {'code': new_code}})
 
-        flash('Code snippet has been updated successfully.', category='success')
+        flash('Code snippet has been updated successfully.', category='info')
         return redirect(url_for('main.edit_snippet', group=new_group, scenario=new_scenario))
     return render_template('main/edit_snippet.html', snippet_group=old_group, snippet_scenario=old_scenario, snippet_code=old_code)
 
@@ -226,7 +226,7 @@ def delete_snippet():
                 db.SnippetGroup.update_one({'name': snippet_group}, {'$set': {'scenarios': scenario_id_list}})
             break
 
-    flash('Code Snippet has been deleted successfully.', category='success')
+    flash('Code Snippet has been deleted successfully.', category='info')
     return redirect(url_for('main.index'))
 
 
