@@ -1,10 +1,18 @@
 
 class Jison:
+    """
+    Jison is a simple Json parser merged with a string search feature.
+
+    If **kwargs is assigned with keywords it is a string searcher based on
+    Json's tree structure, and return search results, otherwise it is a simple
+    Json parser.
+    """
+
     NONE = 0
-    CURLY_OPEN = 1
-    CURLY_CLOSE = 2
-    SQUARED_OPEN = 3
-    SQUARED_CLOSE = 4
+    OBJ_OPEN = 1
+    OBJ_CLOSE = 2
+    ARR_OPEN = 3
+    ARR_CLOSE = 4
     COLON = 5
     COMMA = 6
     STRING = 7
@@ -50,12 +58,12 @@ class Jison:
         if token == self.NUMBER:
             # '0123456789-'
             return self.parse_number()
-        if token == self.CURLY_OPEN:
+        if token == self.OBJ_OPEN:
             # '{'
             if self.ratio_method:
                 self.deep += 1
             return self.parse_object()
-        if token == self.SQUARED_OPEN:
+        if token == self.ARR_OPEN:
             # '['
             if self.ratio_method:
                 self.deep += 1
@@ -95,13 +103,13 @@ class Jison:
         if not check_token:
             self.index = index
         if c == '{':
-            return self.CURLY_OPEN
+            return self.OBJ_OPEN
         elif c == '}':
-            return self.CURLY_CLOSE
+            return self.OBJ_CLOSE
         elif c == '[':
-            return self.SQUARED_OPEN
+            return self.ARR_OPEN
         elif c == ']':
-            return self.SQUARED_CLOSE
+            return self.ARR_CLOSE
         elif c == ',':
             return self.COMMA
         elif c == '"':
@@ -162,7 +170,7 @@ class Jison:
                 return None
             elif token == self.COMMA:
                  self.go_to_next_token()
-            elif token == self.CURLY_CLOSE:
+            elif token == self.OBJ_CLOSE:
                 if self.ratio_method:
                     self.deep -= 1
                 self.go_to_next_token()
@@ -200,7 +208,7 @@ class Jison:
                 return None
             elif token == self.COMMA:
                  self.go_to_next_token()
-            elif token == self.SQUARED_CLOSE:
+            elif token == self.ARR_CLOSE:
                 if self.ratio_method:
                     self.deep -= 1
                 self.go_to_next_token()
