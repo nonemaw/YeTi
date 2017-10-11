@@ -2,11 +2,11 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, ValidationError, SelectField
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 from common.general import get_company_list
 
 
-db = mongo_connect('ytml')
+db = mongo_connect(client, 'ytml')
 cities = [('New South Wales', 'New South Wales'),
           ('Australian Capital Territory', 'Australian Capital Territory'),
           ('Northern Territory', 'Northern Territory'),

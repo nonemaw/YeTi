@@ -3,10 +3,10 @@ from math import ceil
 from flask_login import current_user
 from bson.objectid import ObjectId
 
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 
 
-db = mongo_connect('ytml')
+db = mongo_connect(client, 'ytml')
 
 
 # http://flask.pocoo.org/snippets/44/

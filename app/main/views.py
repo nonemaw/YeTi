@@ -6,14 +6,14 @@ from bson import ObjectId
 
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from common.general import random_word
 from common.pagination import PaginationSnippet
 
 
-db = mongo_connect('ytml')
+db = mongo_connect(client, 'ytml')
 
 
 @main.route('/', methods=['GET', 'POST'])

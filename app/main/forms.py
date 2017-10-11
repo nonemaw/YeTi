@@ -6,12 +6,12 @@ from wtforms import StringField, TextAreaField, SubmitField, BooleanField,\
 from wtforms.validators import Length, DataRequired, Email, Regexp,\
     ValidationError
 
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 from app.auth.forms import cities
 
 
 roles = [('ACCESS', 'Normal User'), ('ADMIN', 'Administrator')]
-db = mongo_connect('ytml')
+db = mongo_connect(client, 'ytml')
 
 
 class EditProfileForm(FlaskForm):

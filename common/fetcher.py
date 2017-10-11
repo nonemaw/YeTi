@@ -10,7 +10,7 @@ import json
 
 from . import global_vars
 from bson import ObjectId
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 from app.models import Group, SubGroup
 
 
@@ -18,7 +18,7 @@ class Fetcher:
     def __init__(self, username, password, debug=False, mode='w'):
         self.debug = debug
         self.mode = mode
-        self.db = mongo_connect(global_vars.company)
+        self.db = mongo_connect(client, global_vars.company)
         self.USERNAME = username
         self.PASSWORD = password
         self.BASE = "https://{}.xplan.iress.com.au".format(global_vars.company)

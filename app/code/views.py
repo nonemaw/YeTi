@@ -7,12 +7,12 @@ from flask_login import current_user, login_required
 from bson import ObjectId
 
 from . import code
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 from app.decorators import admin_required
 import fuzzier.fuzzier as fuzzier
 
 
-db = mongo_connect('ytml')
+db = mongo_connect(client, 'ytml')
 
 
 @login_required

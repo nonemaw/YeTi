@@ -10,7 +10,7 @@ from bson import ObjectId
 
 from . import auth
 from .forms import LoginForm, RegForm, ChangeEmailForm, ChangePasswordForm
-from app.db import mongo_connect
+from app.db import mongo_connect, client
 from app.models import User, UserUtl
 from common.general import send_email, verify_password
 from app.decorators import admin_required
@@ -19,7 +19,7 @@ from common import global_vars
 from common.crypto import AESCipher
 
 
-db = mongo_connect('ytml')
+db = mongo_connect(client, 'ytml')
 
 
 @auth.before_app_request
