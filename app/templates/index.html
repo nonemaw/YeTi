@@ -21,6 +21,11 @@
                         <span class="input-group-btn"><button id="search-button" class="btn btn-success" type="button">Search</button></span>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="row">
+                        <button class="btn btn-danger" id="judge" style="float: right">Judge</button>
+                    </div>
+                </div>
             </div>
 
             <!-- choose variable row -->
@@ -28,7 +33,7 @@
                 <br>
                 <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax" style="font-size: 16px">Group</label>
+                        <label for="syntax" style="font-size: 15px">Group</label>
                     </div>
                     <div class="row">
                         <select id="group-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -36,7 +41,7 @@
                 </div>
                 <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax" style="font-size: 16px">Sub-Group</label>
+                        <label for="syntax" style="font-size: 15px">Sub-Group</label>
                     </div>
                     <div class="row">
                         <select id="subgroup-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -44,7 +49,7 @@
                 </div>
                 <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax" style="font-size: 16px">Variable</label>
+                        <label for="syntax" style="font-size: 15px">Variable</label>
                     </div>
                     <div class="row">
                         <select id="variable-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -93,12 +98,12 @@
                         </tbody>
                         <thead id="variable-search-table-head" style="display:none">
                             <tr>
-                                <th id="choice-value-title" class="col-md-3" style="font-family:Arial;font-size:16px"><i>Group</i></th>
-                                <th id="choice-text-title" class="col-md-3" style="font-family:Arial;font-size:16px"><i>Sub-Group</i></th>
-                                <th id="choice-text-title" class="col-md-6" style="font-family:Arial;font-size:16px"><i>Variable (Search Result)</i></th>
+                                <th id="choice-value-title" class="col-md-3" style="font-family:Arial;font-size:15px"><i>Group</i></th>
+                                <th id="choice-text-title" class="col-md-3" style="font-family:Arial;font-size:15px"><i>Sub-Group</i></th>
+                                <th id="choice-text-title" class="col-md-6" style="font-family:Arial;font-size:15px"><i>Variable (Search Result)</i></th>
                             </tr>
                         </thead>
-                        <tbody id="variable-search-table" style="display:none">
+                        <tbody id="variable-search-table" style="display:none; height: 88%">
                             <tr><td class="col-md-3">/</td><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-6" style="font-family:Arial">/</td></tr>
                         </tbody>
                     </table>
@@ -106,13 +111,13 @@
             </div>
 
             <!-- pick snippet row -->
-            <div class="row">
+            <div class="row" style="padding-top: 10px">
                 <div class="row">
                     <div class="col-md-5 selection-field">
-                            <label for="syntax" style="font-size: 16px">Code Snippet Group</label>
+                            <label for="syntax" style="font-size: 15px">Code Snippet Group</label>
                     </div>
                     <div class="col-md-5 selection-field">
-                            <label for="syntax" style="font-size: 16px">Code Snippet Scenario</label>
+                            <label for="syntax" style="font-size: 15px">Code Snippet Scenario</label>
                     </div>
                     <div class="col-md-2"></div>
                 </div>
@@ -127,7 +132,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button class="btn btn-danger" id="edit-snippet" style="width: 80%">Edit</button>
+                        <button class="btn btn-info" id="edit-snippet" style="width: 100%">Edit</button>
                     </div>
                 </div>
             </div>
@@ -136,7 +141,9 @@
             <div class="row" style="height: 42%">
                 <div class="col-md-12" style="height: 100%">
                     <br>
-                    <div id="snippet-section" style="height: 100%"></div>
+                    <div class="row" style="height: 100%; padding-left: 15px">
+                        <div id="snippet-section" style="height: 100%"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -149,13 +156,10 @@
                 </div>
                 <div class="col-md-2">
                     <div class="row">
-                        <button class="btn btn-warning" id="judge">Judge</button>
-                    </div>
-                    <br>
-                    <div class="row">
                         <div class="btn-group-vertical">
-                            <button id="indent" type="button" class="btn btn-success">Indent Code</button>
-                            <button id="dedent" type="button" class="btn btn-info">Dedent Code</button>
+                            <button id="indent" type="button" class="btn btn-info">Indent Code</button>
+                            <button id="dedent" type="button" class="btn btn-success">Dedent Code</button>
+                            <button id="merge" type="button" class="btn btn-warning">Single Line</button>
                         </div>
                     </div>
                     <br>

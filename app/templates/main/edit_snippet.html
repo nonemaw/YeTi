@@ -22,8 +22,8 @@
                     <label style="font-size:15px">Snippet Scenario Name</label>
                     <input id="snippet-scenario" name="scenario" type="text" class="form-control" value="{{ snippet_scenario }}">
                     <br>
-                    <button class="btn btn-success" name="edit" id="save-snippet" style="width:40%">Save</button>
-                    <button class="btn btn-danger" name="delete" id="delete-snippet" style="width:40%">Delete</button>
+                    <button class="btn btn-success" name="edit" id="save-snippet" style="width:49%">Save</button>
+                    <button class="btn btn-danger" name="delete" id="delete-snippet" style="width:49%">Delete</button>
                 </form>
             {% endif %}
             <br>
@@ -160,7 +160,7 @@
             $('#delete-snippet').on('click', function () {
                 $('#snippet-group').val(group_backup);
                 $('#snippet-scenario').val(scenario_backup);
-                if (confirm("Are you sure?")) {
+                if (confirm("Are you sure? A deletion cannot be undone.")) {
                     $('#snippet-form').attr('action', '/delete_snippet');
                     $("#snippet-form").submit();
                 }
