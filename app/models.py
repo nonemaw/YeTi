@@ -7,7 +7,6 @@ from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from bson import ObjectId
 from app import login_manager
-
 from app.db import mongo_connect, client
 from common import global_vars
 

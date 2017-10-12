@@ -18,7 +18,7 @@
                 <div class="col-md-9">
                     <div class="input-group">
                         <input id="search-field" type="text" class="form-control" placeholder="Search for what you need...">
-                        <span class="input-group-btn"><button id="search-button" class="btn btn-info" type="button">Search</button></span>
+                        <span class="input-group-btn"><button id="search-button" class="btn btn-success" type="button">Search</button></span>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button class="btn btn-success" id="edit-snippet" style="width: 80%">Edit</button>
+                        <button class="btn btn-danger" id="edit-snippet" style="width: 80%">Edit</button>
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                 </div>
                 <div class="col-md-2">
                     <div class="row">
-                        <button class="btn btn-danger" id="judge">Judge</button>
+                        <button class="btn btn-warning" id="judge">Judge</button>
                     </div>
                     <br>
                     <div class="row">
@@ -162,12 +162,12 @@
                     <div class="row">
                         <p><b>Change Entity</b></p>
                         <div class="btn-group-vertical">
-                            <button id="client" type="button" class="btn btn-warning">Client</button>
-                            <button id="partner" type="button" class="btn btn-warning">Partner</button>
-                            <button id="partner" type="button" class="btn btn-warning">Joint</button>
-                            <button id="trust" type="button" class="btn btn-warning">Trust</button>
-                            <button id="superfund" type="button" class="btn btn-warning">Superfund</button>
-                            <button id="company" type="button" class="btn btn-warning">Company</button>
+                            <button id="client" type="button" class="btn btn-default">Client</button>
+                            <button id="partner" type="button" class="btn btn-default">Partner</button>
+                            <button id="partner" type="button" class="btn btn-default">Joint</button>
+                            <button id="trust" type="button" class="btn btn-default">Trust</button>
+                            <button id="superfund" type="button" class="btn btn-default">Superfund</button>
+                            <button id="company" type="button" class="btn btn-default">Company</button>
                         </div>
                     </div>
                     <div class="row">
@@ -255,19 +255,19 @@
         var initial_font_size = $('#font-size option:selected').val();
         var initial_font_family = $('#font-family option:selected').val();
         var code_section = ace.edit("code-section");
-        var template_section = ace.edit("snippet-section");
+        var snippet_section = ace.edit("snippet-section");
         code_section.setTheme("ace/theme/" + initial_theme);
         code_section.session.setMode("ace/mode/" + initial_syntax);
         code_section.setOption("showInvisibles", show_invisibles);
         code_section.setOption("fontFamily", initial_font_family);
         code_section.setOption("fontSize", parseInt(initial_font_size));
         code_section.getSession().setUseWrapMode(wrap_text);
-        template_section.setTheme("ace/theme/" + initial_theme);
-        template_section.session.setMode("ace/mode/" + initial_syntax);
-        template_section.setOption("showInvisibles", show_invisibles);
-        template_section.setOption("fontFamily", initial_font_family);
-        template_section.setOption("fontSize", 14);
-        template_section.getSession().setUseWrapMode(true);
+        snippet_section.setTheme("ace/theme/" + initial_theme);
+        snippet_section.session.setMode("ace/mode/" + initial_syntax);
+        snippet_section.setOption("showInvisibles", show_invisibles);
+        snippet_section.setOption("fontFamily", initial_font_family);
+        snippet_section.setOption("fontSize", 14);
+        snippet_section.getSession().setUseWrapMode(true);
         // get selected code: code_section.getSelectedText()
 
         $('#subgroup-selector').prop('disabled', true);
@@ -362,17 +362,17 @@
             // syntax dropdown
             $('#syntax').on('change', function(){
                 code_section.session.setMode("ace/mode/" + $('#syntax').val());
-                template_section.session.setMode("ace/mode/" + $('#syntax').val());
+                snippet_section.session.setMode("ace/mode/" + $('#syntax').val());
             });
             // theme dropdown
             $('#theme').on('change', function(){
                 code_section.setTheme("ace/theme/" + $('#theme').val());
-                template_section.setTheme("ace/theme/" + $('#theme').val());
+                snippet_section.setTheme("ace/theme/" + $('#theme').val());
             });
             // font dropdown
             $('#font-family').on('change', function(){
                 code_section.setOption("fontFamily", $('#font-family').val());
-                template_section.setOption("fontFamily", $('#font-family').val());
+                snippet_section.setOption("fontFamily", $('#font-family').val());
             });
             // dont size dropdown
             $('#font-size').on('change', function(){
@@ -383,11 +383,11 @@
                 show_invisibles = this.checked;
                 if(show_invisibles) {
                     code_section.setOption("showInvisibles", true);
-                    template_section.setOption("showInvisibles", true);
+                    snippet_section.setOption("showInvisibles", true);
                 }
                 else {
                     code_section.setOption("showInvisibles", false);
-                    template_section.setOption("showInvisibles", false);
+                    snippet_section.setOption("showInvisibles", false);
                 }
             });
             // wrap text tick
@@ -717,7 +717,7 @@
                                 local_scenario_cache[scenario_id] = scenario_detail[1];
                                 if (flag) {
                                     snippet_scenario_selector.append('<option value="' + scenario_id + '">' + scenario_detail[0] + '</option>');
-                                    template_section.setValue(scenario_detail[1]);
+                                    snippet_section.setValue(scenario_detail[1]);
                                     flag = 0
                                 }
                                 else {
@@ -743,11 +743,11 @@
                     $('#snippet-scenario-selector').empty();
                     $('#snippet-scenario-selector').selectpicker('refresh');
                     $('#snippet-scenario-selector').prop('disabled', true);
-                    template_section.setValue('');
+                    snippet_section.setValue('');
                 }
             });
             $('#snippet-scenario-selector').on('change', function() {
-                template_section.setValue(local_scenario_cache[$('#snippet-scenario-selector').val()]);
+                snippet_section.setValue(local_scenario_cache[$('#snippet-scenario-selector').val()]);
             });
             $('#edit-snippet').on('click', function() {
                 var group_val =$('#snippet-group-selector').val();
