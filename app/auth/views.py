@@ -46,7 +46,7 @@ def login():
         # global_vars.crypto = AESCipher()
         # global_vars.company_username = form.company_username.data
         # global_vars.company_password = global_vars.crypto.encrypt(form.company_password.data)
-        print(global_vars.company_password)
+        # print(global_vars.company_password)
         if user_dict is not None and verify_password(user_dict.get('password'), form.password.data):
             # convert 'user_dict' to UserLogin(UserMixin) as 'current_user'
             user = UserUtl(user_dict)

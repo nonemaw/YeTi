@@ -154,6 +154,11 @@ class Fetcher:
                                             except:
                                                 choice_text = ''
                                             multi[index] = [next_item[0], choice_text]
+
+                                        if var_type == 'Multi':
+                                            var_type = 'Multiple Choice / Checkboxes (List of Objects)'
+                                        elif var_type == 'Choice':
+                                            var_type = 'Single Choice (Object)'
                                     else:
                                         multi = None
 
@@ -173,6 +178,7 @@ class Fetcher:
 
                 # logout
                 session.get(self.URL_LOGOUT)
+                print('\nDone!')
             except KeyboardInterrupt:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)

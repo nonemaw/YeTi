@@ -2,7 +2,7 @@
 import os
 import re
 from common import global_vars
-from fuzzier.parser import Jison
+from fuzzier.jison import Jison
 
 
 def ratio(target:str, pattern:str):

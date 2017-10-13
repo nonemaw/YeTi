@@ -164,7 +164,6 @@ def ratio(pattern):
 def acquire_search_result():
     received_json = request.json
     if received_json:
-        print(received_json)
         subgroup_id = received_json.get('subgroup_id')
         var_var = received_json.get('var_var')
         var_list = db.SubGroup.find_one({'_id': ObjectId(subgroup_id)}).get('variables')
