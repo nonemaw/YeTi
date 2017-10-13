@@ -165,7 +165,7 @@ def edit_snippet(group, scenario):
                     for id in new_scenario_id_list:
                         if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == new_scenario:
                             new_scenario += ' - ' + random_word()
-                            flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a random suffix.', category='danger')
+                            flash('A naming conflict occurs to Scenario\'s name in current Group. Current Scenario has been renamed by a random suffix.', category='danger')
                             break
                 else:
                     # if scenario name unchanged, check old scenario name conflict
@@ -177,7 +177,6 @@ def edit_snippet(group, scenario):
 
                 # move old scenario id to new group, update group_id, update scenario's group name
                 db.SnippetGroup.update_one({'name': new_group}, {'$push': {'scenarios': old_scenario_id}})
-                db.SnippetScenario.update_one( {'_id': ObjectId(old_scenario_id)}, {'$set': {'name': new_scenario, 'group': new_group}})
 
             else:
                 # target new group does not exist
@@ -187,6 +186,7 @@ def edit_snippet(group, scenario):
                     'scenarios': [old_scenario_id]
                 }
                 db.SnippetGroup.insert_one(document)
+            db.SnippetScenario.update_one( {'_id': ObjectId(old_scenario_id)}, {'$set': {'name': new_scenario, 'group': new_group}})
 
         elif old_scenario != new_scenario:
             # case 2: group not changed but scenario changed
