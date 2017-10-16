@@ -15,12 +15,15 @@ from app.models import Group, SubGroup
 
 
 class Fetcher:
-    def __init__(self, username, password, debug=False, mode='w'):
-        self.debug = debug
+    def __init__(self, username, password, mode='w', group_only=None):
         self.mode = mode
         self.db = mongo_connect(client, global_vars.company)
         self.USERNAME = username
         self.PASSWORD = password
+        if isinstance(group_only, list):
+            self.group_only = group_only  # only fetch/update designated groups
+        else:
+            self.group_only = None
         self.BASE = "https://{}.xplan.iress.com.au".format(global_vars.company)
         self.URL_LOGIN = "https://{}.xplan.iress.com.au/home".format(global_vars.company)
         self.URL_LIST = "https://{}.xplan.iress.com.au/ufield/list".format(global_vars.company)
@@ -63,7 +66,7 @@ class Fetcher:
                     print('Currently there is another user using this XPLAN account.')
                 else:
                     # start working
-                    print('Start working ... ')
+                    print('Working ... ')
 
                     dropdown_options = re.search(r'<select\b[^>]*>(?P<option_tags>.*)<\/select>', fields.text).group('option_tags').split('</option>')
                     dropdown_options[-1] = '_loop_end'  # original dropdown_options[-1] is an empty string ''
@@ -83,6 +86,10 @@ class Fetcher:
                             match = re.search(r'value="(?P<group>[^>]*)">(?P<obj_name>.*$)', option)
                             group_var = match.group('group').strip()
                             group_name = match.group('obj_name').strip()
+
+                            if self.group_only:
+                                if group_var not in self.group_only and group_name not in self.group_only:
+                                    continue
 
                             if group_var != former_group:
                                 # if moved to a new group, update the former group's subgroup list to DB, then change former_group to current group
@@ -175,10 +182,11 @@ class Fetcher:
                         except Exception as e:
                             logger.warning('Error message: ' + str(e))
                             continue
+                    # for each group loop finished
+                    print('\nDone!')
 
                 # logout
                 session.get(self.URL_LOGOUT)
-                print('\nDone!')
             except KeyboardInterrupt:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)

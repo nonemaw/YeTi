@@ -31,8 +31,14 @@ if __name__ == '__main__':
         yeti.run(debug=True)
     elif args.fetcher:
         company, username, password = input('Please input company, username and password: ').split(' ')
+        groups = input('Please input groups (optional): ')
+        if groups:
+            groups = groups.strip().split(',')
+            groups = [group.strip() for group in groups]
+        else:
+            groups = None
         global_vars.company = company
-        Fetcher(username, password, debug=True).run()
+        Fetcher(username, password, group_only=groups).run()
     elif args.test:
         pattern = input('Input test pattern: ')
         search(pattern=pattern)
