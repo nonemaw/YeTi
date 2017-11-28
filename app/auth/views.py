@@ -74,7 +74,7 @@ def register():
         token = user_utl.generate_token()
         send_email(user_utl.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user_utl, token=token)
-        flash('A confirmation email has been sent to your address: {}.'.format(user_utl.email), category='success')
+        flash(f'A confirmation email has been sent to your address: {user_utl.email}', category='success')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
 
@@ -164,7 +164,7 @@ def change_email(token):
                                      {'$set': {'email': new_email,
                                                'avatar_hash': avatar_hash}})
     logout_user()
-    flash('Your email address has been updated to {} successfully, please login again.'.format(current_user.email), category='success')
+    flash(f'Your email address has been updated to {current_user.email} successfully, please login again.', category='success')
     return redirect(url_for('auth.login'))
 
 

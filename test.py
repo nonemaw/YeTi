@@ -9,4 +9,3 @@ print(curfile_path)
 print(cur_dir)
 print(parent_dir)
 
-print(os.path.join(parent_dir, 'fuzzier', 'json', 'ytml' + '.json'))

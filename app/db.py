@@ -13,9 +13,9 @@ class MongoCfg:
 
 
 try:
-    requests.session().get("https://{}.xplan.iress.com.au".format(global_vars.company.lower()), headers=dict(referer="https://{}.xplan.iress.com.au".format(global_vars.company.lower())))
+    requests.session().get(f'https://{global_vars.company.lower()}.xplan.iress.com.au', headers=dict(referer=f'https://{global_vars.company.lower()}.xplan.iress.com.au'))
 except:
-    print('Company name \"{}\" invalid, no such XPLAN site for this company.'.format(global_vars.company))
+    print('Company name \"{global_vars.company}\" invalid, no such XPLAN site for this company.')
 else:
     client = MongoClient(MongoCfg.HOST, MongoCfg.PORT)
 

@@ -24,11 +24,11 @@ class Fetcher:
             self.group_only = group_only  # only fetch/update designated groups
         else:
             self.group_only = None
-        self.BASE = "https://{}.xplan.iress.com.au".format(global_vars.company)
-        self.URL_LOGIN = "https://{}.xplan.iress.com.au/home".format(global_vars.company)
-        self.URL_LIST = "https://{}.xplan.iress.com.au/ufield/list".format(global_vars.company)
-        self.URL_WALKER = "https://{}.xplan.iress.com.au/ufield/list_iframe?group=".format(global_vars.company) + '{}'
-        self.URL_LOGOUT = "https://{}.xplan.iress.com.au/home/logoff?".format(global_vars.company)
+        self.BASE = f'https://{global_vars.company}.xplan.iress.com.au'
+        self.URL_LOGIN = f'https://{global_vars.company}.xplan.iress.com.au/home'
+        self.URL_LIST = f'https://{global_vars.company}.xplan.iress.com.au/ufield/list'
+        self.URL_WALKER = f'https://{global_vars.company}.xplan.iress.com.au/ufield/list_iframe?group=' + '{}'
+        self.URL_LOGOUT = f'https://{global_vars.company}.xplan.iress.com.au/home/logoff?'
 
     def run(self):
         this_path = os.path.dirname(os.path.realpath(__file__))
@@ -61,9 +61,11 @@ class Fetcher:
                 session.post(self.URL_LOGIN, data=payload, headers=dict(referer=self.URL_LOGIN))
                 # try to get main list page content
                 fields = session.get(self.URL_LIST, headers = dict(referer = self.URL_LIST))
+
                 if re.search(r'permission_error', fields.text):
                     # login failed
                     print('Currently there is another user using this XPLAN account.')
+
                 else:
                     # start working
                     print('Working ... ')
@@ -99,7 +101,7 @@ class Fetcher:
                                 former_group_id = Group(group_var, group_name).new()
                                 former_group = group_var
 
-                            logger.info('Processing {} - {}'.format(group_var, group_name))
+                            logger.info(f'Processing {group_var} - {group_name}')
                             all_subgroup_variable = re.sub(r'<td align.+<\/td>\n', '', session.get(self.URL_WALKER.format(group_var), headers=dict(referer=self.URL_WALKER.format(group_var))).text)
 
                             former_sub_group = ''

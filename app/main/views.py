@@ -16,6 +16,11 @@ from common.pagination import PaginationSnippet
 db = mongo_connect(client, 'ytml')
 
 
+@main.route('/test')
+def test():
+    return render_template('test.html')
+
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
     if current_user.is_authenticated:

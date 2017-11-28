@@ -17,16 +17,57 @@
             <div class="row">
                 <div class="col-md-9">
                     <div class="input-group">
-                        <input id="search-field" type="text" class="form-control" placeholder="Search for what you need...">
+                        <input id="search-field" type="text" class="form-control" placeholder="Need something?">
                         <span class="input-group-btn"><button id="search-button" class="btn btn-success" type="button">Search</button></span>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="row">
-                        <button class="btn btn-danger" id="judge" style="float: right">Judge</button>
+                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".bs-example-modal-lg" data-keyboard="false" data-backdrop="static" style="float: right; width: 60%">Interface</button>
                     </div>
                 </div>
             </div>
+            <!-- end of search bar row -->
+
+            <!-- interface view, display when click `Interface` button -->
+            <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel" style="color: #ff8000">Interface</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p>fdsafsdf</p>
+
+
+
+
+
+
+                                </div>
+                                <div class="col-md-8">
+                                    <p>fdsafsdf</p>
+
+
+
+
+
+
+
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end of interface view -->
 
             <!-- choose variable row -->
             <div class="row">
@@ -56,8 +97,9 @@
                     </div>
                 </div>
             </div>
+            <!-- end of choose variable row -->
 
-            <!-- variable infomation table row -->
+            <!-- variable information table row -->
             <div class="row" style="height: 32vh;padding-top: 15px">
                 <!-- Variable Table -->
                 <div class="col-md-12" style="height: 100%">
@@ -109,6 +151,7 @@
                     </table>
                 </div>
             </div>
+            <!-- end of variable information table -->
 
             <!-- pick snippet row -->
             <div class="row" style="padding-top: 10px">
@@ -136,6 +179,7 @@
                     </div>
                 </div>
             </div>
+            <!-- end of pick snippet row -->
 
             <!-- snippet code editor row -->
             <div class="row" style="height: 42%">
@@ -146,20 +190,26 @@
                     </div>
                 </div>
             </div>
+            <!-- end of snippet code editor row -->
         </div>
 
         <!-- coding column -->
         <div class="col-md-8" style="height: 99%">
             <div class="row" style="height: 100%">
-                <div class="col-md-10" style="height: 100%">
+                <div class="col-md-11" style="height: 100%">
                     <div id="code-section" style="height: 100%"></div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="row">
-                        <div class="btn-group-vertical">
-                            <button id="indent" type="button" class="btn btn-info">Indent Code</button>
-                            <button id="dedent" type="button" class="btn btn-success">Dedent Code</button>
-                            <button id="merge" type="button" class="btn btn-warning">Single Line</button>
+                        <button class="btn btn-warning" id="judge">Judge</button>
+                        <br>
+                        <br>
+                    </div>
+                    <div class="row">
+                        <p><b>Format Code</b></p>
+                        <div class="btn-group-vertical" style="width: 85%">
+                            <button id="indent" type="button" class="btn btn-info">Indent</button>
+                            <button id="dedent" type="button" class="btn btn-success">Dedent</button>
                         </div>
                     </div>
                     <br>
@@ -176,74 +226,106 @@
                     </div>
                     <div class="row">
                         <br>
-                        <label for="syntax">Syntax</label>
+                        <button class="btn btn-danger" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm">Setting</button>
                     </div>
-                    <div class="row">
-                        <select class="selectpicker" id="syntax" data-width="75%">
-                            <option value="python">Python</option>
-                            <option value="html" selected="selected">HTML</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <label for="theme">Theme</label>
-                    </div>
-                    <div class="row">
-                        <select class="selectpicker" id="theme" data-width="75%">
-                            <optgroup label="Bright">
-                                <option value="github">GitHub</option>
-                                <option value="solarized_light">Solarized Light</option>
-                                <option value="xcode">XCode</option>
-                            </optgroup>
-                            <optgroup label="Dark">
-                                <option value="monokai" selected="selected">Monokai</option>
-                                <option value="solarized_dark">Solarized Dark</option>
-                                <option value="twilight">Twilight</option>
-                            </optgroup>
-                        </select>
 
-                    </div>
-                    <div class="row">
-                        <label for="font-family">Font Family</label>
-                    </div>
-                    <div class="row">
-                        <select class="selectpicker" id="font-family" data-width="75%">
-                            <option value="arial">Arial</option>
-                            <option value="consolas" selected="selected">Consolas</option>
-                            <option value="courier">Courier</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <label for="font-size">Font Size</label>
-                    </div>
-                    <div class="row">
-                        <select class="selectpicker" id="font-size" data-width="75%">
-                            <option>10</option>
-                            <option>11</option>
-                            <option>12</option>
-                            <option>13</option>
-                            <option>14</option>
-                            <option selected="selected">16</option>
-                            <option>18</option>
-                            <option>20</option>
-                            <option>24</option>
-                            <option>30</option>
-                        </select>
-                    </div>
-                    <br>
-                    <div class="row">
-                        <div class="checkbox">
-                            <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
+                    <!-- setting panel -->
+                    <div class="modal fade bs-setting-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+                        <div class="modal-dialog modal-sm" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="myModalLabel" style="color: #ff8000">Editor Settings</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-2"></div>
+                                        <div class="col-md-10">
+                                            <div class="row">
+                                                <br>
+                                                <label for="syntax">Syntax</label>
+                                            </div>
+                                            <div class="row">
+                                                <select class="selectpicker" id="syntax" data-width="75%">
+                                                    <option value="python" selected="selected">Python</option>
+                                                    <option value="html">HTML</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label for="theme">Theme</label>
+                                            </div>
+                                            <div class="row">
+                                                <select class="selectpicker" id="theme" data-width="75%">
+                                                    <optgroup label="Bright">
+                                                        <option value="github">GitHub</option>
+                                                        <option value="solarized_light">Solarized Light</option>
+                                                        <option value="xcode">XCode</option>
+                                                    </optgroup>
+                                                    <optgroup label="Dark">
+                                                        <option value="chaos" selected="selected">Chaos</option>
+                                                        <option value="monokai">Monokai</option>
+                                                        <option value="pastel_on_dark">Pastel on Dark</option>
+                                                        <option value="solarized_dark">Solarized Dark</option>
+                                                    </optgroup>
+                                                </select>
+
+                                            </div>
+                                            <div class="row">
+                                                <label for="font-family">Font Family</label>
+                                            </div>
+                                            <div class="row">
+                                                <select class="selectpicker" id="font-family" data-width="75%">
+                                                    <option value="arial">Arial</option>
+                                                    <option value="consolas" selected="selected">Consolas</option>
+                                                    <option value="courier">Courier</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <label for="font-size">Font Size</label>
+                                            </div>
+                                            <div class="row">
+                                                <select class="selectpicker" id="font-size" data-width="75%">
+                                                    <option>10</option>
+                                                    <option>11</option>
+                                                    <option>12</option>
+                                                    <option>13</option>
+                                                    <option>14</option>
+                                                    <option selected="selected">16</option>
+                                                    <option>18</option>
+                                                    <option>20</option>
+                                                    <option>24</option>
+                                                    <option>30</option>
+                                                </select>
+                                            </div>
+                                            <br>
+                                            <div class="row">
+                                                <div class="checkbox">
+                                                    <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label><input id="save-session" type="checkbox" value="">Save Session & Setting</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="checkbox">
-                            <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
-                        </div>
-                        <div class="checkbox">
-                            <label><input id="save-session" type="checkbox" value="">Save Session & Setting</label>
-                        </div>
                     </div>
+                    <!-- end of setting panel -->
+
                 </div>
             </div>
         </div>
+        <!-- end of coding column -->
+
     </div>
 {% endblock %}
 
