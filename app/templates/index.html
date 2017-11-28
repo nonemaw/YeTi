@@ -106,26 +106,26 @@
                     <table class="table table-scroll left-column-table" style="height: 100%">
                         <tbody id="variable-selector-table">
                             <tr>
-                                <td class="col-md-2" style="font-family:Arial"><b><i>Variable</i></b></td>
+                                <td class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Variable</i></b></td>
                                 <td id="var-variable" class="col-md-10" style="font-family:Consolas">/</td>
                             </tr>
                             <tr>
-                                <td class="col-md-2" style="font-family:Arial"><b><i>Usage</i></b></td>
+                                <td class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Usage</i></b></td>
                                 <td id="var-usage" class="col-md-10" style="font-family:Consolas">/</td>
                             </tr>
                             <tr>
-                                <td class="col-md-2" style="font-family:Arial"><b><i>Type</i></b></td>
+                                <td class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Type</i></b></td>
                                 <td id="var-type" class="col-md-10" style="font-family:Consolas">/</td>
                             </tr>
                             <tr>
-                                <td id="choice-type" class="col-md-2" style="font-family:Arial"><b><i>Choice(s)</i></b></td>
+                                <td id="choice-type" class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Choice(s)</i></b></td>
                                 <td class="col-md-10">
                                     <!-- Multi Choice table -->
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th id="choice-value-title" class="col-md-5" style="font-family:Arial"><i>Value</i></th>
-                                                <th id="choice-text-title" class="col-md-7" style="font-family:Arial"><i>Text</i></th>
+                                                <th id="choice-value-title" class="col-md-5" style="font-family:Arial; color: #cb661a"><i>Value</i></th>
+                                                <th id="choice-text-title" class="col-md-7" style="font-family:Arial; color: #cb661a"><i>Text</i></th>
                                             </tr>
                                         </thead>
                                         <tbody id="multi-choice-table">
@@ -310,11 +310,10 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                        </div>
-
                                     </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                                 </div>
                             </div>
                         </div>
@@ -348,12 +347,14 @@
         code_section.setOption("fontFamily", initial_font_family);
         code_section.setOption("fontSize", parseInt(initial_font_size));
         code_section.getSession().setUseWrapMode(wrap_text);
+        code_section.setShowPrintMargin(false);
         snippet_section.setTheme("ace/theme/" + initial_theme);
         snippet_section.session.setMode("ace/mode/" + initial_syntax);
         snippet_section.setOption("showInvisibles", show_invisibles);
         snippet_section.setOption("fontFamily", initial_font_family);
         snippet_section.setOption("fontSize", 14);
         snippet_section.getSession().setUseWrapMode(true);
+        snippet_section.setShowPrintMargin(false);
         // get selected code: code_section.getSelectedText()
 
         $('#subgroup-selector').prop('disabled', true);

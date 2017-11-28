@@ -96,6 +96,7 @@
         code_section.setOption("fontFamily", initial_font_family);
         code_section.setOption("fontSize", parseInt(initial_font_size));
         code_section.getSession().setUseWrapMode(wrap_text);
+        code_section.setShowPrintMargin(false);
 
         // syntax dropdown
         $('#syntax').on('change', function(){
