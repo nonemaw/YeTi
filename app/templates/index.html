@@ -6,6 +6,7 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='jstree/themes/proton/style.min.css') }}">
 {% endblock %}
 
 {% block wide_content %}
@@ -35,12 +36,13 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title" id="myModalLabel" style="color: #ff8000">Interface</h4>
+                            <h4 class="modal-title" id="myModalLabel" style="color: #ff8000"><b>Interface</b></h4>
                         </div>
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4">
-                                    <p>fdsafsdf</p>
+                                    <div id="interface-tree">
+                                    </div>
 
 
 
@@ -235,7 +237,7 @@
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                    <h4 class="modal-title" id="myModalLabel" style="color: #ff8000">Editor Settings</h4>
+                                    <h4 class="modal-title" id="myModalLabel" style="color: #ff8000"><b>Editor Settings</b></h4>
                                 </div>
                                 <div class="modal-body">
                                     <div class="row">
@@ -330,6 +332,7 @@
 
 {% block page_script %}
     <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='jstree/jstree.min.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var save_session = true;
@@ -843,7 +846,21 @@
                     location.replace('edit_snippet/' + group_val + '/' + scenario_val);
                 }
             });
-        });
 
+            $('#interface-tree').jstree({
+                'core': {
+                    'themes': {
+                        'name': 'proton',
+                        'responsive': true
+                    },
+                'data': [
+                       { "id" : "ajson1", "parent" : "#", "text" : "Simple root node" },
+                       { "id" : "ajson2", "parent" : "#", "text" : "Root node 2" },
+                       { "id" : "ajson3", "parent" : "ajson2", "text" : "Child 1" },
+                       { "id" : "ajson4", "parent" : "ajson2", "text" : "Child 2" }
+                    ]
+                }
+            });
+        });
     </script>
 {% endblock %}

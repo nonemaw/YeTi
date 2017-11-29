@@ -8,7 +8,7 @@ import os
 import logging
 import json
 
-from . import global_vars
+from . import meta
 from bson import ObjectId
 from app.db import mongo_connect, client
 from app.models import Group, SubGroup
@@ -17,18 +17,18 @@ from app.models import Group, SubGroup
 class Fetcher:
     def __init__(self, username, password, mode='w', group_only=None):
         self.mode = mode
-        self.db = mongo_connect(client, global_vars.company)
+        self.db = mongo_connect(client, meta.company)
         self.USERNAME = username
         self.PASSWORD = password
         if isinstance(group_only, list):
             self.group_only = group_only  # only fetch/update designated groups
         else:
             self.group_only = None
-        self.BASE = f'https://{global_vars.company}.xplan.iress.com.au'
-        self.URL_LOGIN = f'https://{global_vars.company}.xplan.iress.com.au/home'
-        self.URL_LIST = f'https://{global_vars.company}.xplan.iress.com.au/ufield/list'
-        self.URL_WALKER = f'https://{global_vars.company}.xplan.iress.com.au/ufield/list_iframe?group=' + '{}'
-        self.URL_LOGOUT = f'https://{global_vars.company}.xplan.iress.com.au/home/logoff?'
+        self.BASE = f'https://{meta.company}.xplan.iress.com.au'
+        self.URL_LOGIN = f'https://{meta.company}.xplan.iress.com.au/home'
+        self.URL_LIST = f'https://{meta.company}.xplan.iress.com.au/ufield/list'
+        self.URL_WALKER = f'https://{meta.company}.xplan.iress.com.au/ufield/list_iframe?group=' + '{}'
+        self.URL_LOGOUT = f'https://{meta.company}.xplan.iress.com.au/home/logoff?'
 
     def run(self):
         this_path = os.path.dirname(os.path.realpath(__file__))
@@ -64,7 +64,7 @@ class Fetcher:
 
                 if re.search(r'permission_error', fields.text):
                     # login failed
-                    print('Currently there is another user using this XPLAN account.')
+                    raise Exception('Currently there is another user using this XPLAN account.')
 
                 else:
                     # start working
@@ -193,5 +193,5 @@ class Fetcher:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(json_directory, global_vars.company + '.json'), self.mode) as J:
+        with open(os.path.join(json_directory, meta.company + '.json'), self.mode) as J:
             json.dump(to_json, J)

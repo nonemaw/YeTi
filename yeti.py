@@ -9,7 +9,7 @@ from geventwebsocket.handler import WebSocketHandler
 from app import create_app
 from app.models import Role
 from common.fetcher import Fetcher
-from common import global_vars
+from common import meta
 from fuzzier.fuzzier import search
 
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
             groups = [group.strip() for group in groups]
         else:
             groups = None
-        global_vars.company = company
+        meta.company = company
         Fetcher(username, password, group_only=groups).run()
     elif args.test:
         pattern = input('Input test pattern: ')

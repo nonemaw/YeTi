@@ -15,7 +15,7 @@ from app.models import User, UserUtl
 from common.general import send_email, verify_password
 from app.decorators import admin_required
 
-from common import global_vars
+from common import meta
 from common.crypto import AESCipher
 
 
@@ -42,11 +42,11 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user_dict = db.User.find_one({'email': form.email.data})
-        global_vars.company = form.company.data
-        # global_vars.crypto = AESCipher()
-        # global_vars.company_username = form.company_username.data
-        # global_vars.company_password = global_vars.crypto.encrypt(form.company_password.data)
-        # print(global_vars.company_password)
+        meta.company = form.company.data
+        # meta.crypto = AESCipher()
+        # meta.company_username = form.company_username.data
+        # meta.company_password = meta.crypto.encrypt(form.company_password.data)
+        # print(meta.company_password)
         if user_dict is not None and verify_password(user_dict.get('password'), form.password.data):
             # convert 'user_dict' to UserLogin(UserMixin) as 'current_user'
             user = UserUtl(user_dict)

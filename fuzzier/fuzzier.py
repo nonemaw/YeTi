@@ -1,7 +1,7 @@
 
 import os
 import re
-from common import global_vars
+from common import meta
 from fuzzier.jison import Jison
 
 
@@ -59,7 +59,7 @@ def search(pattern):
     result = []
 
     # current only one line, TODO: update parser for multi-line JSON
-    with open(os.path.join(this_path, 'json', global_vars.company + '.json')) as F:
+    with open(os.path.join(this_path, 'json', meta.company + '.json')) as F:
         for line in F:
             result = Jison(line, pattern=pattern, ratio_method=ratio, result_length=7).parse()
     return result
