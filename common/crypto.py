@@ -11,7 +11,7 @@ class AESCipher:
         self.bs = 32
         self.key = hashlib.sha256(Config.MASTER_KEY.encode()).digest()
 
-    def encrypt(self, raw):
+    def encrypt(self, raw:str):
         raw = self.pad(raw).encode()
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
@@ -23,7 +23,7 @@ class AESCipher:
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         return self.unpad(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
 
-    def pad(self, s):
+    def pad(self, s:str) -> str:
         return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
 
     @staticmethod

@@ -7,6 +7,7 @@
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='jstree/themes/proton/style.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
 
 {% block wide_content %}
@@ -36,7 +37,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title" id="myModalLabel" style="color: #ff8000"><b>Interface</b></h4>
+                            <h4 class="modal-title" id="myModalLabel" style="color: #ff8000"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company.upper() }} )</small></h4>
                         </div>
                         <div class="modal-body">
                             <div class="row">
@@ -203,32 +204,34 @@
                 </div>
                 <div class="col-md-1">
                     <div class="row">
-                        <button class="btn btn-warning" id="judge">Judge</button>
+                        <button class="btn btn-warning" id="judge" style="width: 85%">Judge</button>
                         <br>
                         <br>
                     </div>
                     <div class="row">
                         <p><b>Format Code</b></p>
                         <div class="btn-group-vertical" style="width: 85%">
+                            <button id="format" type="button" class="btn btn-primary">Format</button>
                             <button id="indent" type="button" class="btn btn-info">Indent</button>
                             <button id="dedent" type="button" class="btn btn-success">Dedent</button>
                         </div>
                     </div>
                     <br>
                     <div class="row">
-                        <p><b>Change Entity</b></p>
-                        <div class="btn-group-vertical">
+                        <p><b>Entity</b></p>
+                        <div class="btn-group-vertical" style="width: 85%">
                             <button id="client" type="button" class="btn btn-default">Client</button>
                             <button id="partner" type="button" class="btn btn-default">Partner</button>
                             <button id="partner" type="button" class="btn btn-default">Joint</button>
                             <button id="trust" type="button" class="btn btn-default">Trust</button>
                             <button id="superfund" type="button" class="btn btn-default">Superfund</button>
                             <button id="company" type="button" class="btn btn-default">Company</button>
+                            <button id="partnership" type="button" class="btn btn-default">Partnership</button>
                         </div>
                     </div>
                     <div class="row">
                         <br>
-                        <button class="btn btn-danger" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm">Setting</button>
+                        <button class="btn btn-danger" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="width: 85%">Setting</button>
                     </div>
 
                     <!-- setting panel -->

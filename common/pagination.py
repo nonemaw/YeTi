@@ -14,7 +14,7 @@ class Pagination:
     """
     the base Pagination class
     """
-    def __init__(self, current_page, per_page=5, total_count=0):
+    def __init__(self, current_page:int, per_page:int=5, total_count:int=0):
         self.current_page = current_page
         self.per_page = per_page
         self.total_count = total_count
@@ -33,8 +33,8 @@ class Pagination:
     def has_next(self):
         return self.current_page < self.pages
 
-    def iter_pages(self, left_edge=2, left_current=2, right_current=5,
-                   right_edge=2):
+    def iter_pages(self, left_edge:int=2, left_current:int=2,
+                   right_current:int=5, right_edge:int=2):
         last = 0
         for num in range(1, self.pages + 1):
             if num <= left_edge or \
@@ -67,7 +67,7 @@ class Pagination:
 
 
 class PaginationSnippet(Pagination):
-    def __init__(self, current_page, per_page=15):
+    def __init__(self, current_page:int, per_page:int=15):
         super(PaginationSnippet, self).__init__(current_page, per_page=per_page)
         self.snippets = db.SnippetScenario.find({}).sort([('name', 1)])
         self.total_count = self.snippets.count()

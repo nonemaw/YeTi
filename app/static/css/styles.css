@@ -158,7 +158,7 @@ div.crawler-button {
     overflow-y: scroll;
     height: 100%;
     font-size: 15px;
-    color: #b9b9b9;
+    color: #e9e3d0;
 }
 .table-scroll tr {
     width: 100%;
@@ -171,7 +171,7 @@ div.crawler-button {
 }
 .dropdown-menu li a,
 .dropdown-toggle span{
-    color: #b9b9b9;
+    color: #e9e3d0;
     font-size: 15px;
 }
 
@@ -203,4 +203,9 @@ div.crawler-button {
 {
 	background-color: #09394d;
 	border: 2px solid #3d5964;
+}
+
+.jstree-anchor, .jstree-anchor:link, .jstree-anchor:visited, .jstree-anchor:hover, .jstree-anchor:active {
+    color: #e9e3d0;
+    font-family: Arial;
 }

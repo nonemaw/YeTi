@@ -23,16 +23,16 @@ def get_company_list():
     return company_list
 
 
-def verify_password(password_hash, password):
+def verify_password(password_hash:str, password:str):
     return check_password_hash(password_hash, password)
 
 
-def send_async_email(app, msg):
+def send_async_email(app, msg:str):
     with app.app_context():
         mail.send(msg)
 
 
-def send_email(to, subject, template, **kwargs):
+def send_email(to:str, subject:str, template:str, **kwargs) -> Thread:
     """
     using thread to send asyn email in background, non-blocking client
     """
@@ -46,7 +46,7 @@ def send_email(to, subject, template, **kwargs):
     return thr
 
 
-def gravatar(avatar_hash, size=100, default='identicon', rating='g'):
+def gravatar(avatar_hash:str, size:int=100, default:str='identicon', rating:str='g') -> str:
     if request.is_secure:
         url = 'https://secure.gravatar.com/avatar'
     else:
@@ -55,12 +55,12 @@ def gravatar(avatar_hash, size=100, default='identicon', rating='g'):
                                               d=default, r=rating)
 
 
-def clean_tags(body):
+def clean_tags(body:str) -> str:
     allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
                     'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1',
                     'h2', 'h3', 'p']
     return bleach.linkify(bleach.clean(markdown(body, output_format='html'),
                                             tags=allowed_tags, strip=True))
 
-def random_word(size=8, chars=string.ascii_uppercase + string.digits):
+def random_word(size:int=8, chars:str=string.ascii_uppercase+string.digits) -> str:
     return ''.join(random.choice(chars) for _ in range(size))

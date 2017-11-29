@@ -15,15 +15,18 @@ from app.models import Group, SubGroup
 
 
 class Fetcher:
-    def __init__(self, username, password, mode='w', group_only=None):
+    def __init__(self, username:str, password:str, mode:str='w', group_only:str=None):
         self.mode = mode
         self.db = mongo_connect(client, meta.company)
         self.USERNAME = username
         self.PASSWORD = password
+
+        # only fetch/update designated groups
         if isinstance(group_only, list):
-            self.group_only = group_only  # only fetch/update designated groups
+            self.group_only = group_only
         else:
             self.group_only = None
+
         self.BASE = f'https://{meta.company}.xplan.iress.com.au'
         self.URL_LOGIN = f'https://{meta.company}.xplan.iress.com.au/home'
         self.URL_LIST = f'https://{meta.company}.xplan.iress.com.au/ufield/list'
@@ -31,6 +34,12 @@ class Fetcher:
         self.URL_LOGOUT = f'https://{meta.company}.xplan.iress.com.au/home/logoff?'
 
     def run(self):
+        """
+        code is ugly, but the html content is a little bit complex and parsers
+        like beautifulsoup are hard to manipulate them because I am not very
+        sure about how some of the functions work, therefore regex is mainly
+        used here
+        """
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
         log_directory = os.path.join(this_path, 'log')
@@ -128,6 +137,7 @@ class Fetcher:
                                                 to_json[group_var] = [{former_sub_group: variables_to_json}]
                                             former_sub_group_variables = []
                                             variables_to_json = []
+
                                         former_sub_group_id = SubGroup(sub_group).new()
                                         former_sub_group = sub_group
                                         sub_group_list.append(former_sub_group_id)
@@ -165,9 +175,9 @@ class Fetcher:
                                             multi[index] = [next_item[0], choice_text]
 
                                         if var_type == 'Multi':
-                                            var_type = 'Multiple Choice / Checkboxes (List of Objects)'
+                                            var_type = 'Multiple Choice / Checkboxes (List)'
                                         elif var_type == 'Choice':
-                                            var_type = 'Single Choice (Object)'
+                                            var_type = 'Single Choice (String)'
                                     else:
                                         multi = None
 
@@ -181,13 +191,15 @@ class Fetcher:
                             else:
                                 to_json[group_var] = [{former_sub_group: variables_to_json}]
 
+                        # endtry
                         except Exception as e:
                             logger.warning('Error message: ' + str(e))
                             continue
-                    # for each group loop finished
+
+                    # endfor
                     print('\nDone!')
 
-                # logout
+                # endif, logout
                 session.get(self.URL_LOGOUT)
             except KeyboardInterrupt:
                 logger.info('Received keyboard interruption, logging out ...')

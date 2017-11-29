@@ -9,8 +9,8 @@ from .forms import EditProfileForm, EditProfileAdminForm
 from app.db import mongo_connect, client
 from app.models import UserUtl, Snippet
 from app.decorators import admin_required
-from common.general import random_word
 from common.pagination import PaginationSnippet
+from common import meta
 
 
 db = mongo_connect(client, 'ytml')
@@ -24,7 +24,7 @@ def test():
 @main.route('/', methods=['GET', 'POST'])
 def index():
     if current_user.is_authenticated:
-        return render_template('index.html')
+        return render_template('index.html', company=meta.company)
     else:
         return redirect(url_for('auth.login'))
 
@@ -169,15 +169,15 @@ def edit_snippet(group, scenario):
                     # if scenario name changed, check new scenario name conflict
                     for id in new_scenario_id_list:
                         if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == new_scenario:
-                            new_scenario += ' - ' + random_word()
-                            flash('A naming conflict occurs to Scenario\'s name in current Group. Current Scenario has been renamed by a random suffix.', category='danger')
+                            new_scenario += '_COPY'
+                            flash('A naming conflict occurs to Scenario\'s name in current Group. Current Scenario has been renamed by a suffix.', category='danger')
                             break
                 else:
                     # if scenario name unchanged, check old scenario name conflict
                     for id in new_scenario_id_list:
                         if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == old_scenario:
-                            new_scenario = old_scenario + ' - ' + random_word()
-                            flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a random suffix.', category='danger')
+                            new_scenario = old_scenario + '_COPY'
+                            flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a suffix.', category='danger')
                             break
 
                 # move old scenario id to new group, update group_id, update scenario's group name
@@ -199,8 +199,8 @@ def edit_snippet(group, scenario):
             scenario_id_list = db.SnippetGroup.find_one({'_id': ObjectId(group_id)}).get('scenarios')
             for id in scenario_id_list:
                 if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == new_scenario:
-                    new_scenario += ' - ' + random_word()
-                    flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a random suffix.', category='danger')
+                    new_scenario += '_COPY'
+                    flash('A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a suffix.', category='danger')
                     break
             db.SnippetScenario.update_one({'_id': ObjectId(old_scenario_id)}, {'$set': {'name': new_scenario}})
 
