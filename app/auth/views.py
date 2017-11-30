@@ -15,7 +15,7 @@ from app.models import User, UserUtl
 from common.general import send_email, verify_password
 from app.decorators import admin_required
 
-from common import meta
+from common.meta import Meta
 from common.crypto import AESCipher
 
 
@@ -42,7 +42,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user_dict = db.User.find_one({'email': form.email.data})
-        meta.company = form.company.data
+        Meta.company = form.company.data
         # meta.crypto = AESCipher()
         # meta.company_username = form.company_username.data
         # meta.company_password = meta.crypto.encrypt(form.company_password.data)

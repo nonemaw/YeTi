@@ -1,6 +1,6 @@
 
 import json
-from flask import render_template, redirect, url_for, request, abort, flash
+from flask import render_template, redirect, url_for, request, abort, flash, jsonify
 from flask_login import current_user, login_required
 from bson import ObjectId
 
@@ -10,7 +10,8 @@ from app.db import mongo_connect, client
 from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from common.pagination import PaginationSnippet
-from common import meta
+from common.meta import Meta
+from common.interface_fetcher import initialize_interface
 
 
 db = mongo_connect(client, 'ytml')
@@ -24,7 +25,7 @@ def test():
 @main.route('/', methods=['GET', 'POST'])
 def index():
     if current_user.is_authenticated:
-        return render_template('index.html', company=meta.company)
+        return render_template('index.html', company=Meta.company)
     else:
         return redirect(url_for('auth.login'))
 
@@ -262,3 +263,45 @@ def acquire_snippet_scenario(_id):
         return json.dumps({'scenario': result}), 200
     except:
         return json.dumps({'scenario': []}), 500
+
+
+@login_required
+@main.route('/initialize_interface', methods=['GET', 'POST'])
+def _initialize_interface():
+    task = initialize_interface.delay()
+    return jsonify({}), 202, {'streamer_URL': url_for('main.initialize_interface_streamer', task_id=task.id)}
+
+
+@login_required
+@main.route('/initialize_interface_streamer/<task_id>')
+def initialize_interface_streamer(task_id):
+    task = initialize_interface.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        # task is running
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            # task finished, get menu data
+            response['result'] = task.info.get('result')
+    else:
+        # task failed
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info)  # this is the exception raised
+        }
+    return jsonify(response)
+
+

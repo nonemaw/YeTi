@@ -9,7 +9,7 @@ from geventwebsocket.handler import WebSocketHandler
 from app import create_app
 from app.models import Role
 from common.fetcher import Fetcher
-from common import meta
+from common.meta import Meta
 from fuzzier.fuzzier import search
 
 
@@ -29,6 +29,7 @@ if __name__ == '__main__':
     yeti.debug = True
     if args.debug:
         yeti.run(debug=True)
+
     elif args.fetcher:
         company, username, password = input('Please input company, username and password: ').split(' ')
         groups = input('Please input groups (optional): ')
@@ -37,11 +38,14 @@ if __name__ == '__main__':
             groups = [group.strip() for group in groups]
         else:
             groups = None
-        meta.company = company
+
+        Meta.company = company
         Fetcher(username, password, group_only=groups).run()
+
     elif args.test:
         pattern = input('Input test pattern: ')
         search(pattern=pattern)
+
     else:
         http_server = WSGIServer((args.host, args.port), yeti, log=None,
                                  handler_class=WebSocketHandler)

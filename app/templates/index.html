@@ -12,6 +12,7 @@
 
 {% block wide_content %}
     <div class="row" style="height: 92vh">
+    <div id="progress"></div>
         <!-- left panel column -->
         <div class="col-md-4" style="height: 99%">
 
@@ -334,9 +335,13 @@
 {% endblock %}
 
 {% block page_script %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='jstree/jstree.min.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/index/search_bar.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/index/initialize_group_subgroup_variable.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/index/initialize_code_snippet.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var save_session = true;
         var show_invisibles = false;
@@ -504,224 +509,6 @@
                 }
             });
 
-            // left panel
-            // search bar
-            var local_search_cache = {};
-            $('#search-button').click(function() {
-                $('#variable-search-table').css('display', '');
-                $('#variable-search-table-head').css('display', '');
-                $('#variable-selector-table').css('display', 'none');
-                var variable_table_search = $('#variable-search-table');
-                variable_table_search.empty();
-                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;color:#8DB9CB">Searching ...</td></tr>');
-                var pattern = $('#search-field').val();
-                if (pattern) {
-                    $.ajax({
-                        type: 'GET',
-                        url: '/code/acquire_search/' + pattern,
-                        dataType: 'json',
-                        success: function (data, status, request) {
-                            var search_result = data.search_result;
-                            if (search_result.length == 0) {
-                                variable_table_search.empty();
-                                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;color:#8DB9CB">(No Search Result)</td></tr>');
-                            }
-                            else {
-                                variable_table_search.empty();
-                                local_search_cache = {};
-                                var id = 0;
-                                for (obj in search_result) {
-                                    ++id;
-                                    var group_var = search_result[obj][0];
-                                    var group_name = search_result[obj][1];
-                                    var subgroup_id = search_result[obj][2];
-                                    var subgroup = search_result[obj][3];
-                                    var var_var = search_result[obj][4];
-                                    var var_name = search_result[obj][5];
-                                    variable_table_search.append('<tr class="x" id="search-result' + String(id) + '"><td class="col-md-3" style="font-family:Arial;font-size:15px">' + group_name + '</td><td class="col-md-3" style="font-family:Arial;font-size:15px">' + subgroup + '</td><td class="col-md-6" style="font-family:Arial;color:#8DB9CB">' + var_name + '</td></tr>');
-                                    local_search_cache[id] = [group_var, subgroup_id, var_var]
-                                }
-                            }
-
-                        },
-                        error: function () {
-                            alert('Unexpected error in searching context');
-                        }
-                    });
-                }
-            });
-
-            // click on search result
-            $('#variable-search-table').on('click','.x',function(event){
-                // get table's row id, replace all leading non-digits with nothing
-                var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
-                var subgroup_id = local_search_cache[result_row_id][1];
-                var var_var = local_search_cache[result_row_id][2];
-                sent_info = {
-                    subgroup_id : subgroup_id,
-                    var_var : var_var
-                };
-                $.ajax({
-                    contentType: "application/json",
-                    data: JSON.stringify(sent_info),
-                    type: 'POST',
-                    url: '/code/acquire_search_result',
-                    dataType: 'json',
-                    success: function(data, status, request) {
-                        var variable = data.variable;
-                        $('#variable-search-table').css('display', 'none');
-                        $('#variable-search-table-head').css('display', 'none');
-                        $('#variable-selector-table').css('display', '');
-                        $('#var-variable').text(var_var);
-                        $('#var-usage').text(variable[0]);
-                        $('#var-type').text(variable[1]);
-                        var multi_choice_table = $('#multi-choice-table');
-                        multi_choice_table.empty();
-                        if (variable[2] && (Object.keys(variable[2]).length)) {
-                            $('#choice-value-title').text('Value');
-                            $('#choice-text-title').text('Text');
-                            for (index in variable[2]) {
-                                multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(variable[2][index][0]) + '</td><td class="col-md-7">' + variable[2][index][1] + '</td></tr>');
-                            }
-                        }
-                        else {
-                            multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
-                        }
-                    },
-                    error: function() {
-                        alert('Unexpected error in sending code text');
-                    }
-                });
-            });
-
-            /* when page is loaded AJAX send GET to a route requesting a full list of Groups,
-               and in which 'Entity' is selected by default, loaded at the very beginning
-            */
-            // group - subgroup - variable
-            // initialize the group selector at very beginning
-            var local_var_cache = {};
-            $.ajax({
-                type: 'GET',
-                url: '/code/acquire_group',
-                dataType: 'json',
-                success: function(data, status, request) {
-                    var groups = data.group;
-                    var group_selector = $('#group-selector');
-                    var flag = 1;
-                    for (obj in groups) {
-                        // loop in each object pair ({key: value}) from JSON
-                        for (key in groups[obj]) {
-                            // loop in key - value pair of each object
-                            var group_var = key;
-                            var group_name = groups[obj][key];
-                            if (flag) {
-                                group_selector.append('<option value="' + group_var + '" selected="selected">' + group_name + '</option>');
-                                flag = 0;
-                            }
-                            else {
-                                group_selector.append('<option value="' + group_var + '">' + group_name + '</option>');
-                            }
-                        }
-                    }
-                    group_selector.selectpicker('refresh');
-                },
-                error: function() {
-                    alert('Unexpected error in group selector');
-                }
-            });
-
-            function variable_initialization(subgroup_id, local_var_cache) {
-                $.ajax({
-                    type: 'GET',
-                    url: '/code/acquire_variable/' + subgroup_id,
-                    dataType: 'json',
-                    success: function(data, status, request) {
-                        var variables = data.variable;
-                        var variable_selector = $('#variable-selector');
-                        variable_selector.empty();
-                        var flag = 1;
-                        if (typeof variables[0] === 'undefined') {
-                            $('#variable-selector-table').css('display', '');
-                            $('#var-variable').text('/');
-                            $('#var-usage').text('/');
-                            $('#var-type').text('/');
-                        }
-                        for (obj in variables) {
-                            for (key in variables[obj]) {
-                                var variable_var = key;
-                                var variable_detail = variables[obj][key];
-                                local_var_cache[variable_var] = [variable_detail[1], variable_detail[2], variable_detail[3]];
-                                // variable_detail == ["Variable Name", "$entity.usage", "Type", "Multi (null or list)"]
-                                if (flag) {
-                                    variable_selector.append('<option value="' + variable_var + '" selected="selected">' + variable_detail[0] + '</option>');
-                                    $('#variable-search-table').css('display', 'none');
-                                    $('#variable-search-table-head').css('display', 'none');
-                                    $('#variable-selector-table').css('display', '');
-                                    $('#var-variable').text(variable_var);
-                                    $('#var-usage').text(variable_detail[1]);
-                                    $('#var-type').text(variable_detail[2]);
-                                    var multi_choice_table = $('#multi-choice-table');
-                                    multi_choice_table.empty();
-                                    if (variable_detail[3] && (Object.keys(variable_detail[3]).length)) {
-                                        $('#choice-value-title').text('Value');
-                                        $('#choice-text-title').text('Text');
-                                        for (index in variable_detail[3]) {
-                                            multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-7">' + variable_detail[3][index][1] + '</td></tr>');
-                                        }
-                                    }
-                                    else {
-                                        multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
-                                    }
-                                    flag = 0;
-                                }
-                                else {
-                                    variable_selector.append('<option value="' + variable_var + '">' + variable_detail[0] + '</option>');
-                                }
-                            }
-                        }
-                        variable_selector.selectpicker('refresh');
-                    },
-                    error: function() {
-                        alert('Unexpected error in variable selector');
-                    }
-                });
-            }
-
-            function subgroup_initialization(group_var) {
-                $.ajax({
-                    type: 'GET',
-                    url: '/code/acquire_subgroup/' + group_var,
-                    dataType: 'json',
-                    success: function(data, status, request) {
-                        var subgroups = data.subgroup;
-                        var subgroup_selector = $('#subgroup-selector');
-                        var variable_selector = $('#variable-selector');
-                        subgroup_selector.empty();
-                        variable_selector.empty();
-                        var flag = 1;
-                        for (obj in subgroups) {
-                            for (key in subgroups[obj]) {
-                                var subgroup_id = key;
-                                var subgroup_name = subgroups[obj][key];
-                                if (flag) {
-                                    subgroup_selector.append('<option value="' + subgroup_id + '" selected="selected">' + subgroup_name + '</option>');
-                                    variable_initialization(subgroup_id, local_var_cache);
-                                    flag = 0
-                                }
-                                else {
-                                    subgroup_selector.append('<option value="' + subgroup_id + '">' + subgroup_name + '</option>');
-                                }
-                            }
-                        }
-                        subgroup_selector.selectpicker('refresh');
-                        variable_selector.selectpicker('refresh');
-                    },
-                    error: function() {
-                        alert('Unexpected error in subgroup selector');
-                    }
-                });
-            }
-
             // display subgroup when select a group
             $('#group-selector').on('change', function(){
                 $('#subgroup-selector').prop('disabled', false);
@@ -756,76 +543,7 @@
                     multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
                 }
             });
-
-            // code snippet group - snippet scenario
-            // initialize the snippet dropdown window
-            var local_scenario_cache = {};
-            $.ajax({
-                type: 'GET',
-                url: '/acquire_snippet_group',
-                dataType: 'json',
-                success: function(data, status, request) {
-                    var groups = data.group;
-                    var snippet_group_selector = $('#snippet-group-selector');
-                    var flag = 1;
-                    for (obj in groups) {
-                        // loop in each object pair ({id: group}) from JSON
-                        for (key in groups[obj]) {
-                            // loop in key - value pair of each object
-                            var group_id = key;
-                            var group_name = groups[obj][key];
-                            if (flag) {
-                                snippet_group_selector.append('<option value="/" selected="selected">/</option>');
-                                snippet_group_selector.append('<option value="' + group_id + '">' + group_name + '</option>');
-                                flag = 0;
-                            }
-                            else {
-                                snippet_group_selector.append('<option value="' + group_id + '">' + group_name + '</option>');
-                            }
-                        }
-                    }
-                    snippet_group_selector.selectpicker('refresh');
-                },
-                error: function() {
-                    alert('Unexpected error in snippet group selector');
-                }
-            });
-
-            function snippet_scenario_initialization(group_id) {
-                local_scenario_cache = {};
-                $.ajax({
-                    type: 'GET',
-                    url: '/acquire_snippet_scenario/' + group_id,
-                    dataType: 'json',
-                    success: function(data, status, request) {
-                        var scenarios = data.scenario;
-                        var snippet_scenario_selector = $('#snippet-scenario-selector');
-                        snippet_scenario_selector.empty();
-                        var flag = 1;
-                        for (obj in scenarios) {
-                            for (key in scenarios[obj]) {
-                                console.log(key)
-                                var scenario_id = key;
-                                var scenario_detail = scenarios[obj][key];
-                                local_scenario_cache[scenario_id] = scenario_detail[1];
-                                if (flag) {
-                                    snippet_scenario_selector.append('<option value="' + scenario_id + '">' + scenario_detail[0] + '</option>');
-                                    snippet_section.setValue(scenario_detail[1]);
-                                    flag = 0
-                                }
-                                else {
-                                    snippet_scenario_selector.append('<option value="' + scenario_id + '">' + scenario_detail[0] + '</option>');
-                                }
-                            }
-                        }
-                        snippet_scenario_selector.selectpicker('refresh');
-                    },
-                    error: function() {
-                        alert('Unexpected error in subgroup selector');
-                    }
-                });
-            }
-
+            // snippet group is selected
             $('#snippet-group-selector').on('change', function() {
                 var group_id = $('#snippet-group-selector option:selected').val();
                 if (group_id != '/') {
@@ -839,9 +557,11 @@
                     snippet_section.setValue('');
                 }
             });
+            // snippet scenario is selected
             $('#snippet-scenario-selector').on('change', function() {
                 snippet_section.setValue(local_scenario_cache[$('#snippet-scenario-selector').val()]);
             });
+            // edit snippet button is clicked
             $('#edit-snippet').on('click', function() {
                 var group_val =$('#snippet-group-selector').val();
                 var scenario_val = $('#snippet-scenario-selector').val();
@@ -850,20 +570,122 @@
                 }
             });
 
-            $('#interface-tree').jstree({
-                'core': {
-                    'themes': {
-                        'name': 'proton',
-                        'responsive': true
+            // initialize interface menu view
+            function initialize_interface(){
+                var div = $('<div></div>');
+                $('#progress').append(div);
+                var nanobar = new Nanobar({
+                    bg: '#CB661A',
+                    target: div[0].childNodes[0]
+                });
+                $.ajax({
+                    type: 'GET',
+                    url: '/initialize_interface',
+                    success: function(data, status, request) {
+                        status_url = request.getResponseHeader('streamer_URL');
+                        receive_stream(status_url, nanobar, div[0]);
                     },
-                'data': [
-                       { "id" : "ajson1", "parent" : "#", "text" : "Simple root node" },
-                       { "id" : "ajson2", "parent" : "#", "text" : "Root node 2" },
-                       { "id" : "ajson3", "parent" : "ajson2", "text" : "Child 1" },
-                       { "id" : "ajson4", "parent" : "ajson2", "text" : "Child 2" }
-                    ]
-                }
-            });
+                    error: function() {
+                        alert('Unexpected error in function initialize_interface()');
+                    }
+                });
+            }
+
+            function receive_stream(status_url, nanobar, status_div) {
+                $.getJSON(status_url, function(data){
+                    var percent = data['current'] * 100 / data['total'];
+                    nanobar.go(parseInt(percent));
+                    if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+                        // task finished, state is not 'PROGRESS', and a return from long_task() is received
+                        if ('result' in data) {
+                            // show result, remove bar, update menu
+                            if (data.result.error) {
+                                alert(data.error);
+                                $('#interface-tree').jstree({
+                                    'core': {
+                                        'themes': {
+                                            'name': 'proton',
+                                            'responsive': true
+                                        },
+                                        'data': [{'id': 'None', 'parent': '#', 'text': 'None'}]
+                                    }
+                                });
+                                $('#interface-tree').jstree(true).refresh();
+                            }
+                            else {
+                                $('#interface-tree').jstree({
+                                    'core': {
+                                        'themes': {
+                                            'name': 'proton',
+                                            'responsive': true
+                                        }
+                                    }
+                                });
+                                $('#interface-tree').jstree(true).settings.core.data = data.result.data;
+                                $('#interface-tree').jstree(true).refresh();
+                            }
+                        }
+                        else {
+                            // something unexpected happened
+                            $(status_div.childNodes[0]).text('Result not received, something went wrong.');
+                        }
+                    }
+                    else {
+                        setTimeout(function() {
+                            receive_stream(status_url, nanobar, status_div);
+                        }, 1000);
+                    }
+                });
+            }
+
+            initialize_interface();
+
+
+
+{#            $.ajax({#}
+{#                type: 'GET',#}
+{#                dataType: 'json',#}
+{#                url: '{{ url_for('main._initialize_interface') }}',#}
+{#                success: function(data) {#}
+{#                    if (data.error) {#}
+{#                        alert(data.error);#}
+{#                        $('#interface-tree').jstree({#}
+{#                            'core': {#}
+{#                                'themes': {#}
+{#                                    'name': 'proton',#}
+{#                                    'responsive': true#}
+{#                                },#}
+{#                                'data': [{'id': 'None', 'parent': '#', 'text': 'None'}]#}
+{#                            }#}
+{#                        });#}
+{#                        $('#interface-tree').jstree(true).refresh();#}
+{#                    }#}
+{#                    else {#}
+{#                        $('#interface-tree').jstree({#}
+{#                            'core': {#}
+{#                                'themes': {#}
+{#                                    'name': 'proton',#}
+{#                                    'responsive': true#}
+{#                                },#}
+{#                                'data': [{'id': 'None', 'parent': '#', 'text': 'None'}]#}
+{#                            }#}
+{#                        });#}
+{#                        $('#interface-tree').jstree(true).settings.core.data = data.data;#}
+{#                        $('#interface-tree').jstree(true).refresh();#}
+{#                    }#}
+{#                },#}
+{#                error: function() {#}
+{#                    alert('Unexpected error');#}
+{#                }#}
+{#            });#}
+
+
+
+
+
+
+
+
         });
     </script>
 {% endblock %}

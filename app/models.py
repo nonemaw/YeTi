@@ -8,11 +8,11 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from bson import ObjectId
 from app import login_manager
 from app.db import mongo_connect, client
-from common import meta
+from common.meta import Meta
 
 
 db = mongo_connect(client, 'ytml')
-db_c = mongo_connect(client, meta.company)
+db_c = mongo_connect(client, Meta.company)
 
 
 class Group:
