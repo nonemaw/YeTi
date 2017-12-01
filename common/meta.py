@@ -9,7 +9,7 @@ class Meta:
     """
     company = 'ytml'
     company_username = 'ytmladmin'
-    company_password = 'Passw0rdOCT'
+    company_password = ''
 
 
     """
