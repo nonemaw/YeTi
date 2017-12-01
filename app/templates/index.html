@@ -576,8 +576,14 @@
             initialize_interface();
 
             // click on interface menu
+            var selections = [];
             $('#interface-tree').on("select_node.jstree", function (e, data) {
-                initialize_interface(data.node.id);
+                var id = data.node.id;
+                var text = data.node.text;
+                if (!selections.includes(id)) {
+                    selections.push(id);
+                    initialize_interface(id, text);
+                }
             });
 
 

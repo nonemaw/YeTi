@@ -1,4 +1,4 @@
-function initialize_interface(id){
+function initialize_interface(id, text){
     var div = $('<div></div>');
     $('#progress').append(div);
     var nanobar = new Nanobar({
@@ -25,7 +25,7 @@ function initialize_interface(id){
     else {
         $.ajax({
             contentType: "application/json",
-            data: JSON.stringify({ id: id }),
+            data: JSON.stringify({ id: id, text: text }),
             type: 'POST',
             url: '/update_interface',
             success: function (data, status, request) {
@@ -72,7 +72,7 @@ function initialization_streamer(status_url, nanobar, status_div) {
         else {
             setTimeout(function() {
                 initialization_streamer(status_url, nanobar, status_div);
-            }, 1000);
+            }, 500);
         }
     });
 }
@@ -106,7 +106,7 @@ function update_streamer(status_url, nanobar, status_div, id){
         else {
             setTimeout(function() {
                 update_streamer(status_url, nanobar, status_div, id);
-            }, 1000);
+            }, 500);
         }
     });
 }

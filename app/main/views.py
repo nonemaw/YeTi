@@ -275,7 +275,7 @@ def _initialize_interface():
 @login_required
 @main.route('/update_interface', methods=['GET', 'POST'])
 def _update_interface():
-    task = update_interface.delay(_id=request.json.get('id'))
+    task = update_interface.delay(_id=request.json.get('id'), text=request.json.get('text'))
     return jsonify({}), 202, {'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
 
 

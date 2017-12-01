@@ -8,9 +8,9 @@ from common.meta import Meta
 from selenium import webdriver
 from app import celery
 
-def login():
+def login(driver:str='phantomjs'):
     if not Meta.browser:
-        create_driver()
+        create_driver(driver)
     Meta.browser.get(f'https://{Meta.company}.xplan.iress.com.au/home')
     Meta.browser.find_element_by_id('userid').send_keys(Meta.company_username)
     Meta.browser.find_element_by_id('passwd').send_keys(Meta.company_password)
@@ -32,10 +32,12 @@ def quit_driver(browser):
     Meta.session_id = None
     Meta.executor_url = None
 
-def create_driver():
+def create_driver(driver:str='phantomjs'):
     if not Meta.session_id and not Meta.executor_url:
-        Meta.browser = webdriver.Chrome()
-        Meta.browser = Meta.browser
+        if driver == 'phantomjs':
+            Meta.browser = webdriver.PhantomJS(executable_path='common/phantomjs')
+        else:
+            Meta.browser = webdriver.Chrome(executable_path='common/chromedriver')
         Meta.session_id = Meta.browser.session_id
         Meta.executor_url = Meta.browser.command_executor._url
     elif Meta.session_id and Meta.executor_url:
@@ -61,7 +63,7 @@ def initialize_interface(self, number:int=99) -> dict:
                 get_menu(_id, number, menu)
 
     else:
-        login()
+        login('chromedriver')
         time.sleep(1)
         if test_login(menu):
             print('Going in, awaiting Interface page being loaded ...')
@@ -136,7 +138,7 @@ def get_menu(_id:int, number:int, menu:dict):
 
 
 @celery.task(bind=True)
-def update_interface(self, _id:str, number:int=99) -> dict:
+def update_interface(self, _id:str, text:str, number:int=30) -> dict:
     """
     case 1: a sub menu is expanded, return new list of menu
     case 2: a leaf, return content of panel data
@@ -145,6 +147,8 @@ def update_interface(self, _id:str, number:int=99) -> dict:
     Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
     time.sleep(1)
 
+    if text == 'Key Details' and re.findall('(client_[0-9]+\-[0-9]+)', _id):
+        number = 120
     for child in range(number):
         self.update_state(state='PROGRESS',
                           meta={'current': child + 1, 'total': number, 'status': 'working'})
