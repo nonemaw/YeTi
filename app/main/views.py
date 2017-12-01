@@ -11,7 +11,7 @@ from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from common.pagination import PaginationSnippet
 from common.meta import Meta
-from common.interface_fetcher import initialize_interface
+from common.interface_fetcher import initialize_interface, update_interface
 
 
 db = mongo_connect(client, 'ytml')
@@ -266,17 +266,25 @@ def acquire_snippet_scenario(_id):
 
 
 @login_required
-@main.route('/initialize_interface', methods=['GET', 'POST'])
+@main.route('/initialize_interface')
 def _initialize_interface():
     task = initialize_interface.delay()
-    return jsonify({}), 202, {'streamer_URL': url_for('main.initialize_interface_streamer', task_id=task.id)}
+    return jsonify({}), 202, {'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
 
 
 @login_required
-@main.route('/initialize_interface_streamer/<task_id>')
-def initialize_interface_streamer(task_id):
+@main.route('/update_interface', methods=['GET', 'POST'])
+def _update_interface():
+    task = update_interface.delay(_id=request.json.get('id'))
+    return jsonify({}), 202, {'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
+
+
+@login_required
+@main.route('/interface_streamer/<task_id>')
+def interface_streamer(task_id):
     task = initialize_interface.AsyncResult(task_id)
     if task.state == 'PENDING':
+        # task is pending
         response = {
             'state': task.state,
             'current': 0,
@@ -303,5 +311,3 @@ def initialize_interface_streamer(task_id):
             'status': str(task.info)  # this is the exception raised
         }
     return jsonify(response)
-
-

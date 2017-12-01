@@ -21,8 +21,8 @@ class Meta:
     """
     browser is used for fetch interface menu
     """
-    #browser = webdriver.PhantomJS(executable_path='./phantomjs')
-    browser = webdriver.Chrome()
-    session_id = browser.session_id
-    executor_url = browser.command_executor._url
+    # #browser = webdriver.PhantomJS(executable_path='./phantomjs')
+    browser = None
+    session_id = None
+    executor_url = None
     current_url = None

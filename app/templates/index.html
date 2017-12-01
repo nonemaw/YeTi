@@ -21,7 +21,7 @@
                 <div class="col-md-9">
                     <div class="input-group">
                         <input id="search-field" type="text" class="form-control" placeholder="Need something?">
-                        <span class="input-group-btn"><button id="search-button" class="btn btn-success" type="button">Search</button></span>
+                        <span class="input-group-btn"><button id="search-button" class="btn btn-info" type="button">Search</button></span>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -44,13 +44,13 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div id="interface-tree">
+                                        <ul class="jstree-container-ul jstree-children">
+                                            <li role="treeitem" class="jstree-node jstree-leaf">
+                                                <i class="jstree-icon jstree-ocl"></i>
+                                                <a class="jstree-anchor" href="#"><i class="jstree-icon jstree-themeicon"></i>Loading ...</a>
+                                            </li>
+                                        </ul>
                                     </div>
-
-
-
-
-
-
                                 </div>
                                 <div class="col-md-8">
                                     <p>fdsafsdf</p>
@@ -212,8 +212,8 @@
                     <div class="row">
                         <p><b>Format Code</b></p>
                         <div class="btn-group-vertical" style="width: 85%">
-                            <button id="format" type="button" class="btn btn-primary">Format</button>
-                            <button id="indent" type="button" class="btn btn-info">Indent</button>
+                            <button id="format" type="button" class="btn btn-success">Format</button>
+                            <button id="indent" type="button" class="btn btn-success">Indent</button>
                             <button id="dedent" type="button" class="btn btn-success">Dedent</button>
                         </div>
                     </div>
@@ -232,7 +232,7 @@
                     </div>
                     <div class="row">
                         <br>
-                        <button class="btn btn-danger" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="width: 85%">Setting</button>
+                        <button class="btn btn-danger" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="width: 85%">Settings</button>
                     </div>
 
                     <!-- setting panel -->
@@ -342,6 +342,8 @@
     <script src="{{ url_for('static', filename='js/index/search_bar.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/index/initialize_group_subgroup_variable.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/index/initialize_code_snippet.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/index/initialize_interface.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/index/update_interface.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var save_session = true;
         var show_invisibles = false;
@@ -571,113 +573,12 @@
             });
 
             // initialize interface menu view
-            function initialize_interface(){
-                var div = $('<div></div>');
-                $('#progress').append(div);
-                var nanobar = new Nanobar({
-                    bg: '#CB661A',
-                    target: div[0].childNodes[0]
-                });
-                $.ajax({
-                    type: 'GET',
-                    url: '/initialize_interface',
-                    success: function(data, status, request) {
-                        status_url = request.getResponseHeader('streamer_URL');
-                        receive_stream(status_url, nanobar, div[0]);
-                    },
-                    error: function() {
-                        alert('Unexpected error in function initialize_interface()');
-                    }
-                });
-            }
-
-            function receive_stream(status_url, nanobar, status_div) {
-                $.getJSON(status_url, function(data){
-                    var percent = data['current'] * 100 / data['total'];
-                    nanobar.go(parseInt(percent));
-                    if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
-                        // task finished, state is not 'PROGRESS', and a return from long_task() is received
-                        if ('result' in data) {
-                            // show result, remove bar, update menu
-                            if (data.result.error) {
-                                alert(data.error);
-                                $('#interface-tree').jstree({
-                                    'core': {
-                                        'themes': {
-                                            'name': 'proton',
-                                            'responsive': true
-                                        },
-                                        'data': [{'id': 'None', 'parent': '#', 'text': 'None'}]
-                                    }
-                                });
-                                $('#interface-tree').jstree(true).refresh();
-                            }
-                            else {
-                                $('#interface-tree').jstree({
-                                    'core': {
-                                        'themes': {
-                                            'name': 'proton',
-                                            'responsive': true
-                                        }
-                                    }
-                                });
-                                $('#interface-tree').jstree(true).settings.core.data = data.result.data;
-                                $('#interface-tree').jstree(true).refresh();
-                            }
-                        }
-                        else {
-                            // something unexpected happened
-                            $(status_div.childNodes[0]).text('Result not received, something went wrong.');
-                        }
-                    }
-                    else {
-                        setTimeout(function() {
-                            receive_stream(status_url, nanobar, status_div);
-                        }, 1000);
-                    }
-                });
-            }
-
             initialize_interface();
 
-
-
-{#            $.ajax({#}
-{#                type: 'GET',#}
-{#                dataType: 'json',#}
-{#                url: '{{ url_for('main._initialize_interface') }}',#}
-{#                success: function(data) {#}
-{#                    if (data.error) {#}
-{#                        alert(data.error);#}
-{#                        $('#interface-tree').jstree({#}
-{#                            'core': {#}
-{#                                'themes': {#}
-{#                                    'name': 'proton',#}
-{#                                    'responsive': true#}
-{#                                },#}
-{#                                'data': [{'id': 'None', 'parent': '#', 'text': 'None'}]#}
-{#                            }#}
-{#                        });#}
-{#                        $('#interface-tree').jstree(true).refresh();#}
-{#                    }#}
-{#                    else {#}
-{#                        $('#interface-tree').jstree({#}
-{#                            'core': {#}
-{#                                'themes': {#}
-{#                                    'name': 'proton',#}
-{#                                    'responsive': true#}
-{#                                },#}
-{#                                'data': [{'id': 'None', 'parent': '#', 'text': 'None'}]#}
-{#                            }#}
-{#                        });#}
-{#                        $('#interface-tree').jstree(true).settings.core.data = data.data;#}
-{#                        $('#interface-tree').jstree(true).refresh();#}
-{#                    }#}
-{#                },#}
-{#                error: function() {#}
-{#                    alert('Unexpected error');#}
-{#                }#}
-{#            });#}
+            // click on interface menu
+            $('#interface-tree').on("select_node.jstree", function (e, data) {
+                initialize_interface(data.node.id);
+            });
 
 
 
