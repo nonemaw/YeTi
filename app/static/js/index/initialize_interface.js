@@ -52,13 +52,13 @@ function initialization_streamer(status_url, nanobar, status_div) {
                 if (data.result.error) {
                     alert(data.result.error);
                     $('#interface-tree').jstree({
-                        'core': {'themes': { 'name': 'proton', 'responsive': true }, 'data': [{ 'id': 'Error', 'parent': '#', 'text': 'Error' }]}
+                        'core': {'themes': { 'name': 'proton', 'responsive': true }, "check_callback" : true, 'data': [{ 'id': 'Error', 'parent': '#', 'text': 'Error' }]}
                     });
                     $('#interface-tree').jstree(true).refresh();
                 }
                 else {
                     $('#interface-tree').jstree({
-                        'core': { 'themes': { 'name': 'proton', 'responsive': true }}
+                        'core': { 'themes': { 'name': 'proton', 'responsive': true }, "check_callback" : true}
                     });
                     $('#interface-tree').jstree(true).settings.core.data = data.result.data;
                     $('#interface-tree').jstree(true).refresh();
@@ -72,7 +72,7 @@ function initialization_streamer(status_url, nanobar, status_div) {
         else {
             setTimeout(function() {
                 initialization_streamer(status_url, nanobar, status_div);
-            }, 500);
+            }, 666);
         }
     });
 }
@@ -88,14 +88,18 @@ function update_streamer(status_url, nanobar, status_div, id){
                 // show result, remove bar, update menu
                 if (data.result.error) {
                     alert(data.result.error);
-                    $('#interface-tree').jstree().create_node(id, { "id" : "error", "text" : "Error" }, "last");
-                    $('#interface-tree').jstree(true).refresh();
+                    $('#interface-tree').jstree("create_node", id, { id: 'error', text: 'Error' }, "last");
                 }
                 else {
+                    var menu_list = data.result.data;
+                    for (item in menu_list) {
+                        var node = { id: menu_list[item].id, text: menu_list[item].text };
 
-                    //$('#interface-tree').jstree().create_node(id, { "id" : "ajson5", "text" : "newly added" }, "last");
+                        console.warn(node);
+
+                        $('#interface-tree').jstree("create_node", id, node, "last");
+                    }
                     //$('#interface-tree').jstree(true).refresh();
-                    console.trace();
                 }
             }
             else {
@@ -106,7 +110,7 @@ function update_streamer(status_url, nanobar, status_div, id){
         else {
             setTimeout(function() {
                 update_streamer(status_url, nanobar, status_div, id);
-            }, 500);
+            }, 666);
         }
     });
 }

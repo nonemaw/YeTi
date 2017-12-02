@@ -1,4 +1,3 @@
-
 import hashlib
 from datetime import datetime
 from werkzeug.security import generate_password_hash
@@ -9,7 +8,6 @@ from bson import ObjectId
 from app import login_manager
 from app.db import mongo_connect, client
 from common.meta import Meta
-
 
 db = mongo_connect(client, 'ytml')
 db_c = mongo_connect(client, Meta.company)
@@ -60,14 +58,16 @@ class SubGroup:
         else:
             return str(legacy.get('_id'))
 
-    def update_doc(self, id, variables:list):
-        db_c.SubGroup.update_one({'_id': ObjectId(id)}, {'$set': {'variables': variables}})
+    def update_doc(self, id, variables: list):
+        db_c.SubGroup.update_one({'_id': ObjectId(id)},
+                                 {'$set': {'variables': variables}})
 
 
 class AnonymousUser(AnonymousUserMixin):
     """
     add permission check method to the default AnonymousUse (no login)
     """
+
     def can(self, permission):
         return False
 
@@ -81,7 +81,7 @@ class Permission:
 
 
 class Role:
-    def __init__(self, role:dict):
+    def __init__(self, role: dict):
         self.type = role.get('type')
         self.permission = role.get('permission')
         self.default = role.get('default')
@@ -118,6 +118,7 @@ class User:
     """
     a base class for constructing user object
     """
+
     def __init__(self, email, username, password, location):
         self.email = email
         self.username = username
@@ -130,8 +131,9 @@ class User:
             self.role = db.Role.find_one({'default': True}).get('type')
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = hashlib.md5(self.email.encode('utf-8') +
-                               str(datetime.utcnow()).encode('utf-8'))\
-                               .hexdigest()
+                                           str(datetime.utcnow()).encode(
+                                               'utf-8')) \
+                .hexdigest()
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -144,7 +146,7 @@ class User:
             'email': self.email,
             'username': self.username,
             'password': self.password,  # store hash result
-            'is_confirmed': True,       # FIXME: for test
+            'is_confirmed': True,  # FIXME: for test
             'role': self.role,
             'name': '',
             'location': self.location,
@@ -161,7 +163,8 @@ class UserUtl(UserMixin):
     a utility class based from UserMixin for Flask 'current_user', operating
     current user utilities on a global level
     """
-    def __init__(self, user:dict):
+
+    def __init__(self, user: dict):
         """
         role: set role from string value role type to Role object, for further
         operations
@@ -206,14 +209,14 @@ class UserUtl(UserMixin):
 
     def can(self, permission):
         return self.role is not None and (self.role.permission & permission) \
-                                          == permission
+                                         == permission
 
     def is_administrator(self):
         return self.can(Permission.ADMIN)
 
     def ping(self):
         db.User.update_one({'email': self.email},
-                               {'$set': {'last_login': datetime.utcnow()}})
+                           {'$set': {'last_login': datetime.utcnow()}})
 
     def generate_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -246,7 +249,8 @@ class Snippet():
             # group existing, check scenario name
             old_scenario_id_list = group_dict.get('scenarios')
             for id in old_scenario_id_list:
-                if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get('name') == self.scenario:
+                if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get(
+                        'name') == self.scenario:
                     # both group and scenario are duplicated, you are in big trouble, skipped
                     duplicated = True
                     break
@@ -263,7 +267,8 @@ class Snippet():
             if group_dict:
                 # update new scenario id into existing group
                 group_id = str(group_dict.get('_id'))
-                db.SnippetGroup.update_one({'name': self.group}, {'$push': {'scenarios': scenario_id}})
+                db.SnippetGroup.update_one({'name': self.group}, {
+                    '$push': {'scenarios': scenario_id}})
             else:
                 # insert new group for the new scenario
                 document = {
@@ -311,12 +316,13 @@ This can be tested by just commenting this line and check the Error message
 """
 login_manager.anonymous_user = AnonymousUser
 
-
 """
 This callback is used to reload the user object from the user ID stored in the
 session (as current_user?)
 """
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    user =  db.User.find_one({'_id': ObjectId(user_id)})
+    user = db.User.find_one({'_id': ObjectId(user_id)})
     return UserUtl(user)  # this is current_user

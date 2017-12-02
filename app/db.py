@@ -1,4 +1,3 @@
-
 import requests
 from pymongo import MongoClient
 from common.meta import Meta
@@ -13,14 +12,17 @@ class MongoCfg:
 
 
 try:
-    requests.session().get(f'https://{Meta.company.lower()}.xplan.iress.com.au', headers=dict(referer=f'https://{Meta.company.lower()}.xplan.iress.com.au'))
+    requests.session().get(
+        f'https://{Meta.company.lower()}.xplan.iress.com.au', headers=dict(
+            referer=f'https://{Meta.company.lower()}.xplan.iress.com.au'))
 except:
-    print(f'Company name \"{Meta.company}\" invalid, no such XPLAN site for this company.')
+    print(
+        f'Company name \"{Meta.company}\" invalid, no such XPLAN site for this company.')
 else:
     client = MongoClient(MongoCfg.HOST, MongoCfg.PORT)
 
 
-def mongo_connect(client, company:str):
+def mongo_connect(client, company: str):
     if company.upper() == 'YTML':
         db = client['YETI']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI')

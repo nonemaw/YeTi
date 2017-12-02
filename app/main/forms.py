@@ -1,14 +1,11 @@
-
-
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, BooleanField,\
+from wtforms import StringField, TextAreaField, SubmitField, BooleanField, \
     SelectField
-from wtforms.validators import Length, DataRequired, Email, Regexp,\
+from wtforms.validators import Length, DataRequired, Email, Regexp, \
     ValidationError
 
 from app.db import mongo_connect, client
 from app.auth.forms import cities
-
 
 roles = [('ACCESS', 'Normal User'), ('ADMIN', 'Administrator')]
 db = mongo_connect(client, 'ytml')

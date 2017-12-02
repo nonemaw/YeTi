@@ -1,11 +1,10 @@
-
 import os
 import re
 from common.meta import Meta
 from fuzzier.jison import Jison
 
 
-def ratio(target:str, pattern:str):
+def ratio(target: str, pattern: str):
     """ a modified Levenshtein Distance (LD) algorithm
     """
     target_l = re.sub(r'\s|_', '', target.lower())
@@ -61,5 +60,6 @@ def search(pattern):
     # current only one line, TODO: update parser for multi-line JSON
     with open(os.path.join(this_path, 'json', Meta.company + '.json')) as F:
         for line in F:
-            result = Jison(line, pattern=pattern, ratio_method=ratio, result_length=7).parse()
+            result = Jison(line, pattern=pattern, ratio_method=ratio,
+                           result_length=7).parse()
     return result

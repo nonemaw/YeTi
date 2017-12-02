@@ -1,10 +1,11 @@
-
 import time
 import hashlib
 
-from flask import render_template, redirect, request, url_for, flash, current_app, abort
+from flask import render_template, redirect, request, url_for, flash, \
+    current_app, abort
 from flask_login import login_user, logout_user, login_required, current_user
-from itsdangerous import BadSignature, TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import BadSignature, \
+    TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash
 from bson import ObjectId
 
@@ -18,7 +19,6 @@ from app.decorators import admin_required
 from common.meta import Meta
 from common.crypto import AESCipher
 
-
 db = mongo_connect(client, 'ytml')
 
 
@@ -27,7 +27,8 @@ def before_request():
     if current_user.is_authenticated:
         current_user.ping()  # if user authenticated: update last login time
         if not current_user.is_confirmed and (request.endpoint is None or
-                                              request.endpoint[:5] != 'auth.'):
+                                                      request.endpoint[
+                                                      :5] != 'auth.'):
             return redirect(url_for('auth.unconfirmed'))
 
 
@@ -47,7 +48,8 @@ def login():
         # meta.company_username = form.company_username.data
         # meta.company_password = meta.crypto.encrypt(form.company_password.data)
         # print(meta.company_password)
-        if user_dict is not None and verify_password(user_dict.get('password'), form.password.data):
+        if user_dict is not None and verify_password(user_dict.get('password'),
+                                                     form.password.data):
             # convert 'user_dict' to UserLogin(UserMixin) as 'current_user'
             user = UserUtl(user_dict)
             login_user(user, form.remember_me.data)
@@ -74,7 +76,9 @@ def register():
         token = user_utl.generate_token()
         send_email(user_utl.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user_utl, token=token)
-        flash(f'A confirmation email has been sent to your address: {user_utl.email}', category='success')
+        flash(
+            f'A confirmation email has been sent to your address: {user_utl.email}',
+            category='success')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
 
@@ -90,14 +94,16 @@ def confirm(token):
     id = data.get('confirm')
     user = db.User.find_one({'_id': ObjectId(id)})
     if user is None:
-        flash('The confirmation link is invalid or has expired.', category='danger')
+        flash('The confirmation link is invalid or has expired.',
+              category='danger')
     if user.is_confirmed:
         flash('Your account has already been confirmed.', category='danger')
         time.sleep(2)
         return redirect(url_for('main.index'))
     db.User.update_one({'_id': ObjectId(id)},
-                                     {'$set': {'is_confirmed': True}})
-    flash('You have confirmed your account successfully, Thank you!', category='success')
+                       {'$set': {'is_confirmed': True}})
+    flash('You have confirmed your account successfully, Thank you!',
+          category='success')
     time.sleep(2)
     return redirect(url_for('main.index'))
 
@@ -105,6 +111,8 @@ def confirm(token):
 """
 any user with 'is_confirmed' is False will be redirected to this route
 """
+
+
 @auth.route('/unconfirmed')
 def unconfirmed():
     if current_user.is_anonymous:
@@ -120,7 +128,8 @@ def resend_confirmation():
     token = current_user.generate_token()
     send_email(current_user.email, 'Confirm Your Account',
                'auth/email/confirm', user=current_user, token=token)
-    flash('A new confirmation email has been sent to you by email.', category='success')
+    flash('A new confirmation email has been sent to you by email.',
+          category='success')
     return redirect(url_for('main.index'))
 
 
@@ -134,10 +143,13 @@ def change_email_request():
             send_email(current_user.email, 'Confirm Your New Email Address',
                        'auth/email/change_email',
                        user=current_user, token=token)
-            flash('An email with instructions to confirm your new email address has been sent to you.', category='success')
+            flash(
+                'An email with instructions to confirm your new email address has been sent to you.',
+                category='success')
             return redirect(url_for('main.index'))
         else:
-            flash('Current password does not match your account.', category='danger')
+            flash('Current password does not match your account.',
+                  category='danger')
     return render_template('auth/change_email.html', form=form)
 
 
@@ -151,20 +163,23 @@ def change_email(token):
         return render_template('errors/bad_token.html')
     id = data.get('ID')
     new_email = data.get('new_email')
-    if new_email is None or\
-       db.User.find_one({'email': new_email}) is not None or\
-       db.User.find_one({'_id': ObjectId(id)}) is None:
-        flash('The confirmation link is invalid or has expired.', category='danger')
+    if new_email is None or \
+                    db.User.find_one({'email': new_email}) is not None or \
+                    db.User.find_one({'_id': ObjectId(id)}) is None:
+        flash('The confirmation link is invalid or has expired.',
+              category='danger')
         time.sleep(2)
         return redirect(url_for('main.index'))
     avatar_hash = hashlib.md5(new_email.encode('utf-8') +
-                              str(current_user.member_since).\
+                              str(current_user.member_since). \
                               encode('utf-8')).hexdigest()
     db.User.update_one({'_id': ObjectId(id)},
-                                     {'$set': {'email': new_email,
-                                               'avatar_hash': avatar_hash}})
+                       {'$set': {'email': new_email,
+                                 'avatar_hash': avatar_hash}})
     logout_user()
-    flash(f'Your email address has been updated to {current_user.email} successfully, please login again.', category='success')
+    flash(
+        f'Your email address has been updated to {current_user.email} successfully, please login again.',
+        category='success')
     return redirect(url_for('auth.login'))
 
 
@@ -175,12 +190,15 @@ def change_password():
     if form.validate_on_submit():
         if verify_password(current_user.password, form.password.data):
             db.User.update_one({'email': current_user.email},
-                                             {'$set': {'password': generate_password_hash(form.password_new.data)}})
+                               {'$set': {'password': generate_password_hash(
+                                   form.password_new.data)}})
             logout_user()
-            flash('Your password has been updated, please login again.', category='success')
+            flash('Your password has been updated, please login again.',
+                  category='success')
             return redirect(url_for('auth.login'))
         else:
-            flash('Current password does not match your account.', category='danger')
+            flash('Current password does not match your account.',
+                  category='danger')
     return render_template('auth/change_password.html', form=form)
 
 

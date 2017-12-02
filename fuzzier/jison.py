@@ -1,4 +1,3 @@
-
 class Jison:
     """
     Jison is a simple Json parser merged with a string search feature.
@@ -31,7 +30,8 @@ class Jison:
             # Jison will be a searcher if kwargs are assigned, otherwise it is a normal Json parser
             self.ratio_method = kwargs.get('ratio_method')
             self.pattern = kwargs.get('pattern')
-            self.result_length = kwargs.get('result_length') if kwargs.get('result_length') else 5
+            self.result_length = kwargs.get('result_length') if kwargs.get(
+                'result_length') else 5
             self.result = []
             self.deep = 0
             self.var_val = 0
@@ -114,9 +114,9 @@ class Jison:
             return self.COMMA
         elif c == '"':
             return self.STRING
-        elif c == '0' or c == '1' or c == '2' or c == '3' or c == '4'\
-                      or c == '5' or c == '6' or c == '7' or c == '8'\
-                      or c == '9' or c == '-':
+        elif c == '0' or c == '1' or c == '2' or c == '3' or c == '4' \
+                or c == '5' or c == '6' or c == '7' or c == '8' \
+                or c == '9' or c == '-':
             return self.NUMBER
         elif c == ':':
             return self.COLON
@@ -128,28 +128,28 @@ class Jison:
         remaining_length = self.length - index
         if remaining_length >= 5:
             # 'false' case
-            if self.json[index] == 'f' and self.json[index + 1] == 'a'\
-                                       and self.json[index + 2] == 'l'\
-                                       and self.json[index + 3] == 's'\
-                                       and self.json[index + 4] == 'e':
+            if self.json[index] == 'f' and self.json[index + 1] == 'a' \
+                    and self.json[index + 2] == 'l' \
+                    and self.json[index + 3] == 's' \
+                    and self.json[index + 4] == 'e':
                 index += 5
                 if not check_token:
                     self.index = index
                 return self.FALSE
         if remaining_length >= 4:
             # 'true' case
-            if self.json[index] == 't' and self.json[index + 1] == 'r'\
-                                       and self.json[index + 2] == 'u'\
-                                       and self.json[index + 3] == 'e':
+            if self.json[index] == 't' and self.json[index + 1] == 'r' \
+                    and self.json[index + 2] == 'u' \
+                    and self.json[index + 3] == 'e':
                 index += 4
                 if not check_token:
                     self.index = index
                 return self.TRUE
         if remaining_length >= 4:
             # 'null' case
-            if self.json[index] == 'n' and self.json[index + 1] == 'u'\
-                                       and self.json[index + 2] == 'l'\
-                                       and self.json[index + 3] == 'l':
+            if self.json[index] == 'n' and self.json[index + 1] == 'u' \
+                    and self.json[index + 2] == 'l' \
+                    and self.json[index + 3] == 'l':
                 index += 4
                 if not check_token:
                     self.index = index
@@ -169,7 +169,7 @@ class Jison:
                 self.success = False
                 return None
             elif token == self.COMMA:
-                 self.go_to_next_token()
+                self.go_to_next_token()
             elif token == self.OBJ_CLOSE:
                 if self.ratio_method:
                     self.deep -= 1
@@ -207,7 +207,7 @@ class Jison:
                 self.success = False
                 return None
             elif token == self.COMMA:
-                 self.go_to_next_token()
+                self.go_to_next_token()
             elif token == self.ARR_CLOSE:
                 if self.ratio_method:
                     self.deep -= 1
@@ -288,12 +288,16 @@ class Jison:
                     if current_ratio >= max(stored_ratio_result):
                         for index, item in enumerate(self.result):
                             if item[0] == min_ratio:
-                                self.result[index] = [current_ratio, self.group, self.sub, self.var_name, string]
+                                self.result[index] = [current_ratio,
+                                                      self.group, self.sub,
+                                                      self.var_name, string]
                                 break
                     else:
                         pass
                 elif current_ratio > 0.15:
-                    self.result.append([current_ratio, self.group, self.sub, self.var_name, string])
+                    self.result.append(
+                        [current_ratio, self.group, self.sub, self.var_name,
+                         string])
             elif self.deep == 5 and not self.var_val:
                 self.var_name = string
                 self.var_val = 1
@@ -320,6 +324,6 @@ class Jison:
             return number
 
     def ignore_white_space(self):
-        while self.json[self.index] == ' ' or self.json[self.index] == '\t'\
-                                           or self.json[self.index] == '\n':
+        while self.json[self.index] == ' ' or self.json[self.index] == '\t' \
+                or self.json[self.index] == '\n':
             self.index += 1

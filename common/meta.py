@@ -1,6 +1,6 @@
-
 from selenium import webdriver
 from common.crypto import AESCipher
+
 
 class Meta:
     """
@@ -9,14 +9,12 @@ class Meta:
     """
     company = 'ytml'
     company_username = 'ytmladmin'
-    company_password = ''
-
+    company_password = 'Passw0rdOCT'
 
     """
     `crypto` variable is an instance for AESCipher
     """
     crypto = AESCipher()
-
 
     """
     browser is used for fetch interface menu

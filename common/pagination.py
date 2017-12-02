@@ -1,10 +1,8 @@
-
 from math import ceil
 from flask_login import current_user
 from bson.objectid import ObjectId
 
 from app.db import mongo_connect, client
-
 
 db = mongo_connect(client, 'ytml')
 
@@ -14,12 +12,14 @@ class Pagination:
     """
     the base Pagination class
     """
-    def __init__(self, current_page:int, per_page:int=5, total_count:int=0):
+
+    def __init__(self, current_page: int, per_page: int = 5,
+                 total_count: int = 0):
         self.current_page = current_page
         self.per_page = per_page
         self.total_count = total_count
-        self.next_num = self.current_page + 1 # next page arrow
-        self.prev_num = self.current_page - 1 # prev page arrow
+        self.next_num = self.current_page + 1  # next page arrow
+        self.prev_num = self.current_page - 1  # prev page arrow
 
     @property
     def pages(self):
@@ -33,13 +33,13 @@ class Pagination:
     def has_next(self):
         return self.current_page < self.pages
 
-    def iter_pages(self, left_edge:int=2, left_current:int=2,
-                   right_current:int=5, right_edge:int=2):
+    def iter_pages(self, left_edge: int = 2, left_current: int = 2,
+                   right_current: int = 5, right_edge: int = 2):
         last = 0
         for num in range(1, self.pages + 1):
             if num <= left_edge or \
-               (num > self.current_page - left_current - 1 and
-                        num < self.current_page + right_current) or num > self.pages - right_edge:
+                    (num > self.current_page - left_current - 1 and
+                             num < self.current_page + right_current) or num > self.pages - right_edge:
                 if last + 1 != num:
                     yield None
                 yield num
@@ -67,11 +67,14 @@ class Pagination:
 
 
 class PaginationSnippet(Pagination):
-    def __init__(self, current_page:int, per_page:int=15):
-        super(PaginationSnippet, self).__init__(current_page, per_page=per_page)
+    def __init__(self, current_page: int, per_page: int = 15):
+        super(PaginationSnippet, self).__init__(current_page,
+                                                per_page=per_page)
         self.snippets = db.SnippetScenario.find({}).sort([('name', 1)])
         self.total_count = self.snippets.count()
-        self.current_num = self.total_count - (self.per_page * (self.current_page - 1))
+        self.current_num = self.total_count - (
+        self.per_page * (self.current_page - 1))
         if self.current_num > self.per_page:
             self.current_num = self.per_page
-        self.items = [self.snippets[self.prev_num * self.per_page + i] for i in range(self.current_num)]
+        self.items = [self.snippets[self.prev_num * self.per_page + i] for i in
+                      range(self.current_num)]
