@@ -7,7 +7,7 @@ import os
 import logging
 import json
 
-from . import meta
+from common.meta import Meta
 from bson import ObjectId
 from app.db import mongo_connect, client
 from app.models import Group, SubGroup
@@ -17,7 +17,7 @@ class Fetcher:
     def __init__(self, username: str, password: str, mode: str = 'w',
                  group_only: str = None):
         self.mode = mode
-        self.db = mongo_connect(client, meta.company)
+        self.db = mongo_connect(client, Meta.company)
         self.USERNAME = username
         self.PASSWORD = password
 
@@ -27,11 +27,11 @@ class Fetcher:
         else:
             self.group_only = None
 
-        self.BASE = f'https://{meta.company}.xplan.iress.com.au'
-        self.URL_LOGIN = f'https://{meta.company}.xplan.iress.com.au/home'
-        self.URL_LIST = f'https://{meta.company}.xplan.iress.com.au/ufield/list'
-        self.URL_WALKER = f'https://{meta.company}.xplan.iress.com.au/ufield/list_iframe?group=' + '{}'
-        self.URL_LOGOUT = f'https://{meta.company}.xplan.iress.com.au/home/logoff?'
+        self.BASE = f'https://{Meta.company}.xplan.iress.com.au'
+        self.URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
+        self.URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
+        self.URL_WALKER = f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=' + '{}'
+        self.URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
 
     def run(self):
         """
@@ -42,14 +42,14 @@ class Fetcher:
         """
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
-        log_directory = os.path.join(this_path, 'log')
         json_directory = os.path.join(parent_path, 'fuzzier', 'json')
+        log_directory = os.path.join(this_path, 'log')
 
         if not os.path.exists(log_directory):
             os.makedirs(log_directory)
         if not os.path.exists(json_directory):
-            os.makedirs(json_directory)
-
+            os.makedirs(json_directory
+        )
         logger = logging.getLogger('my_logger')
         logfile_hdlr = logging.FileHandler(
             os.path.join(log_directory, 'fetcher.log'), 'w')
@@ -266,6 +266,6 @@ class Fetcher:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(json_directory, meta.company + '.json'),
+        with open(os.path.join(json_directory, Meta.company + '.json'),
                   self.mode) as J:
             json.dump(to_json, J)

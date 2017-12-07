@@ -18,8 +18,7 @@ def login(driver: str = 'phantomjs'):
 
 
 def test_login(menu: dict) -> bool:
-    Meta.browser.get(
-        f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface')
+    Meta.browser.get(f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface')
     inner_html = Meta.browser.execute_script("return document.body.innerHTML")
     if re.search(r'permission_error', inner_html):
         # login failed
