@@ -112,67 +112,95 @@ div.crawler-date {
 div.crawler-button {
     float: right;
 }
-.log-window {
-    border: #26313D solid 5px;
-    font-family: "Consolas", "DejaVu Sans Mono", monospace;
-    font-size: 11px;
-    color: #eee8d5;
-    background: #26313D;
-    width: 700px;
-    box-shadow: rgba(0, 0, 0, 0.8) 2px 2px 20px;
-}
-.terminal {
-    border: #26313D solid 5px;
-    font-family: "Consolas", "DejaVu Sans Mono", monospace;
-    font-size: 11px;
-    color: #eee8d5;
-    background: #26313D;
-    width: 600px;
-    box-shadow: rgba(0, 0, 0, 0.8) 2px 2px 20px;
-}
-.reverse-video {
-    color: #000;
-    background: #f0f0f0;
-}
-.tweaked-margin-right {
-    margin-right: 20px;
-}
-.navbar-text {
-    position: absolute;
-    width: 100%;
-    left: 0;
-    text-align: center;
-    margin: auto;
-    padding-top: 10px;
-}
-.header-divider {
-     border-left:1px solid #38546d;
-     border-right:1px solid #16222c;
-     height:80px;
-     position:absolute;
-     right:249px;
-     top:10px;
-}
-.table-scroll tbody {
-    position: absolute;
-    overflow-y: scroll;
-    height: 100%;
-    font-size: 15px;
-    color: #e9e3d0;
-}
-.table-scroll tr {
-    width: 100%;
-    table-layout: fixed;
-    display: inline-table;
+
+/*****************************************************************************/
+body {
+   background: #eaeaea !important;
 }
 
-.table-scroll thead > tr > th {
-    border: none;
+.modal-content {
+    background: #eaeaea;
 }
-.dropdown-menu li a,
-.dropdown-toggle span{
-    color: #e9e3d0;
-    font-size: 15px;
+
+.h1, h1 {
+    font-size: 36px;
+    font-weight: bold;
+    font-family: "Bookman Old Style";
+    color: #009688;
+}
+
+.form-group {
+    margin: 0 0 0 0;
+}
+
+.form-group .checkbox label, .form-group .radio label, .form-group label {
+    font-size: 16px;
+    line-height: 1.42857143;
+    color: #3f3f40;
+    font-weight: 400;
+}
+
+.navbar-brand {
+    height: 40px;
+    padding: 5px 5px;
+}
+
+.navbar .navbar-brand {
+    position: relative;
+    height: 40px;
+    line-height: 30px;
+    color: inherit;
+}
+
+.navbar .navbar-nav > li > a {
+    color: inherit;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.navbar {
+    position: relative;
+    min-height: 40px;
+    max-height: 40px;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+}
+
+.checkbox label, .radio label, label {
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    line-height: 1;
+    color: #333333;
+}
+
+label {
+    margin-bottom: 0;
+}
+
+.dropdown-header {
+    font-weight: bold;
+    font-size: 14px;
+    color: #333333;
+}
+
+.dropdown-menu li a:hover {
+    background-color: #008573;
+    color: #f1f1f1;
+}
+
+.btn, .input-group-btn .btn {
+    text-transform: none;
+    padding: 6px 12px 6px 12px;
+}
+
+.form-group {
+    padding-top: 7px;
+    margin: 0 0 0 0;
+}
+
+.form-group label.control-label {
+    font-size: 16px;
 }
 
 .selection-field,
@@ -183,14 +211,47 @@ div.crawler-button {
     padding-left: 30px
 }
 
-.form-control {
+.btn:not(.btn-raised).btn-default, .input-group-btn .btn:not(.btn-raised).btn-default {
+    color: #001729;
+    background: rgba(209, 209, 209, 0.81);
+}
+.btn:not(.btn-raised).btn-info, .input-group-btn .btn:not(.btn-raised).btn-info {
+    color: #006edb;
+    background: rgba(182, 212, 216, 0.81);
+}
+.btn:not(.btn-raised).btn-success, .input-group-btn .btn:not(.btn-raised).btn-success {
+    color: #00855e;
+    background: rgba(183, 212, 213, 0.81);
+}
+.btn:not(.btn-raised).btn-warning, .input-group-btn .btn:not(.btn-raised).btn--warning {
+    color: #f44a00;
+    background: rgba(232, 198, 170, 0.81);
+}
+.btn:not(.btn-raised).btn-danger, .input-group-btn .btn:not(.btn-raised).btn-danger {
+    color: #f40069;
+    background: rgba(225, 197, 210, 0.81);
+}
+
+.table-scroll tbody {
+    position: absolute;
+    overflow-y: scroll;
+    height: 100%;
     font-size: 15px;
+}
+.table-scroll tr {
+    width: 100%;
+    table-layout: fixed;
+    display: inline-table;
+}
+
+.table-scroll thead > tr > th {
+    background: rgb(228, 228, 228);
 }
 
 ::-webkit-scrollbar-track
 {
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-	background-color: #8aadb4;
+	-webkit-box-shadow: inset 0 0 6px rgba(168, 168, 168, 0.3);
+	background-color: #dddddd;
 }
 
 ::-webkit-scrollbar
@@ -201,11 +262,12 @@ div.crawler-button {
 
 ::-webkit-scrollbar-thumb
 {
-	background-color: #09394d;
-	border: 2px solid #3d5964;
+	background-color: #343A40;
+	border: 2px solid #6b6b6c;
 }
 
-.jstree-anchor, .jstree-anchor:link, .jstree-anchor:visited, .jstree-anchor:hover, .jstree-anchor:active {
-    color: #e9e3d0;
-    font-family: Arial;
+.jstree-proton .jstree-anchor {
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    font-size: 15px;
 }
+

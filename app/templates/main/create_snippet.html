@@ -56,23 +56,23 @@
 
             <label for="font-size">Font Size</label>
             <select class="selectpicker" id="font-size" data-width="75%">
-                <option>10</option>
-                <option>11</option>
                 <option>12</option>
                 <option>13</option>
                 <option>14</option>
-                <option selected="selected">16</option>
-                <option>18</option>
+                <option>15</option>
+                <option>16</option>
+                <option selected="selected">18</option>
                 <option>20</option>
-                <option>24</option>
+                <option>22</option>
+                <option>26</option>
                 <option>30</option>
             </select>
 
             <div class="checkbox">
-                <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
+                <label><input id="show-invisibles" type="checkbox" value="" checked="checked">&nbsp&nbspShow Invisibles</label>
             </div>
             <div class="checkbox">
-                <label><input id="wrap-text" type="checkbox" value="" checked>Wrap Text</label>
+                <label><input id="wrap-text" type="checkbox" value="" checked="checked">&nbsp&nbspWrap Text</label>
             </div>
 
         </div>
@@ -83,7 +83,7 @@
     <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
-        var show_invisibles = false;
+        var show_invisibles = true;
         var wrap_text = true;
         var initial_syntax = $('#syntax option:selected').val();
         var initial_theme = $('#theme option:selected').val();

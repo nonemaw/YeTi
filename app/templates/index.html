@@ -7,21 +7,22 @@
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='jstree/themes/proton/style.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
 
 {% block wide_content %}
-    <div class="row" style="height: 92vh">
+    <div class="row" style="height: 94vh">
     <div id="progress"></div>
         <!-- left panel column -->
         <div class="col-md-4" style="height: 99%">
 
             <!-- search bar row -->
-            <div class="row">
+            <div class="row" style="margin-top: -9px">
                 <div class="col-md-9">
                     <div class="input-group">
                         <input id="search-field" type="text" class="form-control" placeholder="Need something?">
-                        <span class="input-group-btn"><button id="search-button" class="btn btn-info" type="button">Search</button></span>
+                        <span class="input-group-btn">
+                            <button id="search-button" class="btn btn-info" type="button">Search</button>
+                        </span>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -38,11 +39,11 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title" id="myModalLabel" style="color: #ff8000"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company.upper() }} )</small></h4>
+                            <h4 class="modal-title" id="myModalLabel"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site ABCD )</small></h4>
                         </div>
                         <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-4">
+                            <div class="row" style="height: 50vh;">
+                                <div class="col-md-5 column-scroll">
                                     <div id="interface-tree">
                                         <ul class="jstree-container-ul jstree-children">
                                             <li role="treeitem" class="jstree-node jstree-leaf">
@@ -52,7 +53,7 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-md-7">
                                     <p>fdsafsdf</p>
 
 
@@ -74,11 +75,11 @@
             <!-- end of interface view -->
 
             <!-- choose variable row -->
-            <div class="row">
+            <div class="row" style="margin-top: -15px">
                 <br>
                 <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax" style="font-size: 15px">Group</label>
+                        <label for="syntax">Group</label>
                     </div>
                     <div class="row">
                         <select id="group-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -86,7 +87,7 @@
                 </div>
                 <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax" style="font-size: 15px">Sub-Group</label>
+                        <label for="syntax">Sub-Group</label>
                     </div>
                     <div class="row">
                         <select id="subgroup-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -94,7 +95,7 @@
                 </div>
                 <div class="col-md-4 selection-field">
                     <div class="row">
-                        <label for="syntax" style="font-size: 15px">Variable</label>
+                        <label for="syntax">Variable</label>
                     </div>
                     <div class="row">
                         <select id="variable-selector" class="selectpicker" data-size="20" data-width="100%" data-live-search="true"></select>
@@ -110,26 +111,26 @@
                     <table class="table table-scroll left-column-table" style="height: 100%">
                         <tbody id="variable-selector-table">
                             <tr>
-                                <td class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Variable</i></b></td>
+                                <td class="col-md-2" style="color: #009688"><b><i>Variable</i></b></td>
                                 <td id="var-variable" class="col-md-10" style="font-family:Consolas">/</td>
                             </tr>
                             <tr>
-                                <td class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Usage</i></b></td>
+                                <td class="col-md-2" style="color: #009688"><b><i>Usage</i></b></td>
                                 <td id="var-usage" class="col-md-10" style="font-family:Consolas">/</td>
                             </tr>
                             <tr>
-                                <td class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Type</i></b></td>
+                                <td class="col-md-2" style="color: #009688"><b><i>Type</i></b></td>
                                 <td id="var-type" class="col-md-10" style="font-family:Consolas">/</td>
                             </tr>
                             <tr>
-                                <td id="choice-type" class="col-md-2" style="font-family:Arial; color: #cb661a"><b><i>Choice(s)</i></b></td>
+                                <td id="choice-type" class="col-md-2" style="color: #009688"><b><i>Choice(s)</i></b></td>
                                 <td class="col-md-10">
                                     <!-- Multi Choice table -->
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th id="choice-value-title" class="col-md-5" style="font-family:Arial; color: #cb661a"><i>Value</i></th>
-                                                <th id="choice-text-title" class="col-md-7" style="font-family:Arial; color: #cb661a"><i>Text</i></th>
+                                                <th id="choice-value-title" class="col-md-5" style="color: #009688; font-style: italic">Value</th>
+                                                <th id="choice-text-title" class="col-md-7" style="color: #009688; font-style: italic">Text</th>
                                             </tr>
                                         </thead>
                                         <tbody id="multi-choice-table">
@@ -144,13 +145,13 @@
                         </tbody>
                         <thead id="variable-search-table-head" style="display:none">
                             <tr>
-                                <th id="choice-value-title" class="col-md-3" style="font-family:Arial;font-size:15px"><i>Group</i></th>
-                                <th id="choice-text-title" class="col-md-3" style="font-family:Arial;font-size:15px"><i>Sub-Group</i></th>
-                                <th id="choice-text-title" class="col-md-6" style="font-family:Arial;font-size:15px"><i>Variable (Search Result)</i></th>
+                                <th id="choice-value-title" class="col-md-3" style="font-size:15px"><i>Group</i></th>
+                                <th id="choice-text-title" class="col-md-3" style="font-size:15px"><i>Sub-Group</i></th>
+                                <th id="choice-text-title" class="col-md-6" style="font-size:15px"><i>Variable (Search Result)</i></th>
                             </tr>
                         </thead>
                         <tbody id="variable-search-table" style="display:none; height: 88%">
-                            <tr><td class="col-md-3">/</td><td class="col-md-3" style="font-family:Arial">/</td><td class="col-md-6" style="font-family:Arial">/</td></tr>
+                            <tr><td class="col-md-3">/</td><td class="col-md-3">/</td><td class="col-md-6">/</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -158,8 +159,8 @@
             <!-- end of variable information table -->
 
             <!-- pick snippet row -->
-            <div class="row" style="padding-top: 10px">
-                <div class="row">
+            <div class="row">
+                <div class="row" style="padding-top: 5px">
                     <div class="col-md-5 selection-field">
                             <label for="syntax" style="font-size: 15px">Code Snippet Group</label>
                     </div>
@@ -186,9 +187,8 @@
             <!-- end of pick snippet row -->
 
             <!-- snippet code editor row -->
-            <div class="row" style="height: 42%">
+            <div class="row" style="height: 44%">
                 <div class="col-md-12" style="height: 100%">
-                    <br>
                     <div class="row" style="height: 100%; padding-left: 15px">
                         <div id="snippet-section" style="height: 100%"></div>
                     </div>
@@ -197,7 +197,7 @@
             <!-- end of snippet code editor row -->
         </div>
 
-        <!-- coding column -->
+        <!-- right column -->
         <div class="col-md-8" style="height: 99%">
             <div class="row" style="height: 100%">
                 <div class="col-md-11" style="height: 100%">
@@ -210,20 +210,21 @@
                         <br>
                     </div>
                     <div class="row">
-                        <p><b>Format Code</b></p>
-                        <div class="btn-group-vertical" style="width: 85%">
-                            <button id="format" type="button" class="btn btn-success">Format</button>
+                        <label for="format-group">Format Code</label>
+                        <button id="format" type="button" class="btn btn-success" style="width: 85%">Format</button>
+                        <div class="btn-group-vertical" id="format-group" style="width: 85%">
                             <button id="indent" type="button" class="btn btn-success">Indent</button>
                             <button id="dedent" type="button" class="btn btn-success">Dedent</button>
                         </div>
                     </div>
-                    <br>
                     <div class="row">
-                        <p><b>Entity</b></p>
-                        <div class="btn-group-vertical" style="width: 85%">
+                        <label for="entity-group">Entity</label>
+                        <div class="btn-group-vertical" id="entity-group" style="width: 85%">
                             <button id="client" type="button" class="btn btn-default">Client</button>
                             <button id="partner" type="button" class="btn btn-default">Partner</button>
-                            <button id="partner" type="button" class="btn btn-default">Joint</button>
+                            <button id="joint" type="button" class="btn btn-default">Joint</button>
+                        </div>
+                        <div class="btn-group-vertical" id="entity-group" style="width: 85%">
                             <button id="trust" type="button" class="btn btn-default">Trust</button>
                             <button id="superfund" type="button" class="btn btn-default">Superfund</button>
                             <button id="company" type="button" class="btn btn-default">Company</button>
@@ -241,7 +242,7 @@
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                    <h4 class="modal-title" id="myModalLabel" style="color: #ff8000"><b>Editor Settings</b></h4>
+                                    <h4 class="modal-title" id="myModalLabel"><b>Editor Settings</b></h4>
                                 </div>
                                 <div class="modal-body">
                                     <div class="row">
@@ -291,28 +292,27 @@
                                             </div>
                                             <div class="row">
                                                 <select class="selectpicker" id="font-size" data-width="75%">
-                                                    <option>10</option>
-                                                    <option>11</option>
                                                     <option>12</option>
                                                     <option>13</option>
                                                     <option>14</option>
-                                                    <option selected="selected">16</option>
-                                                    <option>18</option>
+                                                    <option>15</option>
+                                                    <option>16</option>
+                                                    <option selected="selected">18</option>
                                                     <option>20</option>
-                                                    <option>24</option>
+                                                    <option>22</option>
+                                                    <option>26</option>
                                                     <option>30</option>
                                                 </select>
                                             </div>
-                                            <br>
                                             <div class="row">
                                                 <div class="checkbox">
-                                                    <label><input id="show-invisibles" type="checkbox" value="">Show Invisibles</label>
+                                                    <label><input id="show-invisibles" type="checkbox" value="" checked="checked">&nbsp&nbspShow Invisibles</label>
                                                 </div>
                                                 <div class="checkbox">
-                                                    <label><input id="wrap-text" type="checkbox" value="">Wrap Text</label>
+                                                    <label><input id="wrap-text" type="checkbox" value="" checked="checked">&nbsp&nbspWrap Text</label>
                                                 </div>
                                                 <div class="checkbox">
-                                                    <label><input id="save-session" type="checkbox" value="">Save Session & Setting</label>
+                                                    <label><input id="save-session" type="checkbox" value="">&nbsp&nbspSave Session & Setting</label>
                                                 </div>
                                             </div>
                                         </div>
@@ -329,7 +329,7 @@
                 </div>
             </div>
         </div>
-        <!-- end of coding column -->
+        <!-- end of right column -->
 
     </div>
 {% endblock %}
@@ -346,8 +346,8 @@
     <script src="{{ url_for('static', filename='js/index/update_interface.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var save_session = true;
-        var show_invisibles = false;
-        var wrap_text = false;
+        var show_invisibles = true;
+        var wrap_text = true;
         var initial_syntax = $('#syntax option:selected').val();
         var initial_theme = $('#theme option:selected').val();
         var initial_font_size = $('#font-size option:selected').val();
@@ -365,7 +365,7 @@
         snippet_section.session.setMode("ace/mode/" + initial_syntax);
         snippet_section.setOption("showInvisibles", show_invisibles);
         snippet_section.setOption("fontFamily", initial_font_family);
-        snippet_section.setOption("fontSize", 14);
+        snippet_section.setOption("fontSize", 16);
         snippet_section.getSession().setUseWrapMode(true);
         snippet_section.setShowPrintMargin(false);
         // get selected code: code_section.getSelectedText()
@@ -417,6 +417,14 @@
                 };
                 send_for_formatting(sent_info);
             });
+            // format button
+            $('#format').on('click', function(){
+                var sent_info = {
+                    message: 'format',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
 
             // client button
             $('#client').on('click', function(){
@@ -430,6 +438,14 @@
             $('#partner').on('click', function(){
                 var sent_info = {
                     message: 'partner',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
+            // joint button
+            $('#joint').on('click', function(){
+                var sent_info = {
+                    message: 'joint',
                     code: code_section.getValue()
                 };
                 send_for_formatting(sent_info);
@@ -458,6 +474,14 @@
                 };
                 send_for_formatting(sent_info);
             });
+            // partnership button
+            $('#partnership').on('click', function(){
+                var sent_info = {
+                    message: 'partnership',
+                    code: code_section.getValue()
+                };
+                send_for_formatting(sent_info);
+            });
 
             // syntax dropdown
             $('#syntax').on('change', function(){
@@ -474,7 +498,7 @@
                 code_section.setOption("fontFamily", $('#font-family').val());
                 snippet_section.setOption("fontFamily", $('#font-family').val());
             });
-            // dont size dropdown
+            // font size dropdown
             $('#font-size').on('change', function(){
                 code_section.setOption("fontSize", parseInt($('#font-size').val()));
             });
@@ -585,14 +609,6 @@
                     initialize_interface(id, text);
                 }
             });
-
-
-
-
-
-
-
-
         });
     </script>
 {% endblock %}
