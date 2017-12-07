@@ -8,7 +8,7 @@ class Meta:
     when logged out, is accessible to all other modules across the application
     """
     company = 'ytml'
-    company_username = 'ytmladmin'
+    company_username = 'ytml1'
     company_password = 'Passw0rdOCT'
 
     """

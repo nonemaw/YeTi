@@ -1,13 +1,13 @@
 import json
 import re
 
-from flask import render_template, redirect, url_for, request, abort, flash
-from flask_login import current_user, login_required
+from flask import request
+from flask_login import login_required
 from bson import ObjectId
 
 from . import code
 from app.db import mongo_connect, client
-from app.decorators import admin_required
+from common.code_tools import cleanup_mess, format
 import fuzzier.fuzzier as fuzzier
 
 db = mongo_connect(client, 'ytml')
@@ -18,57 +18,11 @@ db = mongo_connect(client, 'ytml')
 def code_formatting():
     received_json = request.json
     if received_json:
-        def indent(line: str, level: int):
-            for i in range(level):
-                line = '    ' + line
-            return line
-
-        def cleanup_mess(code: list):
-            clean_code = []
-            for line in code:
-                if not re.search(r'(^\s*<:for|^\s*<:if|^\s*<:else|^\s*<:end)',
-                                 line):
-                    # if a line is not started with 'for/if/else/end' but contains 'for/if/else/end'
-                    if '<:for' in line or '<:if' in line or '<:else' in line or '<:end' in line:
-                        for segment in line.split('<:'):
-                            if ':>' in segment:
-                                clean_code.append('<:' + segment)
-                            elif segment:
-                                clean_code.append(segment)
-                    else:
-                        clean_code.append(line)
-                else:
-                    clean_code.append(line)
-            return clean_code
-
         code = cleanup_mess(
             received_json.get('code').replace('\r\n', '\n').split('\n'))
+
         if received_json.get('message') == 'indent':
-            level = 0
-            for index, line in enumerate(code):
-                if line.startswith('<:'):
-                    if line.startswith('<:for') or line.startswith('<:if'):
-                        if '<:end:>' in line:
-                            if len(re.findall(r'<:if', line) + re.findall(
-                                    r'<:for', line)) == len(
-                                    re.findall(r'<:end:>', line)):
-                                code[index] = indent(line, level)
-                            else:
-                                code[index] = indent(line, level)
-                                level += 1
-                        else:
-                            code[index] = indent(line, level)
-                            level += 1
-                    elif line.startswith('<:else'):
-                        code[index] = indent(line, level - 1)
-                    elif line.startswith('<:end'):
-                        level -= 1
-                        code[index] = indent(line, level)
-                    else:
-                        code[index] = indent(line, level)
-                else:
-                    pass
-            code = '\n'.join(code)
+            code = '\n'.join(format(code, message='indent'))
             return json.dumps({'code': code}), 200
 
         elif received_json.get('message') == 'dedent':
@@ -76,10 +30,21 @@ def code_formatting():
                 code[index] = re.sub(r'^\s+', '', line)
             code = '\n'.join(code)
             return json.dumps({'code': code}), 200
+
+        elif received_json.get('message') == 'format':
+            code = '\n'.join(format(code, message='format'))
+            return json.dumps({'code': code}), 200
+
+        elif received_json.get('message') in ['client', 'partner', 'joint',
+                                              'trust', 'superfund', 'company',
+                                              'partnership']:
+            code = '\n'.join(format(code, entity=received_json.get('message')))
+            return json.dumps({'code': code}), 200
+
         else:
             return json.dumps({'code': code}), 200
-    else:
-        return json.dumps({'code': ''}), 500
+
+    return json.dumps({'code': ''}), 500
 
 
 @login_required
@@ -183,6 +148,7 @@ def acquire_search_result():
             if item.get('var') == var_var:
                 result = [item.get('usage'), item.get('type'),
                           item.get('multi')]
+
                 return json.dumps({'variable': result}), 200
-    else:
-        return json.dumps({'variable': ''}), 500
+
+    return json.dumps({'variable': ''}), 500
