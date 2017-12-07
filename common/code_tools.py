@@ -73,8 +73,12 @@ def format_segment(segment: list) -> list:
             indent = re.findall('^ +', chunk)[0]
 
         chunk = chunk.strip().split('<:')
-        text = chunk[0]
-        chunk = chunk[1]
+        if len(chunk) > 1:
+            text = chunk[0]
+            chunk = chunk[1]
+        else:
+            text = ''
+            chunk = chunk[0]
 
         if 'client.' in chunk or 'partner.' in chunk or \
                         'trust' in chunk or 'superfund' in chunk or \
@@ -93,7 +97,10 @@ def format_segment(segment: list) -> list:
 
         elif re.findall('^(let|if|for|end|else)', chunk) or re.findall('^=',
                                                                        chunk):
-            segment[index] = f'{indent}{text}<:{chunk}:>'
+            if chunk.endswith(':'):
+                segment[index] = f'{indent}{text}<:{chunk}>'
+            else:
+                segment[index] = f'{indent}{text}<:{chunk}:>'
 
         elif not re.findall('^(let|if|for|end|else)', chunk) and \
                 not re.findall('^=', chunk):
@@ -106,37 +113,40 @@ def format_segment(segment: list) -> list:
 def cleanup_for_single_entity(code: list) -> list:
     stack = 0
     pop_list = []
-    text_reserve = {}
+    end_list = []
+    #text_reserve = {}
 
     for index, line in enumerate(code):
         segment = line.split(':>')
         for chunk in segment:
-            chunk = chunk.split('<:')
-            if len(chunk) == 1:
-                text = ''
-            else:
-                text = chunk[0]
+            if stack > 0:
+                if 'let' not in chunk:
+                    stack += len(re.findall(' *for.+in *([^\$]+) *| *if +(.+?) *', chunk))
 
-            entity_loop = len(re.findall(' *for.+in *(\$\w+) *', line))
+            entity_loop = len(re.findall(' *for.+in *(\$\w+) *', chunk))
             if entity_loop:
-                stack += entity_loop
+                if stack <= 0:
+                    stack = 0
+                    stack += entity_loop
                 pop_list.append(index)
-                if text:
-                    text_reserve[str(index)] = text
 
-            entity_end = len(re.findall(' *end *', line))
+            entity_end = len(re.findall(' *end *', chunk))
             if entity_end:
                 stack -= entity_end
                 if stack == 0:
-                    pop_list.append(index)
+                    end_list.append(index)
 
-    for index in pop_list:
-        if str(index) not in text_reserve:
-            code.pop(index)
-        else:
-            code[index] = text_reserve.get(str(index))
+    for index in reversed(pop_list):
+        code[index] = re.sub('<: *for.+in *\$\w+ *:>', '', code[index])
+        if index in end_list:
+            code[index] = re.sub('<: *end *:>', '', code[index])
+            end_list.remove(index)
 
-    return code
+    if len(end_list):
+        for index in reversed(end_list):
+            code[index] = re.sub('<: *end *:>', '', code[index])
+
+    return [c for c in code if c]
 
 
 def change_entity(code: list, entity: str) -> list:
