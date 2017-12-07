@@ -5,8 +5,8 @@
 
 {% block head %}
     {{ super() }}
-    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/icon.png') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}" type="image/x-icon">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-material-design.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/ripples.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
@@ -23,7 +23,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{ url_for('main.index') }}"><img src="{{ url_for('static', filename='img/logo.png') }}" style="width: 160px; overflow: hidden"></a>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}"><img src="{{ url_for('static', filename='img/logo.png') }}" style="width: 150px; overflow: hidden; padding-top: 3px"></a>
             </div>
 
             <div class="navbar-collapse collapse">
