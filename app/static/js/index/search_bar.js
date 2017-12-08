@@ -1,13 +1,15 @@
 var local_search_cache = {};
 $('#search-button').click(function() {
-    $('#variable-search-table').css('display', '');
-    $('#variable-search-table-head').css('display', '');
-    $('#variable-selector-table').css('display', 'none');
     var variable_table_search = $('#variable-search-table');
-    variable_table_search.empty();
-    variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;color:#009688">Searching ...</td></tr>');
+
     var pattern = $('#search-field').val();
     if (pattern) {
+        $('#variable-search-table').css('display', '');
+        $('#variable-search-table-head').css('display', '');
+        $('#variable-selector-table').css('display', 'none');
+        variable_table_search.empty();
+        variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;color:#009688">Searching ...</td></tr>');
+
         $.ajax({
             type: 'GET',
             url: '/code/acquire_search/' + pattern,
@@ -41,6 +43,9 @@ $('#search-button').click(function() {
             }
         });
     }
+    else {
+        return false;
+    }
 });
 
 // click on search result
@@ -49,10 +54,12 @@ $('#variable-search-table').on('click','.x',function(event){
     var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
     var subgroup_id = local_search_cache[result_row_id][1];
     var var_var = local_search_cache[result_row_id][2];
+
     sent_info = {
         subgroup_id : subgroup_id,
         var_var : var_var
     };
+
     $.ajax({
         contentType: "application/json",
         data: JSON.stringify(sent_info),

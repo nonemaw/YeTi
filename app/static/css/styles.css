@@ -216,7 +216,7 @@ label {
     background: rgba(209, 209, 209, 0.81);
 }
 .btn:not(.btn-raised).btn-info, .input-group-btn .btn:not(.btn-raised).btn-info {
-    color: #006edb;
+    color: #0063c5;
     background: rgba(182, 212, 216, 0.81);
 }
 .btn:not(.btn-raised).btn-success, .input-group-btn .btn:not(.btn-raised).btn-success {
@@ -224,11 +224,11 @@ label {
     background: rgba(183, 212, 213, 0.81);
 }
 .btn:not(.btn-raised).btn-warning, .input-group-btn .btn:not(.btn-raised).btn--warning {
-    color: #f44a00;
+    color: #cb4200;
     background: rgba(232, 198, 170, 0.81);
 }
 .btn:not(.btn-raised).btn-danger, .input-group-btn .btn:not(.btn-raised).btn-danger {
-    color: #f40069;
+    color: #dd0065;
     background: rgba(225, 197, 210, 0.81);
 }
 
