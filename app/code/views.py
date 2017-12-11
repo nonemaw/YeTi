@@ -6,11 +6,9 @@ from flask_login import login_required
 from bson import ObjectId
 
 from . import code
-from app.db import mongo_connect, client
+from common.meta import Meta
 from common.code_tools import cleanup_mess, format
 import fuzzier.fuzzier as fuzzier
-
-db = mongo_connect(client, 'ytml')
 
 
 @login_required
@@ -52,7 +50,7 @@ def code_formatting():
 def group():
     result = []
     try:
-        groups = db.Group.find({}).sort([('name', 1)])
+        groups = Meta.db_company.Group.find({}).sort([('name', 1)])
         for group_dict in groups:
             result.append({group_dict.get('var'): group_dict.get('name')})
         return json.dumps({'group': result}), 200
@@ -68,11 +66,11 @@ def subgroup(var):
     :return:
     """
     try:
-        subgroup_ids = db.Group.find_one({'var': var}).get('sub_groups')
+        subgroup_ids = Meta.db_company.Group.find_one({'var': var}).get('sub_groups')
         result = []
         if subgroup_ids:
             for id in subgroup_ids:
-                result.append({id: db.SubGroup.find_one(
+                result.append({id: Meta.db_company.SubGroup.find_one(
                     {'_id': ObjectId(id)}).get('name')})
         return json.dumps({'subgroup': result}), 200
     except:
@@ -82,12 +80,8 @@ def subgroup(var):
 @login_required
 @code.route('/acquire_variable/<id>', methods=['GET', 'POST'])
 def variable(id):
-    """
-    :param var: the 'var' name of parent group
-    :return:
-    """
     try:
-        variables = db.SubGroup.find_one({'_id': ObjectId(id)}).get(
+        variables = Meta.db_company.SubGroup.find_one({'_id': ObjectId(id)}).get(
             'variables')
         result = []
         if variables:
@@ -107,8 +101,7 @@ def variable(id):
 @code.route('/acquire_search/<pattern>', methods=['GET', 'POST'])
 def ratio(pattern):
     """
-    :param pattern: the pattern string to be searched
-    :return:
+    return a list of research result for displaying in the table
     """
     result_list = sorted(fuzzier.search(pattern), key=lambda item: item[0],
                          reverse=True)
@@ -116,14 +109,14 @@ def ratio(pattern):
     try:
         for item in result_list:
             group_var = item[1]
-            group_name = db.Group.find_one({'var': group_var}).get('name')
+            group_name = Meta.db_company.Group.find_one({'var': group_var}).get('name')
             subgroup = item[2]
             var_var = item[3]
             var_name = item[4]
 
-            subgroup_id_list = db.Group.find_one({'var': group_var}).get(
+            subgroup_id_list = Meta.db_company.Group.find_one({'var': group_var}).get(
                 'sub_groups')
-            subgroups_with_same_name = db.SubGroup.find({'name': subgroup})
+            subgroups_with_same_name = Meta.db_company.SubGroup.find({'name': subgroup})
             for subgroup_dict in subgroups_with_same_name:
                 if str(subgroup_dict.get('_id')) in subgroup_id_list:
                     returned_list.append(
@@ -138,11 +131,14 @@ def ratio(pattern):
 @login_required
 @code.route('/acquire_search_result', methods=['GET', 'POST'])
 def acquire_search_result():
+    """
+    return detailed variable information when client click on of the search result
+    """
     received_json = request.json
     if received_json:
         subgroup_id = received_json.get('subgroup_id')
         var_var = received_json.get('var_var')
-        var_list = db.SubGroup.find_one({'_id': ObjectId(subgroup_id)}).get(
+        var_list = Meta.db_company.SubGroup.find_one({'_id': ObjectId(subgroup_id)}).get(
             'variables')
         for item in var_list:
             if item.get('var') == var_var:

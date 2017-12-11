@@ -9,15 +9,14 @@ import json
 
 from common.meta import Meta
 from bson import ObjectId
-from app.db import mongo_connect, client
 from app.models import Group, SubGroup
 
 
 class Fetcher:
     def __init__(self, username: str, password: str, mode: str = 'w',
-                 group_only: str = None):
+                 group_only: str=None):
         self.mode = mode
-        self.db = mongo_connect(client, Meta.company)
+        self.db = Meta.db_default if Meta.company == 'ytml' else Meta.db_company
         self.USERNAME = username
         self.PASSWORD = password
 
@@ -37,8 +36,8 @@ class Fetcher:
         """
         code is ugly, but the html content is a little bit complex and parsers
         like beautifulsoup are hard to manipulate them because I am not very
-        sure about how some of the functions work, therefore regex is mainly
-        used here
+        grabing HTML content with BS4 functions, therefore regex is mainly used
+        here
         """
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))

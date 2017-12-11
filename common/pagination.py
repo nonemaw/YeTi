@@ -1,10 +1,6 @@
 from math import ceil
-from flask_login import current_user
-from bson.objectid import ObjectId
+from common.meta import Meta
 
-from app.db import mongo_connect, client
-
-db = mongo_connect(client, 'ytml')
 
 
 # http://flask.pocoo.org/snippets/44/
@@ -70,7 +66,7 @@ class PaginationSnippet(Pagination):
     def __init__(self, current_page: int, per_page: int = 15):
         super(PaginationSnippet, self).__init__(current_page,
                                                 per_page=per_page)
-        self.snippets = db.SnippetScenario.find({}).sort([('name', 1)])
+        self.snippets = Meta.db_default.SnippetScenario.find({}).sort([('name', 1)])
         self.total_count = self.snippets.count()
         self.current_num = self.total_count - (
         self.per_page * (self.current_page - 1))

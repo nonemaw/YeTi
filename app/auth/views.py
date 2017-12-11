@@ -11,15 +11,12 @@ from bson import ObjectId
 
 from . import auth
 from .forms import LoginForm, RegForm, ChangeEmailForm, ChangePasswordForm
-from app.db import mongo_connect, client
 from app.models import User, UserUtl
 from common.general import send_email, verify_password
 from app.decorators import admin_required
 
 from common.meta import Meta
 from common.crypto import AESCipher
-
-db = mongo_connect(client, 'ytml')
 
 
 @auth.before_app_request
@@ -42,7 +39,7 @@ def login():
     """
     form = LoginForm()
     if form.validate_on_submit():
-        user_dict = db.User.find_one({'email': form.email.data})
+        user_dict = Meta.db_default.User.find_one({'email': form.email.data})
         Meta.company = form.company.data
         # meta.crypto = AESCipher()
         # meta.company_username = form.company_username.data
@@ -72,7 +69,7 @@ def register():
     if form.validate_on_submit():
         User(email=form.email.data, username=form.username.data,
              password=form.password.data, location=form.location.data).new()
-        user_utl = UserUtl(db.User.find_one({'email': form.email.data}))
+        user_utl = UserUtl(Meta.db_default.User.find_one({'email': form.email.data}))
         token = user_utl.generate_token()
         send_email(user_utl.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user_utl, token=token)
@@ -92,7 +89,7 @@ def confirm(token):
     except BadSignature:
         return render_template('errors/bad_token.html')
     id = data.get('confirm')
-    user = db.User.find_one({'_id': ObjectId(id)})
+    user = Meta.db_default.User.find_one({'_id': ObjectId(id)})
     if user is None:
         flash('The confirmation link is invalid or has expired.',
               category='danger')
@@ -100,7 +97,7 @@ def confirm(token):
         flash('Your account has already been confirmed.', category='danger')
         time.sleep(2)
         return redirect(url_for('main.index'))
-    db.User.update_one({'_id': ObjectId(id)},
+    Meta.db_default.User.update_one({'_id': ObjectId(id)},
                        {'$set': {'is_confirmed': True}})
     flash('You have confirmed your account successfully, Thank you!',
           category='success')
@@ -164,8 +161,8 @@ def change_email(token):
     id = data.get('ID')
     new_email = data.get('new_email')
     if new_email is None or \
-                    db.User.find_one({'email': new_email}) is not None or \
-                    db.User.find_one({'_id': ObjectId(id)}) is None:
+                    Meta.db_default.User.find_one({'email': new_email}) is not None or \
+                    Meta.db_default.User.find_one({'_id': ObjectId(id)}) is None:
         flash('The confirmation link is invalid or has expired.',
               category='danger')
         time.sleep(2)
@@ -173,7 +170,7 @@ def change_email(token):
     avatar_hash = hashlib.md5(new_email.encode('utf-8') +
                               str(current_user.member_since). \
                               encode('utf-8')).hexdigest()
-    db.User.update_one({'_id': ObjectId(id)},
+    Meta.db_default.User.update_one({'_id': ObjectId(id)},
                        {'$set': {'email': new_email,
                                  'avatar_hash': avatar_hash}})
     logout_user()
@@ -189,7 +186,7 @@ def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if verify_password(current_user.password, form.password.data):
-            db.User.update_one({'email': current_user.email},
+            Meta.db_default.User.update_one({'email': current_user.email},
                                {'$set': {'password': generate_password_hash(
                                    form.password_new.data)}})
             logout_user()

@@ -1,12 +1,11 @@
+import requests
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
     ValidationError, SelectField
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
+from common.meta import Meta
+from app.db import client, mongo_connect
 
-from app.db import mongo_connect, client
-from common.general import get_company_list
-
-db = mongo_connect(client, 'ytml')
 cities = [('New South Wales', 'New South Wales'),
           ('Australian Capital Territory', 'Australian Capital Territory'),
           ('Northern Territory', 'Northern Territory'),
@@ -25,6 +24,22 @@ class LoginForm(FlaskForm):
     # company_password = PasswordField('Company\'s XPLAN Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Login')
+
+    def validate_company(self, field):
+        """
+        the DB is initialized in here
+        """
+        try:
+            requests.session().get(
+                f'https://{field.data.lower()}.xplan.iress.com.au',
+                headers=dict(
+                    referer=f'https://{field.data.lower()}.xplan.iress.com.au'))
+            Meta.company = field.data.lower()
+            Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
+                client, Meta.company)
+        except:
+            raise ValidationError(
+                f'Company name \"{field.data}\" invalid, no such XPLAN site.')
 
 
 class RegForm(FlaskForm):
@@ -51,11 +66,11 @@ class RegForm(FlaskForm):
     """
 
     def validate_email(self, field):
-        if db.User.find_one({'email': field.data}):
+        if Meta.db_default.User.find_one({'email': field.data}):
             raise ValidationError('Email already registered.')
 
     def validate_username(self, field):
-        if db.User.find_one({'username': field.data}):
+        if Meta.db_default.User.find_one({'username': field.data}):
             raise ValidationError('Username already existed.')
 
 
@@ -68,7 +83,7 @@ class ChangeEmailForm(FlaskForm):
     submit = SubmitField('Update Email Address')
 
     def validate_email(self, field):
-        if db.User.find_one({'email': field.data}):
+        if Meta.db_default.User.find_one({'email': field.data}):
             raise ValidationError('Email already registered.')
 
 

@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         help='Debug Mode')
     parser.add_argument('--fetcher', '-F', required=False, action='store_true',
                         help='Run Fetcher')
-    parser.add_argument('--test', '-T', required=False, action='store_true',
+    parser.add_argument('--searcher', '-S', required=False, action='store_true',
                         help='Test')
     args = parser.parse_args()
 
@@ -43,11 +43,13 @@ if __name__ == '__main__':
         else:
             groups = None
 
+        from app.db import mongo_connect, client
         Meta.company = company
+        Meta.db_company = mongo_connect(client, Meta.company)
         Fetcher(username, password, group_only=groups).run()
 
-    elif args.test:
-        pattern = input('Input test pattern: ')
+    elif args.searcher:
+        pattern = input('Input search pattern for test: ')
         search(pattern=pattern)
 
     else:

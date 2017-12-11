@@ -4,11 +4,10 @@ from wtforms import StringField, TextAreaField, SubmitField, BooleanField, \
 from wtforms.validators import Length, DataRequired, Email, Regexp, \
     ValidationError
 
-from app.db import mongo_connect, client
+from common.meta import Meta
 from app.auth.forms import cities
 
 roles = [('ACCESS', 'Normal User'), ('ADMIN', 'Administrator')]
-db = mongo_connect(client, 'ytml')
 
 
 class EditProfileForm(FlaskForm):
@@ -48,12 +47,12 @@ class EditProfileAdminForm(FlaskForm):
         self.user = user
 
     def validate_email(self, field):
-        user_in_db = db.User.find_one({'email': field.data})
+        user_in_db = Meta.db_default.User.find_one({'email': field.data})
         if user_in_db and str(user_in_db.get('_id')) != self.user.id:
             raise ValidationError('Email already registered by another user.')
 
     def validate_username(self, field):
-        user_in_db = db.User.find_one({'username': field.data})
+        user_in_db = Meta.db_default.User.find_one({'username': field.data})
         if user_in_db and str(user_in_db.get('_id')) != self.user.id:
             raise ValidationError(
                 'Username already registered by another user.')

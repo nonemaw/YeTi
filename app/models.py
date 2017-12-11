@@ -6,11 +6,7 @@ from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from bson import ObjectId
 from app import login_manager
-from app.db import mongo_connect, client
 from common.meta import Meta
-
-db = mongo_connect(client, 'ytml')
-db_c = mongo_connect(client, Meta.company)
 
 
 class Group:
@@ -30,9 +26,9 @@ class Group:
             'name': self.name,
             'sub_groups': []
         }
-        legacy = db_c.Group.find_one({'var': self.var})
+        legacy = Meta.db_company.Group.find_one({'var': self.var})
         if not legacy:
-            return str(db_c.Group.insert(document))
+            return str(Meta.db_company.Group.insert(document))
         else:
             return str(legacy.get('_id'))
 
@@ -52,14 +48,14 @@ class SubGroup:
             'name': self.name,
             'variables': []
         }
-        legacy = db_c.Variables.find_one({'name': self.name})
+        legacy = Meta.db_company.Variables.find_one({'name': self.name})
         if not legacy:
-            return str(db_c.SubGroup.insert(document))
+            return str(Meta.db_company.SubGroup.insert(document))
         else:
             return str(legacy.get('_id'))
 
     def update_doc(self, id, variables: list):
-        db_c.SubGroup.update_one({'_id': ObjectId(id)},
+        Meta.db_company.SubGroup.update_one({'_id': ObjectId(id)},
                                  {'$set': {'variables': variables}})
 
 
@@ -98,7 +94,7 @@ class Role:
             'permission': self.permission,
             'default': self.default
         }
-        db.Role.insert(document)
+        Meta.db_default.Role.insert(document)
 
     @staticmethod
     def insert_roles():
@@ -110,8 +106,8 @@ class Role:
              'permission': 0xff,
              'default': False}]
         for role in roles:
-            if not db.Role.find_one({'type': role.get('type')}):
-                db.Role.insert(role)
+            if not Meta.db_default.Role.find_one({'type': role.get('type')}):
+                Meta.db_default.Role.insert(role)
 
 
 class User:
@@ -126,9 +122,9 @@ class User:
         self.location = location
         self.avatar_hash = None
         if self.email == current_app.config['SITE_ADMIN']:
-            self.role = db.Role.find_one({'permission': 0xff}).get('type')
+            self.role = Meta.db_default.Role.find_one({'permission': 0xff}).get('type')
         else:
-            self.role = db.Role.find_one({'default': True}).get('type')
+            self.role = Meta.db_default.Role.find_one({'default': True}).get('type')
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = hashlib.md5(self.email.encode('utf-8') +
                                            str(datetime.utcnow()).encode(
@@ -155,7 +151,7 @@ class User:
             'member_since': datetime.utcnow(),
             'last_login': datetime.utcnow(),
         }
-        return str(db.User.insert(document))
+        return str(Meta.db_default.User.insert(document))
 
 
 class UserUtl(UserMixin):
@@ -174,7 +170,7 @@ class UserUtl(UserMixin):
         self.username = user.get('username')
         self.password = user.get('password')  # store hash result
         self.is_confirmed = user.get('is_confirmed')
-        self.role = Role(db.Role.find_one({'type': user.get('role')}))
+        self.role = Role(Meta.db_default.Role.find_one({'type': user.get('role')}))
         self.name = user.get('name')
         self.location = user.get('location')
         self.about_me = user.get('about_me')
@@ -215,7 +211,7 @@ class UserUtl(UserMixin):
         return self.can(Permission.ADMIN)
 
     def ping(self):
-        db.User.update_one({'email': self.email},
+        Meta.db_default.User.update_one({'email': self.email},
                            {'$set': {'last_login': datetime.utcnow()}})
 
     def generate_token(self, expiration=3600):
@@ -244,12 +240,12 @@ class Snippet():
     def new(self):
         # check duplication, it's ok if only group name or scenario name is same
         duplicated = False
-        group_dict = db.SnippetGroup.find_one({'name': self.group})
+        group_dict = Meta.db_default.SnippetGroup.find_one({'name': self.group})
         if group_dict:
             # group existing, check scenario name
             old_scenario_id_list = group_dict.get('scenarios')
             for id in old_scenario_id_list:
-                if db.SnippetScenario.find_one({'_id': ObjectId(id)}).get(
+                if Meta.db_default.SnippetScenario.find_one({'_id': ObjectId(id)}).get(
                         'name') == self.scenario:
                     # both group and scenario are duplicated, you are in big trouble, skipped
                     duplicated = True
@@ -262,12 +258,12 @@ class Snippet():
                 'group': self.group,
                 'code': self.code
             }
-            scenario_id = str(db.SnippetScenario.insert(document))
+            scenario_id = str(Meta.db_default.SnippetScenario.insert(document))
 
             if group_dict:
                 # update new scenario id into existing group
                 group_id = str(group_dict.get('_id'))
-                db.SnippetGroup.update_one({'name': self.group}, {
+                Meta.db_default.SnippetGroup.update_one({'name': self.group}, {
                     '$push': {'scenarios': scenario_id}})
             else:
                 # insert new group for the new scenario
@@ -275,7 +271,7 @@ class Snippet():
                     'name': self.group,
                     'scenarios': [scenario_id]
                 }
-                group_id = str(db.SnippetGroup.insert(document))
+                group_id = str(Meta.db_default.SnippetGroup.insert(document))
             return group_id, scenario_id
         else:
             return None, None
@@ -300,7 +296,7 @@ class Ticket():
             'solved_timestamp': None,
             'solved': False
         }
-        return str(db.Ticket.insert(document))
+        return str(Meta.db_default.Ticket.insert(document))
 
 
 """
@@ -324,5 +320,5 @@ session (as current_user?)
 
 @login_manager.user_loader
 def load_user(user_id):
-    user = db.User.find_one({'_id': ObjectId(user_id)})
+    user = Meta.db_default.User.find_one({'_id': ObjectId(user_id)})
     return UserUtl(user)  # this is current_user

@@ -1,5 +1,6 @@
 from selenium import webdriver
 from common.crypto import AESCipher
+from app.db import mongo_connect, client
 
 
 class Meta:
@@ -11,14 +12,13 @@ class Meta:
     company_username = 'ytml1'
     company_password = 'Passw0rdOCT'
 
-    """
-    `crypto` variable is an instance for AESCipher
-    """
+    db_default = mongo_connect(client, 'ytml')
+    db_company = None
+
+    # `crypto` variable is an instance for AESCipher
     crypto = AESCipher()
 
-    """
-    browser is used for fetch interface menu
-    """
+    # browser is used for fetch interface menu
     browser = None
     session_id = None
     executor_url = None
