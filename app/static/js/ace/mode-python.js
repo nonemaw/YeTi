@@ -7,13 +7,13 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var PythonHighlightRules = function() {
 
     var keywords = (
-        "and|as|assert|break|class|continue|def|del|elif|else|except|exec|" +
-        "finally|for|from|global|if|import|in|is|lambda|not|or|pass|print|" +
-        "raise|return|try|while|with|yield"
+        "and|as|assert|break|class|continue|def|del|except|exec|" +
+        "finally|from|global|import|pass|print|" +
+        "raise|return|try|yield|<:|:>"
     );
 
     var builtinConstants = (
-        "True|False|None|NotImplemented|Ellipsis|__debug__"
+        "True|False|None|NotImplemented|Ellipsis|__debug__|if|else|for|end|elif|is|in|lambda|not|or|and|with|let|while"
     );
 
     var builtinFunctions = (
@@ -53,7 +53,7 @@ var PythonHighlightRules = function() {
     this.$rules = {
         "start" : [ {
             token : "comment",
-            regex : "#.*$"
+            regex : "#[^:>]*"
         }, {
             token : "string",           // multi line """ string start
             regex : strPre + '"{3}',
@@ -84,7 +84,7 @@ var PythonHighlightRules = function() {
             regex : integer + "\\b"
         }, {
             token : keywordMapper,
-            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b|<:|:>"
         }, {
             token : "keyword.operator",
             regex : "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|%|<<|>>|&|\\||\\^|~|<|>|<=|=>|==|!=|<>|="
