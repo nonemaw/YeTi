@@ -162,15 +162,15 @@ def update_interface(self, _id: str) -> dict:
         content[name] = []
 
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_1"]').get_attribute('checked'): content.get(name).append('Client & Partner')
+                '//*[@id="entity_types_1"]').get_attribute('checked'): content.get(name).append('individual')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_2"]').get_attribute('checked'): content.get(name).append('Superfund')
+                '//*[@id="entity_types_2"]').get_attribute('checked'): content.get(name).append('superfund')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_3"]').get_attribute('checked'): content.get(name).append('Partnership')
+                '//*[@id="entity_types_3"]').get_attribute('checked'): content.get(name).append('partnership')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_4"]').get_attribute('checked'): content.get(name).append('Trust')
+                '//*[@id="entity_types_4"]').get_attribute('checked'): content.get(name).append('trust')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_5"]').get_attribute('checked'): content.get(name).append('Company')
+                '//*[@id="entity_types_5"]').get_attribute('checked'): content.get(name).append('company')
 
         menu['leaf'] = content
     return {'status': 'Update Finished', 'result': menu}
