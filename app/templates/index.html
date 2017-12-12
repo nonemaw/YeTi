@@ -6,7 +6,8 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='jstree/themes/proton/style.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='js/jstree/themes/proton/style.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
 
 {% block wide_content %}
@@ -39,10 +40,10 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title" id="myModalLabel"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site ABCD )</small></h4>
+                            <h4 class="modal-title" id="myModalLabel"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company }} )</small></h4>
                         </div>
                         <div class="modal-body">
-                            <div class="row" style="height: 50vh;">
+                            <div class="row">
                                 <div class="col-md-5 column-scroll">
                                     <div id="interface-tree">
                                         <ul class="jstree-container-ul jstree-children">
@@ -53,16 +54,29 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <div class="col-md-7">
-                                    <p>fdsafsdf</p>
-
-
-
-
-
-
-
-
+                                <div class="col-md-7" id="interface-window">
+                                    <h4 id="interface-type" style="font-weight: bold">/</h4>
+                                    <h5 id="interface-title" style="font-size: 18px">/</h5>
+                                    <br>
+                                    <h4 id="interface-entity" style="font-weight: bold">Applicable Entities</h4>
+                                    <div class="checkbox">
+                                        <label><input id="interface-individual" type="checkbox">&nbsp&nbspClient & Partner</label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label><input id="interface-trust" type="checkbox">&nbsp&nbspTrust</label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label><input id="interface-superfund" type="checkbox">&nbsp&nbspSuperfund</label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label><input id="interface-company" type="checkbox">&nbsp&nbspCompany</label>
+                                    </div>
+                                    <div class="checkbox">
+                                        <label><input id="interface-partnership" type="checkbox">&nbsp&nbspPartnership</label>
+                                    </div>
+                                    <br>
+                                    <h4 id="interface-suggestion-title" style="font-weight: bold; display: none">/</h4>
+                                    <p id="interface-suggestion-body" style="font-size: 16px; display: none">/</p>
                                 </div>
                             </div>
                         </div>
@@ -337,13 +351,13 @@
 {% block page_script %}
     <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='jstree/jstree.min.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/jstree/jstree.min.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/index/search_bar.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/index/initialize_group_subgroup_variable.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/index/initialize_code_snippet.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/index/initialize_interface.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/index/update_interface.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/yeti/search_bar.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/yeti/initialize_group_subgroup_variable.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/yeti/initialize_code_snippet.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/yeti/initialize_interface.js') }}" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/yeti/update_interface.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var save_session = true;
         var show_invisibles = true;
@@ -601,6 +615,7 @@
 
             // click on interface menu
             var selections = [];
+            var local_leaf_cache = {};
             $('#interface-tree').on("select_node.jstree", function (e, data) {
                 var id = data.node.id;
                 var text = data.node.text;

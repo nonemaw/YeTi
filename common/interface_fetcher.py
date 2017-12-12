@@ -8,6 +8,28 @@ from selenium import webdriver
 from app import celery
 
 
+def create_driver(driver: str = 'phantomjs'):
+    # new driver
+    if not Meta.session_id and not Meta.executor_url:
+        if driver == 'phantomjs':
+            Meta.browser = webdriver.PhantomJS(
+                executable_path='common/phantomjs')
+        else:
+            Meta.browser = webdriver.Chrome(
+                executable_path='common/chromedriver')
+
+        Meta.session_id = Meta.browser.session_id
+        Meta.executor_url = Meta.browser.command_executor._url
+
+    # resume session
+    elif Meta.session_id and Meta.executor_url:
+        Meta.browser = webdriver.Remote(command_executor=Meta.executor_url,
+                                        desired_capabilities={})
+        Meta.browser.session_id = Meta.session_id
+    else:
+        return None
+
+
 def login(driver: str = 'phantomjs'):
     if not Meta.browser:
         create_driver(driver)
@@ -18,12 +40,14 @@ def login(driver: str = 'phantomjs'):
 
 
 def test_login(menu: dict) -> bool:
-    Meta.browser.get(f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface')
+    Meta.browser.get(
+        f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface')
+
     inner_html = Meta.browser.execute_script("return document.body.innerHTML")
     if re.search(r'permission_error', inner_html):
         # login failed
-        menu[
-            'error'] = 'Unable to load Interface View, please ensure the correctness of username/password, and no other is using this account.'
+        menu['error'] = \
+            'Unable to load Interface View, please ensure the correctness of username/password, and no other is using this account.'
         return False
     return True
 
@@ -36,27 +60,9 @@ def quit_driver(browser):
     Meta.executor_url = None
 
 
-def create_driver(driver: str = 'phantomjs'):
-    if not Meta.session_id and not Meta.executor_url:
-        if driver == 'phantomjs':
-            Meta.browser = webdriver.PhantomJS(
-                executable_path='common/phantomjs')
-        else:
-            Meta.browser = webdriver.Chrome(
-                executable_path='common/chromedriver')
-        Meta.session_id = Meta.browser.session_id
-        Meta.executor_url = Meta.browser.command_executor._url
-    elif Meta.session_id and Meta.executor_url:
-        Meta.browser = webdriver.Remote(command_executor=Meta.executor_url,
-                                        desired_capabilities={})
-        Meta.browser.session_id = Meta.session_id
-    else:
-        return None
-
-
 # RUN WORKER: celery -A common.interface_fetcher worker --pool=solo -l info
 @celery.task(bind=True)
-def initialize_interface(self, number: int = 99) -> dict:
+def initialize_interface(self, number: int = 200) -> dict:
     URL_INTERFACE = f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface'
     menu = {'data': []}
 
@@ -64,122 +70,109 @@ def initialize_interface(self, number: int = 99) -> dict:
     # and return main menu again
     if Meta.current_url and Meta.current_url == URL_INTERFACE:
         if test_login(menu):
-            time.sleep(1.5)
-            for _id in range(number):
+            time.sleep(1)
+            for _id in range(1, number):
                 self.update_state(state='PROGRESS',
-                                  meta={'current': _id + 1, 'total': number,
+                                  meta={'current': _id + 1, 'total': 100,
                                         'status': 'working'})
-                get_menu(_id, number, menu)
+                if not get_menu(_id, menu):
+                    break
 
+    # a new login session
     else:
         login('chromedriver')
         time.sleep(1)
         if test_login(menu):
-            print('Going in, awaiting Interface page being loaded ...')
             Meta.current_url = URL_INTERFACE
-            time.sleep(1.5)
-            for _id in range(number):
+            time.sleep(1)
+            for _id in range(1, number):
                 self.update_state(state='PROGRESS',
-                                  meta={'current': _id + 1, 'total': number,
+                                  meta={'current': _id + 1, 'total': 100,
                                         'status': 'working'})
-                get_menu(_id, number, menu)
+                if not get_menu(_id, menu):
+                    break
 
     return {'status': 'Initialization Finished', 'result': menu}
-    # for id in range(100):
-    #     try:
-    #         # find hidden tag
-    #         browser.find_element_by_xpath(f'//*[@id="client_{id}"]/a/span[1]/font')
-    #     except:
-    #         # if no hidden tag, perform click operation
-    #         try:
-    #             browser.find_element_by_xpath(f'//*[@id="client_{id}"]/a/span[1]').click()
-    #         except:
-    #             pass
-    #         else:
-    #             time.sleep(0.1)
-    #             # on click success, keep clicking children
-    #             for child in range(100):
-    #                 try:
-    #                     # find hidden tag
-    #                     browser.find_element_by_xpath(f'//*[@id="client_{id}-{child}"]/a/span[1]/font')
-    #                 except:
-    #                     # if no hidden tag, perform click operation on child
-    #                     try:
-    #                         browser.find_element_by_xpath(f'//*[@id="client_{id}-{child}"]/a/span[1]').click()
-    #                     except:
-    #                         pass
-    #                     else:
-    #                         time.sleep(0.1)
-    #                         # on click success, keep clicking sub children
-    #                         for sub in range(50):
-    #                             try:
-    #                                 # find hidden tag
-    #                                 browser.find_element_by_xpath(f'//*[@id="client_{id}-{child}-{sub}"]/a/span[1]/font')
-    #                             except:
-    #                                 # if no hidden tag, perform click operation on sub child
-    #                                 try:
-    #                                     browser.find_element_by_xpath(f'//*[@id="client_{id}-{child}-{sub}"]/a/span[1]').click()
-    #                                 except:
-    #                                     pass
-    #                                 else:
-    #                                     time.sleep(0.1)
-    #                             else:
-    #                                 pass
-    #                 else:
-    #                     pass
-    #     else:
-    #         pass
-    #
-    # inner_html = browser.execute_script("return document.body.innerHTML")
-    # print(inner_html)
 
 
-def get_menu(_id: int, number: int, menu: dict):
+def get_menu(_id: int, menu: dict) -> bool:
     try:
         # find menu item with `hidden` tags
         Meta.browser.find_element_by_xpath(
-            f'//*[@id="client_{_id}"]/a/span[1]/font')
+            f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]/font')
+        return True
     except:
-        # if there is no `hidden` tags, click it
+        # if there is no `hidden` tags, get id and text
         try:
-            menu.get('data').append({'id': f'client_{_id}',
+            menu.get('data').append({'id': Meta.browser.find_element_by_xpath(
+                                         f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute('id'),
                                      'parent': '#',
                                      'text': Meta.browser.find_element_by_xpath(
-                                         f'//*[@id="client_{_id}"]/a/span[1]').text})
+                                         f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text
+                                    })
+            return True
         except:
-            pass
+            return False
 
 
 @celery.task(bind=True)
-def update_interface(self, _id: str, text: str, number: int = 30) -> dict:
+def update_interface(self, _id: str) -> dict:
     """
     case 1: a sub menu is expanded, return new list of menu
     case 2: a leaf, return content of panel data
     """
     menu = {'data': []}
-    Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
-    time.sleep(1)
 
-    if text == 'Key Details' and re.findall('(client_[0-9]+\-[0-9]+)', _id):
-        number = 120
-    for child in range(number):
-        self.update_state(state='PROGRESS',
-                          meta={'current': child + 1, 'total': number,
-                                'status': 'working'})
-        try:
-            # find hidden tag
-            Meta.browser.find_element_by_xpath(
-                f'//*[@id="{_id}-{child}"]/a/span[1]/font')
-        except:
-            # if no hidden tag, perform click operation on child
+    # normal node
+    if re.search('^client_[0-9]+', _id):
+        Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
+        time.sleep(0.5)
+
+        for child in range(1, 200):
+            self.update_state(state='PROGRESS',
+                              meta={'current': child + 1, 'total': 100,
+                                    'status': 'working'})
             try:
-                menu.get('data').append({'id': f'{_id}-{child}',
-                                         'parent': f'{_id}',
-                                         'text': Meta.browser.find_element_by_xpath(
-                                             f'//*[@id="{_id}-{child}"]/a/span[1]').text})
+                # find hidden tag
+                Meta.browser.find_element_by_xpath(
+                    f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]/font')
             except:
-                pass
+                try:
+                    element = Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/ul/li[{child}]')
+                    
+                    if not re.search('(_gap|_title)', element.get_attribute('rel')):
+                        menu.get('data').append({'id': element.get_attribute('id'),
+                                                 'parent': _id,
+                                                 'text': Meta.browser.find_element_by_xpath(
+                                                     f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
+                                                })
+                except:
+                    break
 
+    # leaf node
+    else:
+        Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
+        time.sleep(1)
+        content = {}
+
+        name = Meta.browser.find_element_by_xpath(
+            '//*[@id="edit_interface_page"]/div[2]/div[3]/div/div[2]/table/tbody/tr[1]/td[2]/div/a/span').text
+        if re.findall('\[(.+?)\] (.+)', name):
+            name = '--'.join(re.findall('\[(.+?)\] (.+)', name)[0])
+        content[name] = []
+
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_1"]').get_attribute('checked'): content.get(name).append('Client & Partner')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_2"]').get_attribute('checked'): content.get(name).append('Superfund')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_3"]').get_attribute('checked'): content.get(name).append('Partnership')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_4"]').get_attribute('checked'): content.get(name).append('Trust')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_5"]').get_attribute('checked'): content.get(name).append('Company')
+
+        menu['leaf'] = content
     return {'status': 'Update Finished', 'result': menu}
 
 

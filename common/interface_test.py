@@ -280,33 +280,7 @@ def initialize_interface(menu: dict, content: dict, rollback: bool = False,
                                  _sub_sub)
 
 
-def update_interface(operation: str, _id: str, text: str, number: int = 30) -> dict:
-    """
-    case 'delete': delete one section of the interface
-    case 'update': add or update one section of a list
-    """
-    menu = {'data': []}
-    Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
-    time.sleep(1)
 
-    if text == 'Key Details' and re.findall('(client_[0-9]+\-[0-9]+)', _id):
-        number = 120
-    for child in range(number):
-        try:
-            # find hidden tag
-            Meta.browser.find_element_by_xpath(
-                f'//*[@id="{_id}-{child}"]/a/span[1]/font')
-        except:
-            # if no hidden tag, perform click operation on child
-            try:
-                menu.get('data').append({'id': f'{_id}-{child}',
-                                         'parent': f'{_id}',
-                                         'text': Meta.browser.find_element_by_xpath(
-                                             f'//*[@id="{_id}-{child}"]/a/span[1]').text})
-            except:
-                pass
-
-    return menu
 
 
 if __name__ == '__main__':
