@@ -1,5 +1,5 @@
 
-{% extends "bootstrap/base.html" %}
+{% extends "boot.html" %}
 
 {% block title %}YeTi OJ System{% endblock %}
 
@@ -13,6 +13,8 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
 
+{% block body %}
+    <div id="particles-js"></div>
 {% block navbar %}
     <div class="navbar navbar-default" role="navigation" style="background: #343A40">
         <div class="container">
@@ -60,7 +62,6 @@
 {% endblock %}
 
 {% block content %}
-{#    <div id="particles-js"></div>#}
     <div class="container-fluid" id="yeti">
         <div class="row">
             <div class="col-md-2 col-lg-2"></div>
@@ -93,4 +94,5 @@
     </script>
 
     {% block page_script %}{% endblock %}
+{% endblock %}
 {% endblock %}
