@@ -114,8 +114,26 @@ div.crawler-button {
 }
 
 /*****************************************************************************/
+/*#yeti {*/
+    /*position: relative;*/
+/*}*/
+
+/*#particles-js {*/
+  /*background-color: #b61924;*/
+  /*position:fixed;*/
+  /*top:0;*/
+  /*right:0;*/
+  /*bottom:0;*/
+  /*left:0;*/
+  /*z-index:0;*/
+/*}*/
+
 body {
    background: #eaeaea !important;
+}
+
+#interface-window {
+    border-left: 2px dashed #848383;
 }
 
 .modal-content {
@@ -185,7 +203,7 @@ label {
 }
 
 .dropdown-menu li a:hover {
-    background-color: #008573;
+    background-color: #009688;
     color: #f1f1f1;
 }
 
@@ -268,6 +286,19 @@ label {
 
 .jstree-proton .jstree-anchor {
     font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
+.jstree-proton .jstree-hovered {
+    background: #009688;
+}
+
+.jstree-proton .jstree-clicked {
+    background: #337ab7;
+    color: #fff;
+    border-radius: 3px;
+    box-shadow: inset 0 0 1px #337ab7;
+    font-size: 18px;
+    font-weight: bold;
+}

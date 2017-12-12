@@ -35,9 +35,9 @@ class Fetcher:
     def run(self):
         """
         code is ugly, but the html content is a little bit complex and parsers
-        like beautifulsoup are hard to manipulate them because I am not very
-        grabing HTML content with BS4 functions, therefore regex is mainly used
-        here
+        like BeautifulSoup4 are hard to manipulate them because I am not very
+        good at grabbing HTML content with BS4 methods, therefore regex is
+        mainly used
         """
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))

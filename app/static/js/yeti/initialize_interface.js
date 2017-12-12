@@ -1,4 +1,4 @@
-function initialize_interface(id, text){
+function initialize_interface(id){
     var div = $('<div></div>');
     $('#progress').append(div);
     var nanobar = new Nanobar({
@@ -25,7 +25,7 @@ function initialize_interface(id, text){
     else {
         $.ajax({
             contentType: "application/json",
-            data: JSON.stringify({ id: id, text: text }),
+            data: JSON.stringify({ id: id }),
             type: 'POST',
             url: '/update_interface',
             success: function (data, status, request) {
@@ -40,6 +40,8 @@ function initialize_interface(id, text){
     }
 }
 
+// receive running state from backend: interface_streamer()
+// once task finished, get result to fill & refresh jstree
 function initialization_streamer(status_url, nanobar, status_div) {
     $.getJSON(status_url, function(data){
         var percent = data['current'] * 100 / data['total'];
@@ -77,6 +79,8 @@ function initialization_streamer(status_url, nanobar, status_div) {
     });
 }
 
+// receive running state from backend: interface_streamer()
+// once task finished, get result for appending child to parent & fresh jstree
 function update_streamer(status_url, nanobar, status_div, id){
     $.getJSON(status_url, function(data){
         var percent = data['current'] * 100 / data['total'];
@@ -90,16 +94,34 @@ function update_streamer(status_url, nanobar, status_div, id){
                     alert(data.result.error);
                     $('#interface-tree').jstree("create_node", id, { id: 'error', text: 'Error' }, "last");
                 }
+                else if (data.result.leaf) {
+                    info = data.result.leaf;
+                    for (group_subgroup in info) {
+                        var group_subgroup_array = group_subgroup.split('--');
+                        if (group_subgroup_array.length === 2) {
+                            // XPLAN item
+                        }
+                        else if (group_subgroup_array.length === 1) {
+                            // Group - Subgroup
+                        }
+
+                        entities = info[group_subgroup];
+                        for (entity in entities) {
+                            console.warn(entity);
+                        }
+                    }
+
+
+
+
+
+                }
                 else {
                     var menu_list = data.result.data;
                     for (item in menu_list) {
                         var node = { id: menu_list[item].id, text: menu_list[item].text };
-
-                        console.warn(node);
-
                         $('#interface-tree').jstree("create_node", id, node, "last");
                     }
-                    //$('#interface-tree').jstree(true).refresh();
                 }
             }
             else {
@@ -110,7 +132,7 @@ function update_streamer(status_url, nanobar, status_div, id){
         else {
             setTimeout(function() {
                 update_streamer(status_url, nanobar, status_div, id);
-            }, 666);
+            }, 1000);
         }
     });
 }

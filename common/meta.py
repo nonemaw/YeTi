@@ -1,4 +1,3 @@
-from selenium import webdriver
 from common.crypto import AESCipher
 from app.db import mongo_connect, client
 
