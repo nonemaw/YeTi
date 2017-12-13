@@ -191,7 +191,7 @@ def edit_snippet(group, scenario):
                         if Meta.db_default.SnippetScenario.find_one(
                                 {'_id': ObjectId(id)}).get(
                                 'name') == old_scenario:
-                            new_scenario = old_scenario + '_COPY'
+                            new_scenario = f'{old_scenario}_COPY'
                             flash(
                                 'A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a suffix.',
                                 category='danger')

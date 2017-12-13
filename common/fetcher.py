@@ -29,7 +29,7 @@ class Fetcher:
         self.BASE = f'https://{Meta.company}.xplan.iress.com.au'
         self.URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
         self.URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
-        self.URL_WALKER = f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=' + '{}'
+        self.URL_WALKER = ''.join([f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
         self.URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
 
     def run(self):
@@ -177,18 +177,13 @@ class Fetcher:
                                         sub_group_list.append(
                                             former_sub_group_id)
 
-                                    logger.info('Fetching ' + self.BASE + href)
+                                    logger.info(f'Fetching {self.BASE}{href}')
                                     if '/ufield/edit/entity_' in href:
-                                        usage = '$entity.' + href.split(
-                                            '/ufield/edit/entity_')[1].replace(
-                                            '/', '.')
+                                        usage = f'$entity.{href.split("/ufield/edit/entity_")[1].replace("/", ".")}'
                                     elif '/ufield/edit/entity' in href:
-                                        usage = '$entity.' + href.split(
-                                            '/ufield/edit/entity/')[1]
+                                        usage = f'$entity.{href.split("/ufield/edit/entity/")[1]}'
                                     else:
-                                        usage = '$entity.' + \
-                                                href.split('/ufield/edit/')[
-                                                    1].replace('/', '.')
+                                        usage = f'$entity.{href.split("/ufield/edit/")[1].replace("/", ".")}'
 
                                     # information collection to a variable finished: var / var_name / sub_group / var_type / usage
                                     if var_type == 'Multi' or var_type == 'Choice':
@@ -197,7 +192,7 @@ class Fetcher:
                                                     headers=dict(
                                                         referer=self.BASE + href))
                                         multi_content = session.get(
-                                            self.BASE + '/ufield/list_options',
+                                            f'{self.BASE}/ufield/list_options',
                                             headers=dict(
                                                 referer=self.BASE + href))
                                         multi_content = re.sub(
@@ -253,7 +248,7 @@ class Fetcher:
 
                         # endtry
                         except Exception as e:
-                            logger.warning('Error message: ' + str(e))
+                            logger.warning(f'Error message: {str(e)}')
                             continue
 
                     # endfor
@@ -265,6 +260,6 @@ class Fetcher:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(json_directory, Meta.company + '.json'),
+        with open(os.path.join(json_directory, f'{Meta.company}.json'),
                   self.mode) as J:
             json.dump(to_json, J)

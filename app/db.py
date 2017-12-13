@@ -17,6 +17,6 @@ def mongo_connect(client, company: str):
         db = client['YETI']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI')
     else:
-        db = client['YETI_' + company.upper()]
+        db = client[f'YETI_{company.upper()}']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI_'+company.upper())
     return db

@@ -98,12 +98,12 @@ def variable(id):
 
 
 @login_required
-@code.route('/acquire_search/<pattern>', methods=['GET', 'POST'])
-def ratio(pattern):
+@code.route('/acquire_search/<pattern>/<count>', methods=['GET', 'POST'])
+def ratio(pattern, count):
     """
     return a list of research result for displaying in the table
     """
-    result_list = sorted(fuzzier.search(pattern), key=lambda item: item[0],
+    result_list = sorted(fuzzier.search(pattern, count), key=lambda item: item[0],
                          reverse=True)
     returned_list = []
     try:

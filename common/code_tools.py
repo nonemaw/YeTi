@@ -1,5 +1,4 @@
 import re
-from pprint import pprint
 
 
 def indent(line: str, level: int) -> str:
@@ -333,7 +332,7 @@ def change_entity(code: list, entity: str) -> list:
 if __name__ == '__main__':
     code = \
     [
-
     ]
 
+    from pprint import pprint
     pprint(format(code, 'format'))
