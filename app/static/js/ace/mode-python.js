@@ -24,7 +24,7 @@ var PythonHighlightRules = function() {
         "chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|" +
         "cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|" +
         "__import__|complex|hash|min|set|apply|delattr|help|next|setattr|" +
-        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern"
+        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern|$client|$partner|$company|$trust|$partnership|$superfund"
     );
     var keywordMapper = this.createKeywordMapper({
         "invalid.deprecated": "debugger",
