@@ -139,8 +139,11 @@ body {
     border:none;
 }
 
-#interface-tree-parent {
-    overflow-y: auto;
+#interface-tree-list {
+    overflow-y: scroll;
+}
+#interface-window {
+    overflow-y: scroll;
 }
 
 .modal-content {
@@ -151,7 +154,8 @@ body {
     overflow-y: initial !important
 }
 .modal-body{
-    max-height: 20vh;
+    height: 50vh;
+    max-height: 50vh;
     overflow-y: auto;
 }
 
@@ -283,7 +287,6 @@ label {
 
 .table-scroll tbody {
     position: absolute;
-    overflow-y: auto;
     height: 100%;
     font-size: 15px;
 }

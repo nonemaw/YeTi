@@ -44,7 +44,7 @@
                         </div>
                         <div class="modal-body">
                             <div class="row">
-                                <div id="interface-tree-parent" class="col-md-5 column-scroll">
+                                <div id="interface-tree-list" class="col-md-5">
                                     <div id="interface-tree">
                                         <ul class="jstree-container-ul jstree-children">
                                             <li role="treeitem" class="jstree-node jstree-leaf">
@@ -125,7 +125,7 @@
                 <!-- Variable Table -->
                 <div class="col-md-12" style="height: 100%">
                     <table class="table table-scroll left-column-table" style="height: 100%">
-                        <tbody id="variable-selector-table">
+                        <tbody id="variable-selector-table" style="overflow-y: auto;">
                             <tr>
                                 <td class="col-md-2" style="color: #009688"><b><i>Variable</i></b></td>
                                 <td id="var-variable" class="col-md-10" style="font-family:Consolas">/</td>
@@ -141,7 +141,8 @@
                             <tr>
                                 <td id="choice-type" class="col-md-2" style="color: #009688"><b><i>Choice(s)</i></b></td>
                                 <td class="col-md-10">
-                                    <!-- Multi Choice table -->
+
+                                    <!-- Multi Choice list table -->
                                     <table class="table">
                                         <thead>
                                             <tr>
@@ -156,6 +157,8 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                    <!-- end of multi choice list table -->
+
                                 </td>
                             </tr>
                         </tbody>
