@@ -115,13 +115,13 @@ function update_streamer(status_url, nanobar, status_div, id){
                     for (group_subgroup in info) {
                         var group_subgroup_array = group_subgroup.split('--');
                         if (group_subgroup_array.length === 2) {
-                            // XPLAN item
+                            // Group - Subgroup
                             $('#interface-type').text('Variable');
-                            $('#interface-title').text(group_subgroup_array[0] + ' - ' +  group_subgroup_array[1])
+                            $('#interface-title').text(group_subgroup_array[0] + ' -- ' +  group_subgroup_array[1]);
                         }
                         else if (group_subgroup_array.length === 1) {
-                            // Group - Subgroup
-                            $('#interface-type').text('XPLAN Item (not variable)');
+                            // XPLAN collection
+                            $('#interface-type').text('XPLAN Collection');
                             $('#interface-title').text(group_subgroup_array[0])
                         }
 

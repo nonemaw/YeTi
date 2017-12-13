@@ -39,10 +39,10 @@ def send_email(to: str, subject: str, template: str, **kwargs) -> Thread:
     using thread to send asyn email in background, non-blocking client
     """
     app = current_app._get_current_object()
-    msg = Message(app.config['MAIL_SUBJECT_PREFIX'] + ' ' + subject,
+    msg = Message(f'{app.config["MAIL_SUBJECT_PREFIX"]} {subject}',
                   sender=app.config['MAIL_SENDER'], recipients=[to])
-    msg.body = render_template(template + '.txt', **kwargs)
-    msg.html = render_template(template + '.html', **kwargs)
+    msg.body = render_template(f'{template}.txt', **kwargs)
+    msg.html = render_template(f'{template}.html', **kwargs)
     thr = Thread(target=send_async_email, args=[app, msg])
     thr.start()
     return thr

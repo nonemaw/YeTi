@@ -18,7 +18,7 @@ def ratio(target: str, pattern: str):
 
     # initialize the matrix
     # d_matrix for calculating Levenshtein Distance
-    # d_matrix_mod for detecting a full substring match, if may increase the weight when calculate ratio
+    # d_matrix_mod for detecting a full substring match, increase ratio when a full substring match
     d_matrix = [[0 for n in range(width + 1)] for m in range(height + 1)]
     d_matrix_mod = [[0 for n in range(width + 1)] for m in range(height + 1)]
     for i in range(width + 1):
@@ -53,13 +53,12 @@ def ratio(target: str, pattern: str):
     return ratio
 
 
-def search(pattern):
+def search(pattern: str, count: int = 7) -> list:
     this_path = os.path.dirname(os.path.realpath(__file__))
     result = []
 
-    # current only one line, TODO: update parser for multi-line JSON
-    with open(os.path.join(this_path, 'json', Meta.company + '.json')) as F:
+    with open(os.path.join(this_path, 'json', f'{Meta.company}.json')) as F:
         for line in F:
             result = Jison(line, pattern=pattern, ratio_method=ratio,
-                           result_length=7).parse()
+                           result_length=count).parse()
     return result

@@ -1,10 +1,6 @@
 class Jison:
     """
     Jison is a simple Json parser merged with a string search feature.
-
-    If **kwargs is assigned with keywords it is a string searcher based on
-    Json's tree structure, and return search results, otherwise it is a simple
-    Json parser.
     """
 
     NONE = 0
@@ -20,7 +16,7 @@ class Jison:
     FALSE = 10
     NULL = 11
 
-    def __init__(self, json_string, **kwargs):
+    def __init__(self, json_string: str, **kwargs):
         self.index = 0
         self.success = True
         self.json = json_string
@@ -30,8 +26,8 @@ class Jison:
             # Jison will be a searcher if kwargs are assigned, otherwise it is a normal Json parser
             self.ratio_method = kwargs.get('ratio_method')
             self.pattern = kwargs.get('pattern')
-            self.result_length = kwargs.get('result_length') if kwargs.get(
-                'result_length') else 5
+            self.result_length = int(kwargs.get('result_length')) if kwargs.get(
+                'result_length') else 7
             self.result = []
             self.deep = 0
             self.var_val = 0
@@ -90,7 +86,7 @@ class Jison:
         """
         return self.go_to_next_token(check_token=True)
 
-    def go_to_next_token(self, check_token=False):
+    def go_to_next_token(self, check_token: bool = False):
         self.ignore_white_space()
         index = self.index
 
@@ -282,22 +278,23 @@ class Jison:
                 # I am a variable
                 current_ratio = self.ratio_method(string, self.pattern)
                 self.var_val = 0
-                if len(self.result) == self.result_length:
-                    stored_ratio_result = [i[0] for i in self.result]
-                    min_ratio = min(stored_ratio_result)
-                    if current_ratio >= max(stored_ratio_result):
-                        for index, item in enumerate(self.result):
-                            if item[0] == min_ratio:
-                                self.result[index] = [current_ratio,
-                                                      self.group, self.sub,
-                                                      self.var_name, string]
-                                break
+                if current_ratio > 0.15:
+                    if len(self.result) == self.result_length:
+                        stored_ratio_result = [i[0] for i in self.result]
+                        min_ratio = min(stored_ratio_result)
+                        if current_ratio >= max(stored_ratio_result):
+                            for index, item in enumerate(self.result):
+                                if item[0] == min_ratio:
+                                    self.result[index] = [current_ratio,
+                                                          self.group, self.sub,
+                                                          self.var_name, string]
+                                    break
+                        else:
+                            pass
                     else:
-                        pass
-                elif current_ratio > 0.15:
-                    self.result.append(
-                        [current_ratio, self.group, self.sub, self.var_name,
-                         string])
+                        self.result.append(
+                            [current_ratio, self.group, self.sub, self.var_name,
+                             string])
             elif self.deep == 5 and not self.var_val:
                 self.var_name = string
                 self.var_val = 1
