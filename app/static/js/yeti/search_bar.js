@@ -9,9 +9,16 @@ function search(pattern, count) {
     variable_table_search.empty();
     variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;font-weight: bold;color:#009688">Searching ...</td></tr>');
 
+    sent_info = {
+        pattern: pattern,
+        count: count
+    };
+
     $.ajax({
-        type: 'GET',
-        url: '/code/acquire_search/' + pattern + '/' + count.toString(),
+        contentType: "application/json",
+        data: JSON.stringify(sent_info),
+        type: 'POST',
+        url: '/code/acquire_search',
         dataType: 'json',
         success: function (data, status, request) {
             var search_result = data.search_result;
