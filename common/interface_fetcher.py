@@ -176,7 +176,6 @@ def update_interface(self, _id: str) -> dict:
     return {'status': 'Update Finished', 'result': menu}
 
 
-if __name__ == '__main__':
-    from pprint import pprint
+def dump_interface():
+    pass
 
-    pprint(initialize_interface())

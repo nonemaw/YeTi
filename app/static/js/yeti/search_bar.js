@@ -3,7 +3,7 @@ var local_search_cache = {};
 function search(pattern, count) {
     pattern = pattern.replace('/', ' ');
     var variable_table_search = $('#variable-search-table');
-    $('#variable-search-table').css('display', '');
+    variable_table_search.css('display', '');
     $('#variable-search-table-head').css('display', '');
     $('#variable-selector-table').css('display', 'none');
     variable_table_search.empty();

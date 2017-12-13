@@ -26,7 +26,7 @@ $.ajax({
         snippet_group_selector.selectpicker('refresh');
     },
     error: function() {
-        alert('Unexpected error in snippet group selector');
+        alert('Unexpected error in Snippet Group selector');
     }
 });
 
@@ -60,7 +60,7 @@ function snippet_scenario_initialization(group_id) {
             snippet_scenario_selector.selectpicker('refresh');
         },
         error: function() {
-            alert('Unexpected error in subgroup selector');
+            alert('Unexpected error in Snippet Scenario selector');
         }
     });
 }

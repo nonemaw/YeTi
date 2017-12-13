@@ -25,7 +25,7 @@ $.ajax({
         group_selector.selectpicker('refresh');
     },
     error: function() {
-        alert('Unexpected error in group selector');
+        alert('Notice from Group Selector: Information out of date, please login again');
     }
 });
 
@@ -81,7 +81,7 @@ function variable_initialization(subgroup_id, local_var_cache) {
             variable_selector.selectpicker('refresh');
         },
         error: function() {
-            alert('Unexpected error in variable selector');
+            alert('Notice from Variable Selector: Information out of date, please login again');
         }
     });
 }
@@ -116,7 +116,7 @@ function subgroup_initialization(group_var) {
             variable_selector.selectpicker('refresh');
         },
         error: function() {
-            alert('Unexpected error in subgroup selector');
+            alert('Notice from Subgroup Selector: Information out of date, please login again');
         }
     });
 }

@@ -1,3 +1,15 @@
+
+var itree = $('#interface-tree');
+var inote = $('#interface-note');
+var itype = $('#interface-type');
+var ititle = $('#interface-title');
+var ientity = $('#interface-entity');
+var iindividual = $('#interface-individual');
+var itrust = $('#interface-trust');
+var isuperfund = $('#interface-superfund');
+var icompany = $('#interface-company');
+var ipartnership = $('#interface-partnership');
+
 function initialize_interface(id){
     var div = $('<div></div>');
     $('#progress').append(div);
@@ -54,15 +66,15 @@ function initialization_streamer(status_url, nanobar, status_div) {
                 if (data.result.error) {
                     alert(data.result.error);
                     $('#interface-temp').text('/');
-                    $('#interface-note').text('Failed in loading interface')
+                    inote.text('Failed in loading interface')
                 }
                 else {
-                    $('#interface-tree').jstree({
+                    itree.jstree({
                         'core': { 'themes': { 'name': 'proton', 'responsive': true }, "check_callback" : true}
                     });
-                    $('#interface-note').text('Waiting for selection');
-                    $('#interface-tree').jstree(true).settings.core.data = data.result.data;
-                    $('#interface-tree').jstree(true).refresh();
+                    inote.text('Waiting for selection');
+                    itree.jstree(true).settings.core.data = data.result.data;
+                    itree.jstree(true).refresh();
                 }
             }
             else {
@@ -93,31 +105,31 @@ function update_streamer(status_url, nanobar, status_div, id){
                     alert(data.result.error);
                     $('#interface-tree').jstree("create_node", id, { id: 'error', text: 'Error' }, "last");
 
-                    $('#interface-note').text('Failed in loading node information').css('display', '');
-                    $('#interface-type').css('display', 'none');
-                    $('#interface-title').css('display', 'none');
-                    $('#interface-entity').css('display', 'none');
-                    $('#interface-individual').css('display', 'none');
-                    $('#interface-trust').css('display', 'none');
-                    $('#interface-superfund').css('display', 'none');
-                    $('#interface-company').css('display', 'none');
-                    $('#interface-partnership').css('display', 'none');
+                    inote.text('Failed in loading node information').css('display', '');
+                    itype.css('display', 'none');
+                    ititle.css('display', 'none');
+                    ientity.css('display', 'none');
+                    iindividual.css('display', 'none');
+                    itrust.css('display', 'none');
+                    isuperfund.css('display', 'none');
+                    icompany.css('display', 'none');
+                    ipartnership.css('display', 'none');
                 }
                 // leaf node
                 else if (data.result.leaf) {
-                    $('#interface-individual label input').removeAttr('checked');
-                    $('#interface-trust label input').removeAttr('checked');
-                    $('#interface-superfund label input').removeAttr('checked');
-                    $('#interface-company label input').removeAttr('checked');
-                    $('#interface-partnership label input').removeAttr('checked');
+                    iindividual.find('label, input').removeAttr('checked');
+                    itrust.find('label, input').removeAttr('checked');
+                    isuperfund.find('label, input').removeAttr('checked');
+                    icompany.find('label, input').removeAttr('checked');
+                    ipartnership.find('label, input').removeAttr('checked');
 
                     info = data.result.leaf;
                     for (group_subgroup in info) {
                         var group_subgroup_array = group_subgroup.split('--');
                         if (group_subgroup_array.length === 2) {
                             // Group - Subgroup
-                            $('#interface-type').text('Variable');
-                            $('#interface-title').text(group_subgroup_array[0] + ' -- ' +  group_subgroup_array[1]);
+                            itype.text('Variable');
+                            ititle.text(group_subgroup_array[0] + ' -- ' +  group_subgroup_array[1]);
                         }
                         else if (group_subgroup_array.length === 1) {
                             // XPLAN collection
@@ -127,30 +139,30 @@ function update_streamer(status_url, nanobar, status_div, id){
 
                         entities = info[group_subgroup];
                         if (entities.indexOf("individual") > -1) {
-                            $('#interface-individual label input').attr('checked', 'checked');
+                            iindividual.find('label, input').attr('checked', 'checked');
                         }
                         if (entities.indexOf("trust") > -1) {
-                            $('#interface-trust label input').attr('checked', 'checked');
+                            itrust.find('label, input').attr('checked', 'checked');
                         }
                         if (entities.indexOf("superfund") > -1) {
-                            $('#interface-superfund label input').attr('checked', 'checked');
+                            isuperfund.find('label, input').attr('checked', 'checked');
                         }
                         if (entities.indexOf("company") > -1) {
-                            $('#interface-company label input').attr('checked', 'checked');
+                            icompany.find('label, input').attr('checked', 'checked');
                         }
                         if (entities.indexOf("partnership") > -1) {
-                            $('#interface-partnership label input').attr('checked', 'checked');
+                            ipartnership.find('label, input').attr('checked', 'checked');
                         }
                     }
-                    $('#interface-note').css('display', 'none');
-                    $('#interface-type').css('display', '');
-                    $('#interface-title').css('display', '');
-                    $('#interface-entity').css('display', '');
-                    $('#interface-individual').css('display', '');
-                    $('#interface-trust').css('display', '');
-                    $('#interface-superfund').css('display', '');
-                    $('#interface-company').css('display', '');
-                    $('#interface-partnership').css('display', '');
+                    inote.css('display', 'none');
+                    itype.css('display', '');
+                    ititle.css('display', '');
+                    ientity.css('display', '');
+                    iindividual.css('display', '');
+                    itrust.css('display', '');
+                    isuperfund.css('display', '');
+                    icompany.css('display', '');
+                    ipartnership.css('display', '');
                 }
                 // update node
                 else {
@@ -159,15 +171,15 @@ function update_streamer(status_url, nanobar, status_div, id){
                         var node = { id: menu_list[item].id, text: menu_list[item].text };
                         $('#interface-tree').jstree("create_node", id, node, "last");
                     }
-                    $('#interface-note').text('Waiting for selection').css('display', '');
-                    $('#interface-type').css('display', 'none');
-                    $('#interface-title').css('display', 'none');
-                    $('#interface-entity').css('display', 'none');
-                    $('#interface-individual').css('display', 'none');
-                    $('#interface-trust').css('display', 'none');
-                    $('#interface-superfund').css('display', 'none');
-                    $('#interface-company').css('display', 'none');
-                    $('#interface-partnership').css('display', 'none');
+                    inote.text('Waiting for selection').css('display', '');
+                    itype.css('display', 'none');
+                    ititle.css('display', 'none');
+                    ientity.css('display', 'none');
+                    iindividual.css('display', 'none');
+                    itrust.css('display', 'none');
+                    isuperfund.css('display', 'none');
+                    icompany.css('display', 'none');
+                    ipartnership.css('display', 'none');
                 }
             }
             else {

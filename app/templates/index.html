@@ -28,14 +28,14 @@
                 </div>
                 <div class="col-md-3">
                     <div class="row">
-                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".bs-example-modal-lg" data-keyboard="false" data-backdrop="static" style="float: right; width: 60%">Interface</button>
+                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".interface-modal" data-keyboard="false" data-backdrop="static" style="float: right; width: 60%">Interface</button>
                     </div>
                 </div>
             </div>
             <!-- end of search bar row -->
 
             <!-- interface view, display when click `Interface` button -->
-            <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -44,7 +44,7 @@
                         </div>
                         <div class="modal-body">
                             <div class="row">
-                                <div class="col-md-5 column-scroll">
+                                <div id="interface-tree-parent" class="col-md-5 column-scroll">
                                     <div id="interface-tree">
                                         <ul class="jstree-container-ul jstree-children">
                                             <li role="treeitem" class="jstree-node jstree-leaf">
@@ -54,10 +54,11 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <div class="col-md-7" id="interface-window">
-                                    <h4 id="interface-note" style="font-weight: bold">Loading ... </h4>
+                                <div id="interface-window" class="col-md-7">
+                                    <h4 id="interface-note" style="font-weight: bold"></h4>
                                     <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
-                                    <h5 id="interface-title" style="font-size: 18px; display: none">/</h5>
+                                    <button id="interface-title" style="font-size: 18px; display: none">/</button>
+                                    <br>
                                     <br>
                                     <h4 id="interface-entity" style="font-weight: bold; display: none">Applicable Entities</h4>
                                     <div class="checkbox" id="interface-individual" style="display: none">
@@ -402,7 +403,7 @@
                         code_section.setValue(data.code);
                     },
                     error: function() {
-                        alert('Unexpected error in sending code text');
+                        alert('Unexpected error in sending code content');
                     }
                 });
             }
@@ -624,6 +625,15 @@
                     selections.push(id);
                     initialize_interface(id, text);
                 }
+            });
+
+            // click on interface variable name
+            $('#interface-title').on('click', function(){
+                var group_subgroup_array = $('#interface-title').text().split(' -- ');
+                if (group_subgroup_array.length === 2) {
+                    search(group_subgroup_array[1], 1);
+                }
+                return false;
             });
         });
     </script>
