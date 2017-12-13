@@ -141,58 +141,57 @@ def format_segment(segment: list) -> list:
 
 
 def cleanup_for_single_entity(code: list) -> list:
-    stack = 0
+    for index, c in enumerate(code):
+        c = re.sub(r' *(#.*):>', ':>', c)
+        code[index] = c.strip().split(':>')
+        code[index] = [f'{_c}:>' for _c in code[index] if _c]
+
+    new_code = []
+    for c in code:
+        new_code += c
+    code.clear()
+
+    stack = []
     pop_list = []
     end_list = []
     # text_reserve = {}
 
-    for index, line in enumerate(code):
-        # remove comment
-        line = re.sub(r' *(#.*):>', ':>', code[index])
+    for index, line in enumerate(new_code):
+        len_left = len(re.findall('<:', line))
+        len_right = len(re.findall(':>', line))
 
-        segment = line.split(':>')
-        for chunk in segment:
-            if stack > 0:
-                if 'let' not in chunk:
-                    stack += len(
-                        re.findall(r' *for.+in *([^\$]+) *| *if +(.+?) *',
-                                   chunk))
+        if len_left != len_right or not len_left or not len_right:
+            continue
 
-            entity_loop = len(re.findall(r' *for.+in *(\$\w+) *', chunk))
-            if entity_loop:
-                if stack <= 0:
-                    stack = 0
-                    stack += entity_loop
+        if not len(re.findall(r' *end *', line)):
+            if 'let' not in line:
+                if len(re.findall(r' *for +[\w]+ +in +(.+) *| *if +(.+?) *', line)):
+                    stack.append(index)
+
+            if len(re.findall(r' *for +[\w]+ +in +(\$\w+) *', line)):
                 pop_list.append(index)
 
-            entity_end = len(re.findall(r' *end *', chunk))
-            if entity_end:
-                stack -= entity_end
-                if stack == 0:
-                    end_list.append(index)
+        else:
+            # process `end` tag
+            if stack and stack.pop() in pop_list:
+                end_list.append(index)
 
     for index in reversed(pop_list):
-        # remove comment
-        line = re.sub(r' *(#.*):>', ':>', code[index])
-
-        if not re.search(r'<: *:>', line):
-            entry_log = re.findall(r'<: *for.+in *\$\w+ *:>', line)[0]
-            code[index] = re.sub(r'<: *for.+in *\$\w+ *:>',
+        if not re.search(r'<: *:>', new_code[index]):
+            entry_log = re.findall(r'<: *for.+in *\$\w+ *:>', new_code[index])[0]
+            new_code[index] = re.sub(r'<: *for.+in *\$\w+ *:>',
                                  f'<:#{entry_log[2:-2]}:>',
-                                 line)
+                                     new_code[index])
             if index in end_list:
-                code[index] = re.sub(r'<: *end *:>', '<:#end:>', line)
+                new_code[index] = re.sub(r'<: *end *:>', '<:#end:>', new_code[index])
                 end_list.remove(index)
 
     if len(end_list):
         for index in reversed(end_list):
-            # remove comment
-            line = re.sub(r' *(#.*):>', ':>', code[index])
+            if not re.search(r'<: *:>', new_code[index]):
+                new_code[index] = re.sub(r'<: *end *:>', '<:#end:>', new_code[index])
 
-            if not re.search(r'<: *:>', line):
-                code[index] = re.sub(r'<: *end *:>', '<:#end:>', line)
-
-    return [c for c in code if c]
+    return new_code
 
 
 def change_entity(code: list, entity: str) -> list:
@@ -332,7 +331,11 @@ def change_entity(code: list, entity: str) -> list:
 if __name__ == '__main__':
     code = \
     [
+    '<:for superfund in $superfund:><:for superfund in $superfund:>',
+    '<:=superfund.name:>',
+    '<:end:>',
+    '<:end:>',
     ]
 
     from pprint import pprint
-    pprint(format(code, 'format'))
+    pprint(change_entity(code, 'client'))
