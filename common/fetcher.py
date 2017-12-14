@@ -14,7 +14,7 @@ from app.models import Group, SubGroup
 
 class Fetcher:
     def __init__(self, username: str, password: str, mode: str = 'w',
-                 group_only: str=None):
+                 group_only: list=None):
         self.mode = mode
         self.db = Meta.db_default if Meta.company == 'ytml' else Meta.db_company
         self.USERNAME = username
@@ -163,11 +163,9 @@ class Fetcher:
                                                                             '$set': {
                                                                                 'variables': former_sub_group_variables}})
                                             if group_var in to_json:
-                                                to_json[group_var].append({
-                                                                              former_sub_group: variables_to_json})
+                                                to_json[group_var].append({former_sub_group: variables_to_json})
                                             else:
-                                                to_json[group_var] = [{
-                                                                          former_sub_group: variables_to_json}]
+                                                to_json[group_var] = [{former_sub_group: variables_to_json}]
                                             former_sub_group_variables = []
                                             variables_to_json = []
 

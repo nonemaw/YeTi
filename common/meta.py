@@ -22,3 +22,5 @@ class Meta:
     session_id = None
     executor_url = None
     current_url = None
+
+    statistic = {}
