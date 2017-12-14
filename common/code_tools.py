@@ -141,8 +141,12 @@ def format_segment(segment: list) -> list:
 
 
 def cleanup_for_single_entity(code: list) -> list:
+
     for index, c in enumerate(code):
         c = re.sub(r' *(#.*):>', ':>', c)
+        if c.strip() == '<::>':
+            code[index] = [code[index]]
+            continue
         code[index] = c.strip().split(':>')
         code[index] = [f'{_c}:>' for _c in code[index] if _c]
 
@@ -157,6 +161,8 @@ def cleanup_for_single_entity(code: list) -> list:
     # text_reserve = {}
 
     for index, line in enumerate(new_code):
+        # remove comment
+        line = re.sub(r' *(#.*):>', ':>', line)
         len_left = len(re.findall('<:', line))
         len_right = len(re.findall(':>', line))
 
@@ -176,6 +182,7 @@ def cleanup_for_single_entity(code: list) -> list:
             if stack and stack.pop() in pop_list:
                 end_list.append(index)
 
+    stack.clear()
     for index in reversed(pop_list):
         if not re.search(r'<: *:>', new_code[index]):
             entry_log = re.findall(r'<: *for.+in *\$\w+ *:>', new_code[index])[0]
@@ -186,7 +193,7 @@ def cleanup_for_single_entity(code: list) -> list:
                 new_code[index] = re.sub(r'<: *end *:>', '<:#end:>', new_code[index])
                 end_list.remove(index)
 
-    if len(end_list):
+    if end_list:
         for index in reversed(end_list):
             if not re.search(r'<: *:>', new_code[index]):
                 new_code[index] = re.sub(r'<: *end *:>', '<:#end:>', new_code[index])
@@ -201,6 +208,9 @@ def change_entity(code: list, entity: str) -> list:
         for index, line in enumerate(code):
             # remove comment
             line = re.sub(r' *(#.*):>', ':>', line)
+
+            if re.search(r'\(\$(trust|superfund|company|partnership)\)', line):
+                continue
 
             if not re.search(r'<: *:>', line):
                 if entity in ['client', 'partner']:
@@ -241,9 +251,9 @@ def change_entity(code: list, entity: str) -> list:
                         if re.findall(r'<: *for +([\w]+) +in +\$[\w]+', line):
                             var_name = \
                                 re.findall(r'<: *for +([\w]+) +in +\$[\w]+',
-                                           line)[
-                                    0]
+                                           line)[0]
 
+                    line = re.sub(r'(trust|superfund|company|partnership)', entity, line)
                     line = re.sub(r'<: *for +[\w]+ +in +\$[\w]+',
                                   f'<:for {entity} in ${entity}', line)
 
@@ -298,21 +308,24 @@ def change_entity(code: list, entity: str) -> list:
                 merged_chunk[-1].append(len(code) - 1)
 
             if len(merged_chunk):
-                for c in merged_chunk:
-                    gap_index = c[0]
-                    if c[-1] == c[0]:
-                        while gap_index <= c[-1]:
+                for c in reversed(merged_chunk):
+                    gap_index = c[-1]
+                    if c[0] == c[-1]:
+                        while gap_index >= c[0]:
                             code[gap_index] = re.sub(r'\$[\w]+', f'{entity}',
                                                      code[gap_index])
-                            gap_index += 1
+                            gap_index -= 1
                         code.append('<:end #INSERTION:>')
                         code.insert(c[0],
                                     f'<:for {entity} in ${entity} #INSERTION:>')
+
                     else:
-                        while gap_index < c[-1]:
-                            code[gap_index] = re.sub(r'\$[\w]+', f'{entity}',
-                                                     code[gap_index])
-                            gap_index += 1
+                        while gap_index >= c[0]:
+                            if not re.findall('<: *for +[\w]+ +in +\$[\w]+', code[gap_index]):
+                                code[gap_index] = re.sub(r'\$[\w]+', f'{entity}',
+                                                         code[gap_index])
+
+                            gap_index -= 1
                         if c[-1] == len(code) - 1:
                             code.append('<:end #INSERTION:>')
                         else:
@@ -330,12 +343,10 @@ def change_entity(code: list, entity: str) -> list:
 
 if __name__ == '__main__':
     code = \
-    [
-    '<:for superfund in $superfund:><:for superfund in $superfund:>',
-    '<:=superfund.name:>',
-    '<:end:>',
-    '<:end:>',
-    ]
+        [
+'<:if len($trust):>',
+'<:end:>',
+]
 
     from pprint import pprint
-    pprint(change_entity(code, 'client'))
+    pprint(change_entity(code, 'partnership'))

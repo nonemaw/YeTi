@@ -12,7 +12,7 @@ import fuzzier.fuzzier as fuzzier
 
 
 @login_required
-@code.route('/code_formatting', methods=['GET', 'POST'])
+@code.route('/code_formatting', methods=['POST'])
 def code_formatting():
     received_json = request.json
     if received_json:
@@ -46,7 +46,7 @@ def code_formatting():
 
 
 @login_required
-@code.route('/acquire_group', methods=['GET', 'POST'])
+@code.route('/acquire_group', methods=['GET'])
 def group():
     result = []
     try:
@@ -59,7 +59,7 @@ def group():
 
 
 @login_required
-@code.route('/acquire_subgroup/<var>', methods=['GET', 'POST'])
+@code.route('/acquire_subgroup/<var>', methods=['GET'])
 def subgroup(var):
     """
     :param var: the 'var' name of parent group
@@ -79,7 +79,7 @@ def subgroup(var):
 
 
 @login_required
-@code.route('/acquire_variable/<id>', methods=['GET', 'POST'])
+@code.route('/acquire_variable/<id>', methods=['GET'])
 def variable(id):
     try:
         variables = Meta.db_company.SubGroup.find_one(
@@ -100,7 +100,7 @@ def variable(id):
 
 
 @login_required
-@code.route('/acquire_search', methods=['GET', 'POST'])
+@code.route('/acquire_search', methods=['POST'])
 def do_search():
     """
     return a list of research result for displaying in the table
@@ -144,7 +144,7 @@ def do_search():
 
 
 @login_required
-@code.route('/acquire_search_result', methods=['GET', 'POST'])
+@code.route('/acquire_search_result', methods=['POST'])
 def acquire_search_result():
     """
     return detailed variable information when client click on of the search result
