@@ -1,8 +1,16 @@
+import os
+import json
+from common.meta import Meta
+
+
+class JsonSyntaxError(Exception):
+    pass
+
+
 class Jison:
     """
-    Jison is a simple Json parser merged with a string search feature.
+    Jison is a simple one-line Json parser merged with a string search feature.
     """
-
     NONE = 0
     OBJ_OPEN = 1
     OBJ_CLOSE = 2
@@ -16,40 +24,101 @@ class Jison:
     FALSE = 10
     NULL = 11
 
-    def __init__(self, json_string: str, **kwargs):
+    def __init__(self, json_string: str, old_chunk: str = None,
+                 new_chunk: dict = None, target_file: str = None, **kwargs):
         self.index = 0
         self.success = True
-        self.json = json_string
+
+        # top-level object manipulation:
+        # if only old_chunk is assigned, Jison will return the dictionary of this object
+        # if only new_chunk is assigned, Jison will append new dictionary to json
+        # if both old_chunk and new_chunk are assigned, Jison will delete the old chunk, and append new dictionary
+        # if target_file is None, old_chunk and new_chunk will be ignored
+        if target_file:
+            self.old_chunk = old_chunk  # object name
+            self.new_chunk = json.dumps(new_chunk)  # full new dict
+            self.target_file = target_file
+            self.chunk_location = []
+            self.recursion_depth = 0
+            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                   'json', f'{Meta.company}.json', 'r')) as F:
+                self.json = F.readline()
+        else:
+            self.json = json_string
+
         self.length = len(json_string)
         self.ratio_method = None
         if len(kwargs):
-            # Jison will be a searcher if kwargs are assigned, otherwise it is a normal Json parser
-            self.ratio_method = kwargs.get('ratio_method')
-            self.pattern = kwargs.get('pattern')
-            self.result_length = int(kwargs.get('result_length')) if kwargs.get(
-                'result_length') else 7
-            self.result = []
-            self.deep = 0
-            self.var_val = 0
-            self.var_name = ''
-            self.group = ''
-            self.sub = ''
+            try:
+                self.ratio_method = kwargs.get('ratio_method')
+                self.pattern = kwargs.get('pattern')
+                self.result_length = int(
+                    kwargs.get('result_length')) if kwargs.get(
+                    'result_length') else 7
+                self.result = []
+                self.deep = 0
+                self.var_val = 0
+                self.var_name = ''
+                self.group = ''
+                self.sub = ''
+            except:
+                self.ratio_method = None
+
+    def get_object(self) -> dict:
+        self.parse()
+        if not self.old_chunk:
+            return {}
+
+        from ast import literal_eval
+        return literal_eval(
+            f'{{{self.json[self.chunk_location[0]:self.chunk_location[1]]}}}')
+
+    def replace_object(self):
+        self.remove_object(called_by_replace=True)
+        self.json = f'{self.json[0:self.chunk_location[0]]}{self.new_chunk[1:-2]}{self.json[self.chunk_location[1]:]}'
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'json', f'{Meta.company}.json', 'w')) as F:
+            import json
+            json.dump(self.json, F)
+
+    def remove_object(self, called_by_replace: bool = False) -> str:
+        self.parse()
+
+        if not called_by_replace:
+            left = self.chunk_location[0]
+            right = self.chunk_location[1]
+            if self.json[self.chunk_location[0] - 1] != '{':
+                left = left - 2
+            if self.json[self.chunk_location[1] + 1] != '}' and self.json[
+                        self.chunk_location[1] + 1] != ']':
+                right = right + 2
+            self.json = f'{self.json[:left]}{self.json[right:]}'
+
+            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                   'json', f'{Meta.company}.json', 'w')) as F:
+                import json
+                json.dump(self.json, F)
+                return self.json
+        else:
+            return ''
 
     def parse(self):
         if self.json:
             if self.ratio_method:
-                self.scanner()
+                self.scanner(0)
                 return self.result
-            return self.scanner()
+            return self.scanner(0)
         else:
-            return None
+            raise JsonSyntaxError(f'Json syntax error at index {self.index}')
 
-    def scanner(self):
+    def scanner(self, recursion: int = 0):
         """ it decides which kind of data will be parsed
         """
         token = self.check_token()
         if token == self.STRING:
             # '"'
+            if self.old_chunk:
+                return self.parse_string()[0]
             return self.parse_string()
         if token == self.NUMBER:
             # '0123456789-'
@@ -58,12 +127,12 @@ class Jison:
             # '{'
             if self.ratio_method:
                 self.deep += 1
-            return self.parse_object()
+            return self.parse_object(recursion)
         if token == self.ARR_OPEN:
             # '['
             if self.ratio_method:
                 self.deep += 1
-            return self.parse_array()
+            return self.parse_array(recursion)
         if token == self.TRUE:
             # 'true'
             self.go_to_next_token()
@@ -75,11 +144,11 @@ class Jison:
         if token == self.NULL:
             # 'null'
             self.go_to_next_token()
-            return None
+            raise JsonSyntaxError(f'Json syntax error at index {self.index}')
         if token == self.NONE:
             pass
         self.success = False
-        return None
+        raise JsonSyntaxError(f'Json syntax error at index {self.index}')
 
     def check_token(self):
         """ check next token but not move index
@@ -152,56 +221,75 @@ class Jison:
                 return self.NULL
         return self.NONE
 
-    def parse_object(self):
+    def parse_object(self, recursion: int):
         """ a '{'
         """
+        recursion += 1
         table = {}
-        done = False
         self.go_to_next_token()
 
-        while not done:
+        while True:
             token = self.check_token()
+
             if token == self.NONE:
                 self.success = False
-                return None
+                raise JsonSyntaxError(
+                    f'Json syntax error at index {self.index}')
             elif token == self.COMMA:
                 self.go_to_next_token()
             elif token == self.OBJ_CLOSE:
+                if recursion == self.recursion_depth and len(
+                        self.chunk_location) == 1:
+                    self.chunk_location.append(self.index)
+
                 if self.ratio_method:
                     self.deep -= 1
                 self.go_to_next_token()
                 return table
             else:
-                # all other token types:
+                # not comma, not close, it can be all the following token types:
                 # a key
-                key = self.parse_string()
+                if self.recursion_depth == recursion and len(
+                        self.chunk_location) == 1:
+                    self.chunk_location.append(self.index - 2)
+                if self.old_chunk:
+                    key, location = self.parse_string()
+                    if key == self.old_chunk and not self.chunk_location:
+                        self.chunk_location.append(location)
+                        self.recursion_depth = recursion
+                else:
+                    key = self.parse_string()
                 if not self.success:
-                    return None
+                    raise JsonSyntaxError(
+                        f'Json syntax error at index {self.index}')
+
                 # a ':'
                 token = self.go_to_next_token()
                 if token != self.COLON:
                     self.success = False
-                    return None
-                # a value, send to scanner to decide type
-                value = self.scanner()
+                    raise JsonSyntaxError(
+                        f'Json syntax error at index {self.index}')
+
+                # a value
+                value = self.scanner(recursion)
                 if not self.success:
                     self.success = False
-                    return None
+                    raise JsonSyntaxError(
+                        f'Json syntax error at index {self.index}')
                 table[key] = value
-        return table
 
-    def parse_array(self):
+    def parse_array(self, recursion: int):
         """ a '['
         """
         array = []
-        done = False
         self.go_to_next_token()
 
-        while not done:
+        while True:
             token = self.check_token()
             if token == self.NONE:
                 self.success = False
-                return None
+                raise JsonSyntaxError(
+                    f'Json syntax error at index {self.index}')
             elif token == self.COMMA:
                 self.go_to_next_token()
             elif token == self.ARR_CLOSE:
@@ -210,16 +298,20 @@ class Jison:
                 self.go_to_next_token()
                 break
             else:
-                value = self.scanner()
+                value = self.scanner(recursion)
                 if not self.success:
                     self.success = False
-                    return None
+                    raise JsonSyntaxError(
+                        f'Json syntax error at index {self.index}')
                 array.append(value)
         return array
 
     def parse_string(self):
         """ a '"'
         """
+        if self.old_chunk:
+            anchor = self.index
+
         self.ignore_white_space()
         string = ''
         done = False
@@ -259,14 +351,14 @@ class Jison:
                 elif char == 'u':
                     remaining_length = self.length - self.index
                     if remaining_length >= 4:
-                        # handling 32 bit unicode, reserved for future development when I have time ('_>')
+                        # handling 32 bit unicode, reserved for future development when I have time
                         a = 1
             else:
                 # build string a-zA-Z0-9
                 string += char
         if not done:
             self.success = False
-            return None
+            raise JsonSyntaxError(f'Json syntax error at index {self.index}')
         if self.ratio_method:
             if self.deep == 1:
                 # I am the group
@@ -287,17 +379,22 @@ class Jison:
                                 if item[0] == min_ratio:
                                     self.result[index] = [current_ratio,
                                                           self.group, self.sub,
-                                                          self.var_name, string]
+                                                          self.var_name,
+                                                          string]
                                     break
                         else:
                             pass
                     else:
                         self.result.append(
-                            [current_ratio, self.group, self.sub, self.var_name,
+                            [current_ratio, self.group, self.sub,
+                             self.var_name,
                              string])
             elif self.deep == 5 and not self.var_val:
                 self.var_name = string
                 self.var_val = 1
+
+        if self.old_chunk:
+            return string, anchor
         return string
 
     def parse_number(self):
@@ -324,3 +421,14 @@ class Jison:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t' \
                 or self.json[self.index] == '\n':
             self.index += 1
+
+
+if __name__ == '__main__':
+    jison = Jison(
+        '{"OBJ1": [{"AMPFDS Services Comment": [{"comment": "Comment"}, {"date": "Date"}]}], "OBJ2": [{"Savings Scenario": [{"modifiedby": "Modified By"}, {"modifiedstamp": "Modified Date"}, {"descp": "Description"}, {"createdby": "Created By"}, {"createdstamp": "Created Date"}]}]}',
+        old_chunk='Savings Scenario',
+        new_chunk={'OBJ3': ['A', 'B']}
+    )
+    from pprint import pprint
+
+    pprint(jison.replace_object())

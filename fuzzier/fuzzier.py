@@ -58,7 +58,6 @@ def search(pattern: str, count: int = 7) -> list:
     result = []
 
     with open(os.path.join(this_path, 'json', f'{Meta.company}.json')) as F:
-        for line in F:
-            result = Jison(line, pattern=pattern, ratio_method=ratio,
+        result = Jison(F.readline(), pattern=pattern, ratio_method=ratio,
                            result_length=count).parse()
     return result
