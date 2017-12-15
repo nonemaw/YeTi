@@ -115,7 +115,7 @@ class Jison:
                 else:
                     return self.json
             else:
-                # if the chunk_location do not throw exception
+                # if the chunk_location is empty do not throw exception
                 pass
 
         else:
