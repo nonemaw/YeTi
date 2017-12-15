@@ -53,11 +53,8 @@ def ratio(target: str, pattern: str):
     return ratio
 
 
-def search(pattern: str, count: int = 7) -> list:
-    this_path = os.path.dirname(os.path.realpath(__file__))
-    result = []
+def search(pattern: str, count: int = 8) -> list:
+    result = Meta.jison.search(pattern=pattern, ratio_method=ratio,
+                               count=count)
 
-    with open(os.path.join(this_path, 'json', f'{Meta.company}.json')) as F:
-        result = Jison(F.readline(), pattern=pattern, ratio_method=ratio,
-                           result_length=count).parse()
     return result

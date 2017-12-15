@@ -1,15 +1,23 @@
 import os
-import json
-from common.meta import Meta
+from ast import literal_eval
 
 
 class JsonSyntaxError(Exception):
     pass
 
 
+class JsonObjectRemovalFailed(Exception):
+    pass
+
+
 class Jison:
     """
-    Jison is a simple one-line Json parser merged with a string search feature.
+    Jison is a simple parser for one-line Json string for Json manipulation:
+
+    1. string search under a maintained tree structure
+    2. Json object acquisition
+    3. Json object deletion
+    4. Json object replacement
     """
     NONE = 0
     OBJ_OPEN = 1
@@ -24,100 +32,203 @@ class Jison:
     FALSE = 10
     NULL = 11
 
-    def __init__(self, json_string: str, old_chunk: str = None,
-                 new_chunk: dict = None, target_file: str = None, **kwargs):
+    def __init__(self, json_string: str = None, company: str = None, **kwargs):
         self.index = 0
         self.success = True
+        self.company = company
 
-        # top-level object manipulation:
-        # if only old_chunk is assigned, Jison will return the dictionary of this object
-        # if only new_chunk is assigned, Jison will append new dictionary to json
-        # if both old_chunk and new_chunk are assigned, Jison will delete the old chunk, and append new dictionary
-        # if target_file is None, old_chunk and new_chunk will be ignored
-        if target_file:
-            self.old_chunk = old_chunk  # object name
-            self.new_chunk = json.dumps(new_chunk)  # full new dict
-            self.target_file = target_file
-            self.chunk_location = []
-            self.recursion_depth = 0
-            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   'json', f'{Meta.company}.json', 'r')) as F:
-                self.json = F.readline()
-        else:
-            self.json = json_string
+        # object (dict) manipulation:
+        # old_chunk: for get_object()/remove_object()/replace_object()
+        # new_chunk: for replace_object()
+        self.chunk_location = []
+        self.recursion_depth = 0
 
-        self.length = len(json_string)
-        self.ratio_method = None
-        if len(kwargs):
+        # if json_string is manually provided then file will be ignored. If
+        # further operations such as remove or replace have been done, the file
+        # will be overwritten with the provided json_string + operation results
+        if json_string:
             try:
-                self.ratio_method = kwargs.get('ratio_method')
-                self.pattern = kwargs.get('pattern')
-                self.result_length = int(
-                    kwargs.get('result_length')) if kwargs.get(
-                    'result_length') else 7
-                self.result = []
-                self.deep = 0
-                self.var_val = 0
-                self.var_name = ''
-                self.group = ''
-                self.sub = ''
+                literal_eval(json_string)
+                self.json = json_string.strip()
             except:
-                self.ratio_method = None
+                raise JsonSyntaxError('Jison got an invalid Json string')
+        elif company:
+            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                   'json', f'{self.company}.json'), 'r') as F:
+                self.json = F.readline().strip()
+        else:
+            raise Exception('No Json string has been provided')
+        self.length = len(self.json)
 
-    def get_object(self) -> dict:
-        self.parse()
-        if not self.old_chunk:
+        self.ratio_method = None
+
+    def get_object(self, obj_name: str) -> dict:
+        self.obj_name = obj_name
+        self.parse(recursion=0)
+        self.index = 0
+        if not self.obj_name:
             return {}
 
-        from ast import literal_eval
-        return literal_eval(
+        returned_dict = literal_eval(
             f'{{{self.json[self.chunk_location[0]:self.chunk_location[1]]}}}')
+        self.chunk_location.clear()
+        self.recursion_depth = 0
 
-    def replace_object(self):
-        self.remove_object(called_by_replace=True)
-        self.json = f'{self.json[0:self.chunk_location[0]]}{self.new_chunk[1:-2]}{self.json[self.chunk_location[1]:]}'
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               'json', f'{Meta.company}.json', 'w')) as F:
+        return returned_dict
+
+    def replace_object(self, obj_name: str, new_chunk):
+        """
+        replace `old_chunk` (object name) with `new_chunk` (dict or Json string),
+        and write result to file
+        """
+        if isinstance(new_chunk, str):
+            try:
+                literal_eval(new_chunk)
+            except:
+                raise JsonSyntaxError(
+                    '"new_chunk" is not a valid Json string')
+        elif isinstance(new_chunk, dict):
             import json
-            json.dump(self.json, F)
+            new_chunk = json.dumps(new_chunk)
+        else:
+            raise Exception(
+                f'Jison.replace_object() only accepts type "str" or "dict", but got {type(new_chunk)}')
 
-    def remove_object(self, called_by_replace: bool = False) -> str:
-        self.parse()
+        # TODO: support a list of obj_name's replacement rather than only one
+        # TODO: obj_name = ['a', 'b', 'c']
+        # TODO: new_chunk = [chunk1, chunk2, chunk3]
+        if len(new_chunk) > 2:
+            self.obj_name = obj_name
+            self.parse(recursion=0)
+            self.index = 0
 
-        if not called_by_replace:
+            if self.chunk_location:
+                self.json = f'{self.json[0:self.chunk_location[0]]}{new_chunk[1:-1]}{self.json[self.chunk_location[1]:]}'
+                self.length = self.json
+                self.chunk_location.clear()
+                self.recursion_depth = 0
+                if self.company:
+                    with open(os.path.join(
+                            os.path.dirname(os.path.realpath(__file__)),
+                            'json', f'{self.company}.json'), 'w') as F:
+                        F.write(self.json)
+                else:
+                    return self.json
+            else:
+                # if the chunk_location do not throw exception
+                pass
+
+        else:
+            # an empty `new_chunk`: {}
+            pass
+
+
+    def remove_object(self, obj_name: str):
+        """
+        remove `old_chunk` (object name) from Json string
+
+        if this method is `called_by_replace`: return nothing, keep modified Json
+        in memory and waiting for further process in `replace_object()`
+
+        if this method is not `called_by_replace`: write changes to file
+        """
+        self.obj_name = obj_name
+        self.parse(recursion=0)
+        self.index = 0
+
+        if self.chunk_location:
             left = self.chunk_location[0]
             right = self.chunk_location[1]
-            if self.json[self.chunk_location[0] - 1] != '{':
-                left = left - 2
-            if self.json[self.chunk_location[1] + 1] != '}' and self.json[
-                        self.chunk_location[1] + 1] != ']':
-                right = right + 2
+
+            # case 1: ...|, {"key": value}| ...
+            if self.json[left - 1] == '{' and self.json[right] == '}':
+                if self.length == right + 1:
+                    raise JsonObjectRemovalFailed(
+                        f'Cannot remove the ONLY object "{obj_name}" in Json')
+                else:
+                    left -= 3
+                    right += 1
+            # case 2: ...|, "key": value|, ...
+            if (self.json[left - 1] == ' ' or self.json[left - 1] == ',') and (
+                            self.json[right] == ' ' or self.json[
+                        right] == ','):
+                print('case2')
+                left -= 2
+            # case 3: ...|, "key": value|} ...
+            if (self.json[left - 1] == ' ' or self.json[left - 1] == ',') and \
+                            self.json[right] == '}':
+                print('case3')
+                left -= 2
+            # case 4: ..., {|"key": value, |...
+            if self.json[left - 1] == '{' and self.json[right] == ',':
+                print('case4')
+                right += 1
+                if self.json[right] == ' ':
+                    right += 1
+
             self.json = f'{self.json[:left]}{self.json[right:]}'
-
-            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   'json', f'{Meta.company}.json', 'w')) as F:
-                import json
-                json.dump(self.json, F)
+            self.length = len(self.json)
+            self.recursion_depth = 0
+            self.chunk_location.clear()
+            if self.company:
+                with open(os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)),
+                        'json', f'{self.company}.json'), 'w') as F:
+                    F.write(self.json)
+            else:
                 return self.json
-        else:
-            return ''
 
-    def parse(self):
+        else:
+            raise JsonObjectRemovalFailed(
+                f'The Json object "{obj_name}" does not exist')
+
+    def search(self, pattern: str, ratio_method, count: int = 8) -> list:
+        self.ratio_method = ratio_method
+        self.pattern = pattern
+        self.result_length = int(count)
+        self.result = []
+        self.deep = 0
+        self.var_val = 0
+        self.var_name = ''
+        self.group = ''
+        self.sub = ''
+
+        self.parse()
+        self.index = 0
+        return self.result
+
+    def json_to_file(self, json_string):
+        if isinstance(json_string, str):
+            try:
+                literal_eval(json_string)
+            except:
+                raise JsonSyntaxError(
+                    'Jison.json_to_file() got an invalid Json string')
+            self.json = json_string
+        elif isinstance(json_string, dict):
+            import json
+            self.json = json.dumps(json_string)
+        else:
+            raise Exception(
+                f'Jison.json_to_file() only accepts type "str" or "dict", but got {type(json_string)}')
+
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'json', f'{self.company}.json'), 'w') as F:
+            F.write(json_string)
+
+    def parse(self, recursion: int = None):
         if self.json:
-            if self.ratio_method:
-                self.scanner(0)
-                return self.result
-            return self.scanner(0)
+            return self.scanner(recursion)
         else:
-            raise JsonSyntaxError(f'Json syntax error at index {self.index}')
+            raise JsonSyntaxError('No Json string provided')
 
-    def scanner(self, recursion: int = 0):
+    def scanner(self, recursion: int = None):
         """ it decides which kind of data will be parsed
         """
         token = self.check_token()
         if token == self.STRING:
             # '"'
-            if self.old_chunk:
+            if hasattr(self, 'obj_name') and self.obj_name:
                 return self.parse_string()[0]
             return self.parse_string()
         if token == self.NUMBER:
@@ -221,10 +332,11 @@ class Jison:
                 return self.NULL
         return self.NONE
 
-    def parse_object(self, recursion: int):
+    def parse_object(self, recursion: int = None):
         """ a '{'
         """
-        recursion += 1
+        if recursion is not None:
+            recursion += 1
         table = {}
         self.go_to_next_token()
 
@@ -249,16 +361,20 @@ class Jison:
             else:
                 # not comma, not close, it can be all the following token types:
                 # a key
-                if self.recursion_depth == recursion and len(
-                        self.chunk_location) == 1:
-                    self.chunk_location.append(self.index - 2)
-                if self.old_chunk:
+                if recursion is not None:
+                    if self.recursion_depth == recursion and len(
+                            self.chunk_location) == 1:
+                        self.chunk_location.append(self.index - 2)
+
+                if recursion is not None and hasattr(self,
+                                                     'obj_name') and self.obj_name:
                     key, location = self.parse_string()
-                    if key == self.old_chunk and not self.chunk_location:
+                    if key == self.obj_name and not self.chunk_location:
                         self.chunk_location.append(location)
                         self.recursion_depth = recursion
                 else:
                     key = self.parse_string()
+
                 if not self.success:
                     raise JsonSyntaxError(
                         f'Json syntax error at index {self.index}')
@@ -278,7 +394,7 @@ class Jison:
                         f'Json syntax error at index {self.index}')
                 table[key] = value
 
-    def parse_array(self, recursion: int):
+    def parse_array(self, recursion: int = None):
         """ a '['
         """
         array = []
@@ -309,7 +425,7 @@ class Jison:
     def parse_string(self):
         """ a '"'
         """
-        if self.old_chunk:
+        if hasattr(self, 'obj_name') and self.obj_name:
             anchor = self.index
 
         self.ignore_white_space()
@@ -393,8 +509,9 @@ class Jison:
                 self.var_name = string
                 self.var_val = 1
 
-        if self.old_chunk:
+        if hasattr(self, 'obj_name') and self.obj_name:
             return string, anchor
+
         return string
 
     def parse_number(self):
@@ -421,14 +538,3 @@ class Jison:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t' \
                 or self.json[self.index] == '\n':
             self.index += 1
-
-
-if __name__ == '__main__':
-    jison = Jison(
-        '{"OBJ1": [{"AMPFDS Services Comment": [{"comment": "Comment"}, {"date": "Date"}]}], "OBJ2": [{"Savings Scenario": [{"modifiedby": "Modified By"}, {"modifiedstamp": "Modified Date"}, {"descp": "Description"}, {"createdby": "Created By"}, {"createdstamp": "Created Date"}]}]}',
-        old_chunk='Savings Scenario',
-        new_chunk={'OBJ3': ['A', 'B']}
-    )
-    from pprint import pprint
-
-    pprint(jison.replace_object())

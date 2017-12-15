@@ -1,4 +1,3 @@
-from common.crypto import AESCipher
 from app.db import mongo_connect, client
 
 
@@ -9,13 +8,19 @@ class Meta:
     """
     company = 'ytml'
     company_username = 'ytml1'
-    company_password = ''
+    company_password = 'Passw0rdOCT'
 
     db_default = mongo_connect(client, 'ytml')
     db_company = None
 
     # `crypto` variable is an instance for AESCipher
-    crypto = AESCipher()
+    crypto = None
+
+    # `jison` is an instance of Jison parser
+    jison = None
+
+    # `fetcher` is an instance of Fetcher
+    fetcher = None
 
     # browser is used for fetch interface menu
     browser = None

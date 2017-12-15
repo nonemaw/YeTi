@@ -5,7 +5,6 @@ import requests
 import re
 import os
 import logging
-import json
 
 from common.meta import Meta
 from bson import ObjectId
@@ -13,18 +12,8 @@ from app.models import Group, SubGroup
 
 
 class Fetcher:
-    def __init__(self, username: str, password: str, mode: str = 'w',
-                 group_only: list=None):
-        self.mode = mode
+    def __init__(self):
         self.db = Meta.db_default if Meta.company == 'ytml' else Meta.db_company
-        self.USERNAME = username
-        self.PASSWORD = password
-
-        # only fetch/update designated groups
-        if isinstance(group_only, list):
-            self.group_only = group_only
-        else:
-            self.group_only = None
 
         self.BASE = f'https://{Meta.company}.xplan.iress.com.au'
         self.URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
@@ -32,7 +21,8 @@ class Fetcher:
         self.URL_WALKER = ''.join([f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
         self.URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
 
-    def run(self):
+    # TODO: along with Jison, support a list of group update, generate a list of 'to_json' result based on the list of groups
+    def run(self, group_only: str = None):
         """
         code is ugly, but the html content is a little bit complex and parsers
         like BeautifulSoup4 are hard to manipulate them because I am not very
@@ -48,7 +38,7 @@ class Fetcher:
             os.makedirs(log_directory)
         if not os.path.exists(json_directory):
             os.makedirs(json_directory
-        )
+                        )
         logger = logging.getLogger('my_logger')
         logfile_hdlr = logging.FileHandler(
             os.path.join(log_directory, 'fetcher.log'), 'w')
@@ -62,8 +52,8 @@ class Fetcher:
             try:
                 # login payload
                 payload = {
-                    "userid": self.USERNAME,
-                    "passwd": self.PASSWORD,
+                    "userid": Meta.company_username,
+                    "passwd": Meta.company_password,
                     "rolename": "User",
                     "redirecturl": ''
                 }
@@ -81,8 +71,6 @@ class Fetcher:
 
                 else:
                     # start working
-                    print('Working ... ')
-
                     dropdown_options = re.search(
                         r'<select\b[^>]*>(?P<option_tags>.*)<\/select>',
                         fields.text).group('option_tags').split('</option>')
@@ -94,12 +82,11 @@ class Fetcher:
 
                     # for each group (option), the main loop
                     for option in dropdown_options:
-                        if option == '_loop_end':
+                        if option == '_loop_end' and not group_only:
                             # update former group
                             self.db.Group.update_one(
                                 {'_id': ObjectId(former_group_id)},
                                 {'$set': {'sub_groups': sub_group_list}})
-                            # sub_group_to_json[self.db.SubGroup.find_one({'_id': ObjectId(former_sub_group_id)}).get('name')] = variables_to_json
                             break
 
                         try:
@@ -109,12 +96,20 @@ class Fetcher:
                             group_var = match.group('group').strip()
                             group_name = match.group('obj_name').strip()
 
-                            if self.group_only:
-                                if group_var not in self.group_only and group_name not in self.group_only:
+                            if group_only:
+                                # if current group not matched, continue
+                                if group_var != group_only and group_name != group_only:
                                     continue
+                                # if current group matched, change `group_only` to
+                                # currently group's `group_var` (because `group_only`
+                                # can be also a `group_name`)
+                                else:
+                                    group_only = group_var
 
                             if group_var != former_group:
-                                # if moved to a new group, update the former group's subgroup list to DB, then change former_group to current group
+                                # if moved to a new group, update the former group's
+                                # subgroup list to DB, then change former_group to
+                                # current group
                                 if former_group and former_group_id and len(
                                         sub_group_list):
                                     self.db.Group.update_one(
@@ -140,7 +135,8 @@ class Fetcher:
                             former_sub_group_variables = []
                             variables_to_json = []
 
-                            # for each option's entry ([sub_group] - variable pair), analysis sub_group and variable
+                            # for each option's entry ([sub_group] - variable pair),
+                            # analysis sub_group and variable
                             for href_name_type in re.findall(
                                     r'<a href=\"([^=]+)\" .+\">(.+)<\/a><\/td>\n\s+<td>(.+)<\/td>',
                                     all_subgroup_variable):
@@ -154,18 +150,22 @@ class Fetcher:
                                             var_name).groups()
 
                                     if sub_group != former_sub_group:
-                                        # if moved to a new subgroup, updating former SubGroup's variables, then insert new current SubGroup to DB
+                                        # if moved to a new subgroup, updating former
+                                        # SubGroup's variables, then insert new current
+                                        # SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
                                             self.db.SubGroup.update_one({
-                                                                            '_id': ObjectId(
-                                                                                former_sub_group_id)},
-                                                                        {
-                                                                            '$set': {
-                                                                                'variables': former_sub_group_variables}})
+                                                '_id': ObjectId(
+                                                    former_sub_group_id)},
+                                                {
+                                                    '$set': {
+                                                        'variables': former_sub_group_variables}})
                                             if group_var in to_json:
-                                                to_json[group_var].append({former_sub_group: variables_to_json})
+                                                to_json[group_var].append({
+                                                    former_sub_group: variables_to_json})
                                             else:
-                                                to_json[group_var] = [{former_sub_group: variables_to_json}]
+                                                to_json[group_var] = [{
+                                                    former_sub_group: variables_to_json}]
                                             former_sub_group_variables = []
                                             variables_to_json = []
 
@@ -183,7 +183,8 @@ class Fetcher:
                                     else:
                                         usage = f'$entity.{href.split("/ufield/edit/")[1].replace("/", ".")}'
 
-                                    # information collection to a variable finished: var / var_name / sub_group / var_type / usage
+                                    # information collection to a variable finished:
+                                    # var / var_name / sub_group / var_type / usage
                                     if var_type == 'Multi' or var_type == 'Choice':
                                         multi = {}
                                         session.get(self.BASE + href,
@@ -232,7 +233,8 @@ class Fetcher:
                                              usage=usage))
                                     variables_to_json.append({var: var_name})
 
-                            # end of loop in current group's [sub_group] - variable pairs, update last subgroup's variables
+                            # end of loop in current group's [sub_group] - variable pairs,
+                            # update last subgroup's variables
                             self.db.SubGroup.update_one(
                                 {'_id': ObjectId(former_sub_group_id)}, {
                                     '$set': {
@@ -248,9 +250,7 @@ class Fetcher:
                         except Exception as e:
                             logger.warning(f'Error message: {str(e)}')
                             continue
-
                     # endfor
-                    print('\nDone!')
 
                 # endif, logout
                 session.get(self.URL_LOGOUT)
@@ -258,6 +258,9 @@ class Fetcher:
                 logger.info('Received keyboard interruption, logging out ...')
                 session.get(self.URL_LOGOUT)
 
-        with open(os.path.join(json_directory, f'{Meta.company}.json'),
-                  self.mode) as J:
-            json.dump(to_json, J)
+        import json
+        if not group_only:
+            Meta.jison.json_to_file(json.dumps(to_json))
+        else:
+            Meta.jison.replace_object(group_only, json.dumps(to_json))
+        to_json.clear()
