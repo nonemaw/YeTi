@@ -4,14 +4,18 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
     ValidationError, SelectField
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 from common.meta import Meta
+from common.crypto import AESCipher
+from common.fetcher import Fetcher
+from fuzzier.jison import Jison
 from app.db import client, mongo_connect
 
-cities = [('New South Wales', 'New South Wales'),
-          ('Australian Capital Territory', 'Australian Capital Territory'),
-          ('Northern Territory', 'Northern Territory'),
-          ('Queensland', 'Queensland'), ('South Australia', 'South Australia'),
-          ('Tasmania', 'Tasmania'), ('Victoria', 'Victoria'),
-          ('Western Australia', 'Western Australia')]
+cities = [('New South Wales', ' New South Wales'),
+          ('Australian Capital Territory', ' Australian Capital Territory'),
+          ('Northern Territory', ' Northern Territory'),
+          ('Queensland', ' Queensland'),
+          ('South Australia', ' South Australia'),
+          ('Tasmania', ' Tasmania'), ('Victoria', ' Victoria'),
+          ('Western Australia', ' Western Australia')]
 
 
 class LoginForm(FlaskForm):
@@ -27,7 +31,7 @@ class LoginForm(FlaskForm):
 
     def validate_company(self, field):
         """
-        the DB is initialized in here
+        validate company name and initialize Meta class if validation passed
         """
         try:
             requests.session().get(
@@ -37,6 +41,9 @@ class LoginForm(FlaskForm):
             Meta.company = field.data.lower()
             Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
                 client, Meta.company)
+            Meta.crypto = AESCipher()
+            Meta.jison = Jison(company=Meta.company)
+            Meta.fetcher = Fetcher()
         except:
             raise ValidationError(
                 f'Company name \"{field.data}\" invalid, no such XPLAN site.')

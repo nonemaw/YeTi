@@ -7,7 +7,7 @@ from wtforms.validators import Length, DataRequired, Email, Regexp, \
 from common.meta import Meta
 from app.auth.forms import cities
 
-roles = [('ACCESS', 'Normal User'), ('ADMIN', 'Administrator')]
+roles = [('ACCESS', ' Normal User'), ('ADMIN', ' Administrator')]
 
 
 class EditProfileForm(FlaskForm):
