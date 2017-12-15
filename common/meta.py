@@ -8,7 +8,7 @@ class Meta:
     """
     company = 'ytml'
     company_username = 'ytml1'
-    company_password = 'Passw0rdOCT'
+    company_password = ''
 
     db_default = mongo_connect(client, 'ytml')
     db_company = None
