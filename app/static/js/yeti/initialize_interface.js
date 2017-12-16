@@ -152,14 +152,14 @@ function update_streamer(status_url, nanobar, status_div, id){
                                     var _id = 0;
                                     for (name in collection_info[item]) {
                                         ++_id;
-                                        interface_collection_table.append('<tr class="y" id="collection_' + String(_id) + '"><td class="col-md-3" style="padding:2px;padding-left:15px;font-size:14px;font-weight:bold">' + collection_info[item][name] + '</td></tr>');
+                                        interface_collection_table.append('<tr class="y" id="collection_' + String(_id) + '"><td class="col-md-3">' + collection_info[item][name] + '</td></tr>');
                                         local_interface_table_cache[_id] = [collection_info[item][name]]
                                     }
                                 }
                             }
                             else {
                                 $('#interface-collection-table-title').text('(Collection is Empty)');
-                                interface_collection_table.append('<tr><td class="col-md-3" style="padding:2px;padding-left:15px;font-size:14px;font-weight:bold">/</td></tr>');
+                                interface_collection_table.append('<tr><td class="col-md-3">/</td></tr>');
                             }
                             $('#interface-collection-table-head').css('display', '');
                             ititle.css('display', 'none');

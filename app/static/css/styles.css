@@ -300,6 +300,21 @@ label {
     background: rgb(228, 228, 228);
 }
 
+#variable-search-table tr td {
+    padding: 5px;
+}
+
+#multi-choice-table tr td {
+    padding: 5px;
+}
+
+#interface-collection-table tr td {
+    padding: 2px;
+    padding-left: 15px;
+    font-size: 14px;
+    font-weight: bold
+}
+
 ::-webkit-scrollbar-track
 {
 	-webkit-box-shadow: inset 0 0 6px rgba(168, 168, 168, 0.3);

@@ -13,7 +13,7 @@ function search(pattern, count) {
     $('#variable-search-table-head').css('display', '');
     $('#variable-selector-table').css('display', 'none');
     variable_table_search.empty();
-    variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;font-weight: bold;color:#009688">Searching ...</td></tr>');
+    variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px;padding:5px;">/</td><td class="col-md-4" style="font-family:Arial;font-size:15px;padding:5px;">/</td><td class="col-md-5" style="font-family:Arial;font-weight: bold;color:#009688;padding:5px;">Searching ...</td></tr>');
 
     sent_info = {
         pattern: pattern,
@@ -30,7 +30,7 @@ function search(pattern, count) {
             var search_result = data.search_result;
             if (search_result.length === 0) {
                 variable_table_search.empty();
-                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-3" style="font-family:Arial;font-size:15px">/</td><td class="col-md-6" style="font-family:Arial;font-weight: bold;color:#009688">(No Search Result)</td></tr>');
+                variable_table_search.append('<tr><td class="col-md-3" style="font-family:Arial;font-size:15px;">/</td><td class="col-md-4" style="font-family:Arial;font-size:15px;padding:5px;">/</td><td class="col-md-5" style="font-family:Arial;font-weight: bold;color:#009688;padding:5px;">(No Search Result)</td></tr>');
             }
             else {
                 variable_table_search.empty();
@@ -44,7 +44,7 @@ function search(pattern, count) {
                     var subgroup = search_result[obj][3];
                     var var_var = search_result[obj][4];
                     var var_name = search_result[obj][5];
-                    variable_table_search.append('<tr class="x" id="search-result' + String(id) + '"><td class="col-md-3" style="font-family:Arial;font-size:15px">' + group_name + '</td><td class="col-md-3" style="font-family:Arial;font-size:15px">' + subgroup + '</td><td class="col-md-6" style="font-family:Arial;font-weight: bold;color:#009688">' + var_name + '</td></tr>');
+                    variable_table_search.append('<tr class="x" id="search-result' + String(id) + '"><td class="col-md-3" style="font-family:Arial;font-size:15px;padding:5px;">' + group_name + '</td><td class="col-md-4" style="font-family:Arial;font-size:15px;padding:5px;">' + subgroup + '</td><td class="col-md-5" style="font-family:Arial;font-weight: bold;color:#009688;padding:5px;">' + var_name + '</td></tr>');
                     local_search_cache[id] = [group_var, subgroup_id, var_var]
                 }
             }
