@@ -1,7 +1,5 @@
-import os
 import re
 from common.meta import Meta
-from fuzzier.jison import Jison
 
 
 def ratio(target: str, pattern: str):

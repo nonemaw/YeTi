@@ -1,7 +1,13 @@
 var local_search_cache = {};
 
 function search(pattern, count) {
-    pattern = pattern.replace('/', ' ');
+    pattern = pattern.replace('/', ' ').trim();
+    var regex = /\[([0-9]+)\]$/;
+    if (regex.test(pattern)) {
+        count = regex.exec(pattern)[1];
+        pattern = /(.*)\[[0-9]+\]$/.exec(pattern)[1].trim();
+    }
+
     var variable_table_search = $('#variable-search-table');
     variable_table_search.css('display', '');
     $('#variable-search-table-head').css('display', '');

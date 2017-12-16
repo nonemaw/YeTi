@@ -14,7 +14,7 @@ class Jison:
     """
     Jison is a simple parser for one-line Json string for Json manipulation:
 
-    1. string search under a maintained tree structure
+    1. string search under a maintained tree structure, hierarchical search
     2. Json object acquisition
     3. Json object deletion
     4. Json object replacement
@@ -152,16 +152,13 @@ class Jison:
             if (self.json[left - 1] == ' ' or self.json[left - 1] == ',') and (
                             self.json[right] == ' ' or self.json[
                         right] == ','):
-                print('case2')
                 left -= 2
             # case 3: ...|, "key": value|} ...
             if (self.json[left - 1] == ' ' or self.json[left - 1] == ',') and \
                             self.json[right] == '}':
-                print('case3')
                 left -= 2
             # case 4: ..., {|"key": value, |...
             if self.json[left - 1] == '{' and self.json[right] == ',':
-                print('case4')
                 right += 1
                 if self.json[right] == ' ':
                     right += 1
@@ -188,11 +185,16 @@ class Jison:
         self.result_length = int(count)
         self.result = []
         self.deep = 0
-        self.var_val = 0
+        self.is_var_value = True
+        self.skipped = False
         self.var_name = ''
         self.group = ''
         self.sub = ''
 
+        # a pattern can be a simple string (for variable search)
+        # or a combination of 'sub_group:variable_name'
+        if ':' in self.pattern:
+            self.pattern = [p.strip() for p in self.pattern.split(':') if p]
         self.parse()
         self.index = 0
         return self.result
@@ -216,14 +218,17 @@ class Jison:
                                'json', f'{self.company}.json'), 'w') as F:
             F.write(json_string)
 
-    def parse(self, recursion: int = None):
+    def parse(self, recursion: int = None) -> dict:
         if self.json:
             return self.scanner(recursion)
         else:
             raise JsonSyntaxError('No Json string provided')
 
     def scanner(self, recursion: int = None):
-        """ it decides which kind of data will be parsed
+        """
+        it decides which kind of data will be parsed
+
+        returned type can be a dict, list, or string
         """
         token = self.check_token()
         if token == self.STRING:
@@ -236,13 +241,9 @@ class Jison:
             return self.parse_number()
         if token == self.OBJ_OPEN:
             # '{'
-            if self.ratio_method:
-                self.deep += 1
             return self.parse_object(recursion)
         if token == self.ARR_OPEN:
             # '['
-            if self.ratio_method:
-                self.deep += 1
             return self.parse_array(recursion)
         if token == self.TRUE:
             # 'true'
@@ -337,6 +338,9 @@ class Jison:
         """
         if recursion is not None:
             recursion += 1
+        if self.ratio_method:
+            self.deep += 1
+
         table = {}
         self.go_to_next_token()
 
@@ -409,8 +413,6 @@ class Jison:
             elif token == self.COMMA:
                 self.go_to_next_token()
             elif token == self.ARR_CLOSE:
-                if self.ratio_method:
-                    self.deep -= 1
                 self.go_to_next_token()
                 break
             else:
@@ -423,15 +425,14 @@ class Jison:
         return array
 
     def parse_string(self):
-        """ a '"'
-        """
+        # anything begin with `"`
         if hasattr(self, 'obj_name') and self.obj_name:
             anchor = self.index
 
         self.ignore_white_space()
         string = ''
         done = False
-        self.index += 1  # current index is '"', +1 to move to string
+        self.index += 1  # current index is `"`, +1 to move to string
 
         while not done:
             if self.index == self.length:
@@ -467,25 +468,52 @@ class Jison:
                 elif char == 'u':
                     remaining_length = self.length - self.index
                     if remaining_length >= 4:
-                        # handling 32 bit unicode, reserved for future development when I have time
-                        a = 1
+                        # TODO: handling 32 bit unicode, reserved for future development when I have time
+                        pass
             else:
                 # build string a-zA-Z0-9
                 string += char
         if not done:
             self.success = False
             raise JsonSyntaxError(f'Json syntax error at index {self.index}')
+
         if self.ratio_method:
             if self.deep == 1:
                 # I am the group
                 self.group = string
-            elif self.deep == 3:
+            elif self.deep == 2:
                 # I am the subgroup
-                self.sub = string
-            elif self.deep == 5 and self.var_val:
-                # I am a variable
-                current_ratio = self.ratio_method(string, self.pattern)
-                self.var_val = 0
+                self.skipped = False
+                if isinstance(self.pattern, str):
+                    self.sub = string
+                elif isinstance(self.pattern, list) and len(self.pattern) == 2:
+                    subgroup_ratio = self.ratio_method(string, self.pattern[0])
+                    if subgroup_ratio < 0.33:
+                        # `skipped` works on second level of recursion, AKA subgroup
+                        # once `skipped` is True, parser will ignore current object
+                        # and move to next object on second level of recursion
+                        self.skipped = True
+                    else:
+                        self.sub = string
+                elif isinstance(self.pattern, list) and len(self.pattern) == 1:
+                    self.pattern = self.pattern[0]
+                    self.sub = string
+                else:
+                    raise Exception('An invalid search pattern')
+
+            elif self.deep == 3 and not self.is_var_value and not self.skipped:
+                # I am a variable and a var_name, run ratio_method()
+                # a variable representation in Json is `var_value: var_name`
+                # the `ratio_method()` will be only applied on `var_name`, as
+                # the `var_value` is usually in a short form
+                if isinstance(self.pattern, str):
+                    current_ratio = self.ratio_method(string, self.pattern)
+                elif isinstance(self.pattern, list):
+                    current_ratio = self.ratio_method(string, self.pattern[1])
+                else:
+                    raise Exception('An invalid search pattern')
+                self.is_var_value = True
+
                 if current_ratio > 0.15:
                     if len(self.result) == self.result_length:
                         stored_ratio_result = [i[0] for i in self.result]
@@ -503,11 +531,11 @@ class Jison:
                     else:
                         self.result.append(
                             [current_ratio, self.group, self.sub,
-                             self.var_name,
-                             string])
-            elif self.deep == 5 and not self.var_val:
+                             self.var_name, string])
+            elif self.deep == 3 and self.is_var_value and not self.skipped:
+                # record var_value
                 self.var_name = string
-                self.var_val = 1
+                self.is_var_value = False
 
         if hasattr(self, 'obj_name') and self.obj_name:
             return string, anchor
