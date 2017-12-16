@@ -26,7 +26,7 @@ class LoginForm(FlaskForm):
                           default='ytml', validators=[DataRequired()])
     # company_username = StringField('Company\'s XPLAN Username', validators=[DataRequired()])
     # company_password = PasswordField('Company\'s XPLAN Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
+    remember_me = BooleanField(' Remember Me')
     submit = SubmitField('Login')
 
     def validate_company(self, field):
