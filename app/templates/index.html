@@ -58,6 +58,16 @@
                                     <h4 id="interface-note" style="font-weight: bold"></h4>
                                     <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
                                     <button id="interface-title" style="font-size: 18px; display: none">/</button>
+                                    <!-- interface collection table for xplan collection items -->
+                                    <table class="table table-scroll left-column-table" id="interface-collection-table-head" style="display: none; height: 100px">
+                                        <thead>
+                                            <tr>
+                                                <th id="interface-collection-table-title" style="font-size:16px; font-style: italic; color:#009688"></th>
+                                        </thead>
+                                        <tbody id="interface-collection-table">
+                                        </tbody>
+                                    </table>
+                                    <!-- end of interface collection table -->
                                     <br>
                                     <br>
                                     <h4 id="interface-entity" style="font-weight: bold; display: none">Applicable Entities</h4>
@@ -165,8 +175,8 @@
                         <thead id="variable-search-table-head" style="display:none">
                             <tr>
                                 <th id="choice-value-title" class="col-md-3" style="font-size:15px"><i>Group</i></th>
-                                <th id="choice-text-title" class="col-md-3" style="font-size:15px"><i>Sub-Group</i></th>
-                                <th id="choice-text-title" class="col-md-6" style="font-size:15px"><i>Result</i></th>
+                                <th id="choice-text-title" class="col-md-4" style="font-size:15px"><i>Sub-Group</i></th>
+                                <th id="choice-text-title" class="col-md-5" style="font-size:15px"><i>Result</i></th>
                             </tr>
                         </thead>
                         <tbody id="variable-search-table" style="display:none; overflow-y: auto; height: 88%">
@@ -632,9 +642,19 @@
 
             // click on interface variable name
             $('#interface-title').on('click', function(){
-                var group_subgroup_array = $('#interface-title').text().split(' -- ');
-                if (group_subgroup_array.length === 2) {
-                    search(group_subgroup_array[1], 1);
+                var title = $('#interface-title').text();
+                var variable = '_NONE';
+
+                alert(title);
+
+                if (/\[.+\]/.test(title)) {
+                    variable = /\[.+\] *(.+)/.exec(title)[1];
+                }
+
+                alert(variable);
+
+                if (variable !== '_NONE') {
+                    search(variable, 1);
                 }
                 return false;
             });

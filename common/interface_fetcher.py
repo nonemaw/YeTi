@@ -105,11 +105,12 @@ def get_menu(_id: int, menu: dict) -> bool:
         # if there is no `hidden` tags, get id and text
         try:
             menu.get('data').append({'id': Meta.browser.find_element_by_xpath(
-                                         f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute('id'),
-                                     'parent': '#',
-                                     'text': Meta.browser.find_element_by_xpath(
-                                         f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text
-                                    })
+                f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute(
+                'id'),
+                'parent': '#',
+                'text': Meta.browser.find_element_by_xpath(
+                    f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text
+            })
             return True
         except:
             return False
@@ -125,7 +126,8 @@ def update_interface(self, _id: str) -> dict:
 
     # normal node
     if re.search('^client_[0-9]+', _id):
-        Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
+        Meta.browser.find_element_by_xpath(
+            f'//*[@id="{_id}"]/a/span[1]').click()
         time.sleep(0.5)
 
         for child in range(1, 200):
@@ -138,44 +140,86 @@ def update_interface(self, _id: str) -> dict:
                     f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]/font')
             except:
                 try:
-                    element = Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/ul/li[{child}]')
-                    
-                    if not re.search('(_gap|_title)', element.get_attribute('rel')):
-                        menu.get('data').append({'id': element.get_attribute('id'),
-                                                 'parent': _id,
-                                                 'text': Meta.browser.find_element_by_xpath(
-                                                     f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
-                                                })
+                    element = Meta.browser.find_element_by_xpath(
+                        f'//*[@id="{_id}"]/ul/li[{child}]')
+
+                    if not re.search('(_gap|_title)',
+                                     element.get_attribute('rel')):
+                        menu.get('data').append(
+                            {'id': element.get_attribute('id'),
+                             'parent': _id,
+                             'text': Meta.browser.find_element_by_xpath(
+                                 f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
+                             })
                 except:
                     break
 
     # leaf node
     else:
-        Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/a/span[1]').click()
+        Meta.browser.find_element_by_xpath(
+            f'//*[@id="{_id}"]/a/span[1]').click()
         time.sleep(1)
-        content = {}
 
         name = Meta.browser.find_element_by_xpath(
             '//*[@id="edit_interface_page"]/div[2]/div[3]/div/div[2]/table/tbody/tr[1]/td[2]/div/a/span').text
         if re.findall('\[(.+?)\] (.+)', name):
             name = '--'.join(re.findall('\[(.+?)\] (.+)', name)[0])
-        content[name] = []
+        content = {name: []}
 
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_1"]').get_attribute('checked'): content.get(name).append('individual')
+                '//*[@id="entity_types_1"]').get_attribute('checked'):
+            content.get(name).append('individual')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_2"]').get_attribute('checked'): content.get(name).append('superfund')
+                '//*[@id="entity_types_2"]').get_attribute('checked'):
+            content.get(name).append('superfund')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_3"]').get_attribute('checked'): content.get(name).append('partnership')
+                '//*[@id="entity_types_3"]').get_attribute('checked'):
+            content.get(name).append('partnership')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_4"]').get_attribute('checked'): content.get(name).append('trust')
+                '//*[@id="entity_types_4"]').get_attribute('checked'):
+            content.get(name).append('trust')
         if Meta.browser.find_element_by_xpath(
-                '//*[@id="entity_types_5"]').get_attribute('checked'): content.get(name).append('company')
+                '//*[@id="entity_types_5"]').get_attribute('checked'):
+            content.get(name).append('company')
+        menu['leaf_basic'] = content
+        content = {name: []}
 
-        menu['leaf'] = content
+        try:
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
+        except:
+            pass
+        else:
+            for i in range(1, 30):
+                try:
+                    if Meta.browser.find_element_by_xpath(
+                            f'//*[@id="xstore_listfields_{i}"]').get_attribute(
+                        'checked'):
+                        content.get(name).append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tr_element_xplan_definition"]/td/div/span[{i}]/label').text)
+                except:
+                    menu['leaf_collection'] = content
+                    break
+
+        try:
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[1]')
+        except:
+            pass
+        else:
+            for i in range(1, 30):
+                try:
+                    content.get(name).append(
+                        Meta.browser.find_element_by_xpath(
+                            f'//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
+                except:
+                    menu['leaf_collection'] = content
+                    break
+
+    # endif
     return {'status': 'Update Finished', 'result': menu}
 
 
 def dump_interface():
     pass
-

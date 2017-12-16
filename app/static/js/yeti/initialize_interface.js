@@ -9,6 +9,7 @@ var itrust = $('#interface-trust');
 var isuperfund = $('#interface-superfund');
 var icompany = $('#interface-company');
 var ipartnership = $('#interface-partnership');
+var local_interface_table_cache = {};
 
 function initialize_interface(id){
     var div = $('<div></div>');
@@ -114,30 +115,57 @@ function update_streamer(status_url, nanobar, status_div, id){
                     isuperfund.css('display', 'none');
                     icompany.css('display', 'none');
                     ipartnership.css('display', 'none');
+                    $('#interface-collection-table-head').css('display', 'none');
                 }
                 // leaf node
-                else if (data.result.leaf) {
+                else if (data.result.leaf_basic) {
                     iindividual.find('label, input').removeAttr('checked');
                     itrust.find('label, input').removeAttr('checked');
                     isuperfund.find('label, input').removeAttr('checked');
                     icompany.find('label, input').removeAttr('checked');
                     ipartnership.find('label, input').removeAttr('checked');
 
-                    info = data.result.leaf;
-                    for (group_subgroup in info) {
-                        var group_subgroup_array = group_subgroup.split('--');
+                    var basic_info = data.result.leaf_basic;
+                    for (item in basic_info) {
+                        var group_subgroup_array = item.split('--');
+
                         if (group_subgroup_array.length === 2) {
                             // Group - Subgroup
+                            $('#interface-collection-table-head').css('display', 'none');
                             itype.text('Variable');
-                            ititle.text(group_subgroup_array[0] + ' -- ' +  group_subgroup_array[1]);
-                        }
-                        else if (group_subgroup_array.length === 1) {
-                            // XPLAN collection
-                            $('#interface-type').text('XPLAN Collection');
-                            $('#interface-title').text(group_subgroup_array[0])
+                            ititle.text('[' + group_subgroup_array[0] + '] ' +  group_subgroup_array[1]);
+                            ititle.css('display', '');
                         }
 
-                        entities = info[group_subgroup];
+                        else if (group_subgroup_array.length === 1) {
+                            // XPLAN collection
+                            $('#interface-type').text('XPLAN Collection: ' + group_subgroup_array[0]);
+                            $('#interface-title').css('display', 'none');
+                            var interface_collection_table = $('#interface-collection-table');
+                            interface_collection_table.empty();
+
+                            if (data.result.leaf_collection) {
+                                $('#interface-collection-table-title').text(group_subgroup_array[0]);
+                                var collection_info = data.result.leaf_collection;
+                                for (item in collection_info) {
+                                    local_interface_table_cache = {};
+                                    var _id = 0;
+                                    for (name in collection_info[item]) {
+                                        ++_id;
+                                        interface_collection_table.append('<tr class="y" id="collection_' + String(_id) + '"><td class="col-md-3" style="padding:2px;padding-left:15px;font-size:14px;font-weight:bold">' + collection_info[item][name] + '</td></tr>');
+                                        local_interface_table_cache[_id] = [collection_info[item][name]]
+                                    }
+                                }
+                            }
+                            else {
+                                $('#interface-collection-table-title').text('(Collection is Empty)');
+                                interface_collection_table.append('<tr><td class="col-md-3" style="padding:2px;padding-left:15px;font-size:14px;font-weight:bold">/</td></tr>');
+                            }
+                            $('#interface-collection-table-head').css('display', '');
+                            ititle.css('display', 'none');
+                        }
+
+                        var entities = basic_info[item];
                         if (entities.indexOf("individual") > -1) {
                             iindividual.find('label, input').attr('checked', 'checked');
                         }
@@ -156,7 +184,6 @@ function update_streamer(status_url, nanobar, status_div, id){
                     }
                     inote.css('display', 'none');
                     itype.css('display', '');
-                    ititle.css('display', '');
                     ientity.css('display', '');
                     iindividual.css('display', '');
                     itrust.css('display', '');
@@ -180,6 +207,7 @@ function update_streamer(status_url, nanobar, status_div, id){
                     isuperfund.css('display', 'none');
                     icompany.css('display', 'none');
                     ipartnership.css('display', 'none');
+                    $('#interface-collection-table-head').css('display', 'none');
                 }
             }
             else {
@@ -194,3 +222,14 @@ function update_streamer(status_url, nanobar, status_div, id){
         }
     });
 }
+
+// click on interface table if the table is not empty
+$('#interface-collection-table').on('click','.y',function(event){
+    // get table's row id, replace all leading non-digits with nothing
+    var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
+    var var_var = local_interface_table_cache[result_row_id][0];
+
+
+
+
+});
