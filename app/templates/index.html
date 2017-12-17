@@ -58,16 +58,29 @@
                                     <h4 id="interface-note" style="font-weight: bold"></h4>
                                     <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
                                     <button id="interface-title" style="font-size: 18px; display: none">/</button>
-                                    <!-- interface collection table for xplan collection items -->
-                                    <table class="table table-scroll left-column-table" id="interface-collection-table-head" style="display: none; height: 100px">
-                                        <thead>
-                                            <tr>
-                                                <th id="interface-collection-table-title" style="font-size:16px; font-style: italic; color:#009688"></th>
-                                        </thead>
-                                        <tbody id="interface-collection-table">
-                                        </tbody>
-                                    </table>
-                                    <!-- end of interface collection table -->
+                                    <!-- interface collection table1 for xplan collection items -->
+                                    <div class="row" id="interface-table-row" style="height:200px">
+                                        <div class="col-md-6" style="height:100%">
+                                            <table class="table table-scroll left-column-table" id="interface-collection-table1-head" style="display:none;height:100px">
+                                                <thead>
+                                                    <tr>
+                                                        <th id="interface-collection-table1-title"></th>
+                                                </thead>
+                                                <tbody id="interface-collection-table1" style="overflow-y: auto">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6" style="height:100%">
+                                            <table class="table table-scroll left-column-table" id="interface-collection-table2-head" style="display:none;height:100px">
+                                                <thead>
+                                                    <tr>
+                                                        <th id="interface-collection-table2-title"></th>
+                                                </thead>
+                                                <tbody id="interface-collection-table2" style="overflow-y: auto">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                     <br>
                                     <br>
                                     <h4 id="interface-entity" style="font-weight: bold; display: none">Applicable Entities</h4>
@@ -156,8 +169,8 @@
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th id="choice-value-title" class="col-md-5" style="color: #009688; font-style: italic">Value</th>
-                                                <th id="choice-text-title" class="col-md-7" style="color: #009688; font-style: italic">Text</th>
+                                                <th id="choice-value-title" class="col-md-5" style="color:#009688;font-style:italic;padding:2px">Value</th>
+                                                <th id="choice-text-title" class="col-md-7" style="color:#009688;font-style:italic;padding:2px">Text</th>
                                             </tr>
                                         </thead>
                                         <tbody id="multi-choice-table">

@@ -9,7 +9,8 @@ var itrust = $('#interface-trust');
 var isuperfund = $('#interface-superfund');
 var icompany = $('#interface-company');
 var ipartnership = $('#interface-partnership');
-var local_interface_table_cache = {};
+var local_interface_table1_cache = {};
+var local_interface_table2_cache = {};
 
 function initialize_interface(id){
     var div = $('<div></div>');
@@ -115,7 +116,8 @@ function update_streamer(status_url, nanobar, status_div, id){
                     isuperfund.css('display', 'none');
                     icompany.css('display', 'none');
                     ipartnership.css('display', 'none');
-                    $('#interface-collection-table-head').css('display', 'none');
+                    $('#interface-collection-table1-head').css('display', 'none');
+                    $('#interface-collection-table2-head').css('display', 'none');
                 }
                 // leaf node
                 else if (data.result.leaf_basic) {
@@ -129,39 +131,65 @@ function update_streamer(status_url, nanobar, status_div, id){
                     for (item in basic_info) {
                         var group_subgroup_array = item.split('--');
 
+                        // Group - Subgroup
                         if (group_subgroup_array.length === 2) {
-                            // Group - Subgroup
-                            $('#interface-collection-table-head').css('display', 'none');
+                            $('#interface-table-row').css('height', '0');
+                            $('#interface-collection-table1-head').css('display', 'none');
+                            $('#interface-collection-table2-head').css('display', 'none');
                             itype.text('Variable');
                             ititle.text('[' + group_subgroup_array[0] + '] ' +  group_subgroup_array[1]);
                             ititle.css('display', '');
                         }
 
+                        // XPLAN collection
                         else if (group_subgroup_array.length === 1) {
-                            // XPLAN collection
-                            $('#interface-type').text('XPLAN Collection: ' + group_subgroup_array[0]);
+                            $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
                             $('#interface-title').css('display', 'none');
-                            var interface_collection_table = $('#interface-collection-table');
-                            interface_collection_table.empty();
+                            var interface_collection_table1 = $('#interface-collection-table1');
+                            var interface_collection_table2 = $('#interface-collection-table2');
+                            interface_collection_table1.empty();
+                            interface_collection_table2.empty();
 
+                            // XPLAN collection got some variables
                             if (data.result.leaf_collection) {
-                                $('#interface-collection-table-title').text(group_subgroup_array[0]);
                                 var collection_info = data.result.leaf_collection;
                                 for (item in collection_info) {
-                                    local_interface_table_cache = {};
-                                    var _id = 0;
-                                    for (name in collection_info[item]) {
-                                        ++_id;
-                                        interface_collection_table.append('<tr class="y" id="collection_' + String(_id) + '"><td class="col-md-3">' + collection_info[item][name] + '</td></tr>');
-                                        local_interface_table_cache[_id] = [collection_info[item][name]]
+                                    local_interface_table1_cache = {};
+                                    local_interface_table2_cache = {};
+                                    for (table in collection_info[item]) {
+                                        if (table === 'table1') {
+                                            var _id1 = 0;
+                                            $('#interface-collection-table1-title').text('List View');
+                                            $('#interface-table-row').css('height', '200px');
+                                            for (variable in collection_info[item][table]) {
+                                                ++_id1;
+                                                interface_collection_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + collection_info[item][table][variable] + '</td></tr>');
+                                                local_interface_table1_cache[_id1] = [collection_info[item][table][variable]];
+                                            }
+                                            $('#interface-collection-table1-head').css('display', '');
+                                        }
+                                        else if (table === 'table2') {
+                                            var _id2 = 0;
+                                            $('#interface-collection-table2-title').text('Edit View');
+                                            for (variable in collection_info[item][table]) {
+                                                ++_id2;
+                                                interface_collection_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + collection_info[item][table][variable] + '</td></tr>');
+                                                local_interface_table2_cache[_id2] = [collection_info[item][table][variable]];
+                                            }
+                                            $('#interface-collection-table2-head').css('display', '');
+                                        }
                                     }
                                 }
                             }
+
+                            // an empty XPLAN colelction
                             else {
-                                $('#interface-collection-table-title').text('(Collection is Empty)');
-                                interface_collection_table.append('<tr><td class="col-md-3">/</td></tr>');
+                                interface_collection_table1.append('<tr><td>/</td></tr>');
+                                $('#interface-collection-table2-head').css('display', 'none');
+                                $('#interface-table-row').css('height', '30px');
+                                $('#interface-collection-table1-title').text('(Collection is Empty)');
+                                $('#interface-collection-table1-head').css('display', '');
                             }
-                            $('#interface-collection-table-head').css('display', '');
                             ititle.css('display', 'none');
                         }
 
@@ -207,7 +235,8 @@ function update_streamer(status_url, nanobar, status_div, id){
                     isuperfund.css('display', 'none');
                     icompany.css('display', 'none');
                     ipartnership.css('display', 'none');
-                    $('#interface-collection-table-head').css('display', 'none');
+                    $('#interface-collection-table1-head').css('display', 'none');
+                    $('#interface-collection-table2-head').css('display', 'none');
                 }
             }
             else {
@@ -224,12 +253,23 @@ function update_streamer(status_url, nanobar, status_div, id){
 }
 
 // click on interface table if the table is not empty
-$('#interface-collection-table').on('click','.y',function(event){
+$('#interface-collection-table1').on('click','.t1',function(event){
     // get table's row id, replace all leading non-digits with nothing
     var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
-    var var_var = local_interface_table_cache[result_row_id][0];
+    var var_var = local_interface_table1_cache[result_row_id][0];
+
+    console.warn(var_var)
 
 
+});
+
+// click on interface table if the table is not empty
+$('#interface-collection-table2').on('click','.t2',function(event){
+    // get table's row id, replace all leading non-digits with nothing
+    var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
+    var var_var = local_interface_table2_cache[result_row_id][0];
+
+    console.warn(var_var)
 
 
 });

@@ -182,7 +182,7 @@ def update_interface(self, _id: str) -> dict:
                 '//*[@id="entity_types_5"]').get_attribute('checked'):
             content.get(name).append('company')
         menu['leaf_basic'] = content
-        content = {name: []}
+        content = {name: {'table1': [], 'table2': []}}
 
         try:
             Meta.browser.find_element_by_xpath(
@@ -190,17 +190,38 @@ def update_interface(self, _id: str) -> dict:
         except:
             pass
         else:
+            # table 1
             for i in range(1, 30):
                 try:
                     if Meta.browser.find_element_by_xpath(
                             f'//*[@id="xstore_listfields_{i}"]').get_attribute(
                         'checked'):
-                        content.get(name).append(
+                        content.get(name).get('table1').append(
                             Meta.browser.find_element_by_xpath(
                                 f'//*[@id="tr_element_xplan_definition"]/td/div/span[{i}]/label').text)
+
+                        if Meta.browser.find_element_by_xpath(
+                                f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
+                                'checked'):
+                            content.get(name).get('table2').append(
+                                Meta.browser.find_element_by_xpath(
+                                    f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
                 except:
-                    menu['leaf_collection'] = content
                     break
+
+            # table 2
+            for i in range(1, 30):
+                try:
+                    if Meta.browser.find_element_by_xpath(
+                            f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
+                            'checked'):
+                        content.get(name).get('table2').append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
+                except:
+                    break
+
+            menu['leaf_collection'] = content
 
         try:
             Meta.browser.find_element_by_xpath(
@@ -208,14 +229,25 @@ def update_interface(self, _id: str) -> dict:
         except:
             pass
         else:
+            # table 1
             for i in range(1, 30):
                 try:
-                    content.get(name).append(
+                    content.get(name).get('table1').append(
                         Meta.browser.find_element_by_xpath(
                             f'//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
                 except:
-                    menu['leaf_collection'] = content
                     break
+
+            # table 2
+            for i in range(1, 30):
+                try:
+                    content.get(name).get('table2').append(
+                        Meta.browser.find_element_by_xpath(
+                            f'//*[@id="tr_element_xplan_edit_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
+                except:
+                    break
+
+            menu['leaf_collection'] = content
 
     # endif
     return {'status': 'Update Finished', 'result': menu}
