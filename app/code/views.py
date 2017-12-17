@@ -150,6 +150,7 @@ def acquire_search_result():
     return detailed variable information when client click on of the search result
     """
     received_json = request.json
+
     if received_json:
         var_list = Meta.db_company.SubGroup.find_one(
             {'_id': ObjectId(received_json.get('subgroup_id'))}).get(

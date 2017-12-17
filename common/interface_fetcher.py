@@ -7,6 +7,25 @@ from common.meta import Meta
 from selenium import webdriver
 from app import celery
 
+subgroup_name_ref = {
+    'telephone/email list': 'Contact',
+    'address list': 'Address',
+    'employment': 'Employment',
+    'dependent': 'Dependent',
+    'goals': 'Goals',
+    'income': 'Cashflow',
+    'expense': 'Cashflow',
+    'asset list': 'Balance Sheet-Asset',
+    'liability list': 'Balance Sheet-Liability',
+    'existing funds': 'Superannuation-Plans',
+    'retirement income': 'Retirement Income',
+    'bank details': 'Bank',
+    'insurance group': 'Insurance Group',
+    'insurance group by cover': 'Insurance Group',
+    'general insurance policies': 'Risk',
+    'medical insurance': 'Medical Insurance',
+}
+
 
 def create_driver(driver: str = 'phantomjs'):
     # new driver
@@ -145,12 +164,15 @@ def update_interface(self, _id: str) -> dict:
 
                     if not re.search('(_gap|_title)',
                                      element.get_attribute('rel')):
-                        menu.get('data').append(
-                            {'id': element.get_attribute('id'),
-                             'parent': _id,
-                             'text': Meta.browser.find_element_by_xpath(
-                                 f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
-                             })
+
+                        text = Meta.browser.find_element_by_xpath(
+                            f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
+                        if text != 'Retirement Funds':
+                            menu.get('data').append(
+                                {'id': element.get_attribute('id'),
+                                 'parent': _id,
+                                 'text': text
+                                 })
                 except:
                     break
 
@@ -184,12 +206,15 @@ def update_interface(self, _id: str) -> dict:
         menu['leaf_basic'] = content
         content = {name: {'table1': [], 'table2': []}}
 
+        # if content is a XPLAN collection or XPLAN group
         try:
             Meta.browser.find_element_by_xpath(
                 '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
         except:
             pass
         else:
+            if name.lower() in subgroup_name_ref:
+                menu['subgroup'] = subgroup_name_ref.get(name.lower())
             # table 1
             for i in range(1, 30):
                 try:
@@ -202,7 +227,7 @@ def update_interface(self, _id: str) -> dict:
 
                         if Meta.browser.find_element_by_xpath(
                                 f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
-                                'checked'):
+                            'checked'):
                             content.get(name).get('table2').append(
                                 Meta.browser.find_element_by_xpath(
                                     f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
@@ -214,7 +239,7 @@ def update_interface(self, _id: str) -> dict:
                 try:
                     if Meta.browser.find_element_by_xpath(
                             f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
-                            'checked'):
+                        'checked'):
                         content.get(name).get('table2').append(
                             Meta.browser.find_element_by_xpath(
                                 f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
@@ -223,12 +248,15 @@ def update_interface(self, _id: str) -> dict:
 
             menu['leaf_collection'] = content
 
+        # if content is a XPLAN collection or XPLAN group
         try:
             Meta.browser.find_element_by_xpath(
                 '//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[1]')
         except:
             pass
         else:
+            if name.lower() in subgroup_name_ref:
+                menu['subgroup'] = subgroup_name_ref.get(name.lower())
             # table 1
             for i in range(1, 30):
                 try:
@@ -250,6 +278,7 @@ def update_interface(self, _id: str) -> dict:
             menu['leaf_collection'] = content
 
     # endif
+    print(menu)
     return {'status': 'Update Finished', 'result': menu}
 
 

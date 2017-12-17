@@ -187,9 +187,9 @@
                         </tbody>
                         <thead id="variable-search-table-head" style="display:none">
                             <tr>
-                                <th id="choice-value-title" class="col-md-3" style="font-size:15px"><i>Group</i></th>
-                                <th id="choice-text-title" class="col-md-4" style="font-size:15px"><i>Sub-Group</i></th>
-                                <th id="choice-text-title" class="col-md-5" style="font-size:15px"><i>Result</i></th>
+                                <th id="choice-value-title" class="col-md-3" style="font-size:15px;padding:5px;"><i>Group</i></th>
+                                <th id="choice-text-title" class="col-md-4" style="font-size:15px;padding:5px;"><i>Sub-Group</i></th>
+                                <th id="choice-text-title" class="col-md-5" style="font-size:15px;padding:5px;"><i>Search Result</i></th>
                             </tr>
                         </thead>
                         <tbody id="variable-search-table" style="display:none; overflow-y: auto; height: 88%">
@@ -651,25 +651,6 @@
                     selections.push(id);
                     initialize_interface(id, text);
                 }
-            });
-
-            // click on interface variable name
-            $('#interface-title').on('click', function(){
-                var title = $('#interface-title').text();
-                var variable = '_NONE';
-
-                alert(title);
-
-                if (/\[.+\]/.test(title)) {
-                    variable = /\[.+\] *(.+)/.exec(title)[1];
-                }
-
-                alert(variable);
-
-                if (variable !== '_NONE') {
-                    search(variable, 1);
-                }
-                return false;
             });
         });
     </script>

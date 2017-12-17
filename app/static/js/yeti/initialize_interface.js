@@ -11,6 +11,7 @@ var icompany = $('#interface-company');
 var ipartnership = $('#interface-partnership');
 var local_interface_table1_cache = {};
 var local_interface_table2_cache = {};
+var current_subugroup = undefined;
 
 function initialize_interface(id){
     var div = $('<div></div>');
@@ -150,7 +151,7 @@ function update_streamer(status_url, nanobar, status_div, id){
                             interface_collection_table1.empty();
                             interface_collection_table2.empty();
 
-                            // XPLAN collection got some variables
+                            // XPLAN collection/group got some variables
                             if (data.result.leaf_collection) {
                                 var collection_info = data.result.leaf_collection;
                                 for (item in collection_info) {
@@ -180,8 +181,15 @@ function update_streamer(status_url, nanobar, status_div, id){
                                         }
                                     }
                                 }
-                            }
 
+                                // if XPLAN collection/group has a known subgroup
+                                if (data.result.subgroup) {
+                                    current_subugroup = data.result.subgroup;
+                                }
+                                else {
+                                    current_subugroup = undefined;
+                                }
+                            }
                             // an empty XPLAN colelction
                             else {
                                 interface_collection_table1.append('<tr><td>/</td></tr>');
@@ -257,10 +265,10 @@ $('#interface-collection-table1').on('click','.t1',function(event){
     // get table's row id, replace all leading non-digits with nothing
     var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
     var var_var = local_interface_table1_cache[result_row_id][0];
-
-    console.warn(var_var)
-
-
+    if (current_subugroup !== undefined) {
+        var pattern = current_subugroup + ':' + var_var;
+        search(pattern, 5);
+    }
 });
 
 // click on interface table if the table is not empty
@@ -268,8 +276,27 @@ $('#interface-collection-table2').on('click','.t2',function(event){
     // get table's row id, replace all leading non-digits with nothing
     var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
     var var_var = local_interface_table2_cache[result_row_id][0];
+    if (current_subugroup !== undefined) {
+        var pattern = current_subugroup + ':' + var_var;
+        search(pattern, 5);
+    }
+});
 
-    console.warn(var_var)
+// click on a interface variable name
+ititle.on('click', function(){
+    var title = ititle.text();
+    var variable = '_NONE';
 
+    alert(title);
 
+    if (/\[.+\]/.test(title)) {
+        variable = /\[.+\] *(.+)/.exec(title)[1];
+    }
+
+    alert(variable);
+
+    if (variable !== '_NONE') {
+        search(variable, 1);
+    }
+    return false;
 });

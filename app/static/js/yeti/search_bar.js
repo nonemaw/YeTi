@@ -104,7 +104,7 @@ $('#variable-search-table').on('click','.x',function(event){
             }
         },
         error: function() {
-            alert('Unexpected error in sending code text');
+            alert('Unexpected error in acquiring result');
         }
     });
 });
