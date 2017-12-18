@@ -6,6 +6,7 @@ import time
 from common.meta import Meta
 from selenium import webdriver
 from app import celery
+from app.models import InterfaceNode, InterfaceLeafPage
 
 
 def create_driver(driver: str = 'phantomjs'):
@@ -16,7 +17,7 @@ def create_driver(driver: str = 'phantomjs'):
                 executable_path='common/phantomjs')
         else:
             Meta.browser = webdriver.Chrome(
-                executable_path='common/chromedriver')
+                executable_path='./chromedriver')
 
         Meta.session_id = Meta.browser.session_id
         Meta.executor_url = Meta.browser.command_executor._url
@@ -188,7 +189,7 @@ def update_interface(self, _id: str, sleep: int = 1) -> dict or list:
     return {'status': 'Update Finished', 'result': menu}
 
 
-def handle_leaf(_id: str, sleep: int = 1) -> dict:
+def handle_leaf(_id: str, sleep: int = 2) -> dict:
     Meta.browser.find_element_by_xpath(
         f'//*[@id="{_id}"]/a/span[1]').click()
     time.sleep(sleep)
@@ -218,7 +219,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
     menu['leaf_basic'] = content
 
     # if content is a Group
-    content = {name: {'group': []}}
+    content = {'group': []}
     try:
         Meta.browser.find_element_by_xpath(
             '//*[@id="tab-general"]/table/tbody/tr[2]/td[1]')
@@ -230,7 +231,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
                 if Meta.browser.find_element_by_xpath(
                         f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[2]/input').get_attribute(
                     'checked'):
-                    content.get(name).get('group').append(
+                    content.get('group').append(
                         Meta.browser.find_element_by_xpath(
                             f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[1]').text)
             except:
@@ -238,7 +239,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
         menu['leaf_group'] = content
 
     # if content is a XPLAN collection, type 1
-    content = {name: {'table1': [], 'table2': []}}
+    content = {'table1': [], 'table2': []}
     try:
         Meta.browser.find_element_by_xpath(
             '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
@@ -253,14 +254,14 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
                 if Meta.browser.find_element_by_xpath(
                         f'//*[@id="xstore_listfields_{i}"]').get_attribute(
                     'checked'):
-                    content.get(name).get('table1').append(
+                    content.get('table1').append(
                         Meta.browser.find_element_by_xpath(
                             f'//*[@id="tr_element_xplan_definition"]/td/div/span[{i}]/label').text)
 
                     if Meta.browser.find_element_by_xpath(
                             f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
                         'checked'):
-                        content.get(name).get('table2').append(
+                        content.get('table2').append(
                             Meta.browser.find_element_by_xpath(
                                 f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
             except:
@@ -272,7 +273,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
                 if Meta.browser.find_element_by_xpath(
                         f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
                     'checked'):
-                    content.get(name).get('table2').append(
+                    content.get('table2').append(
                         Meta.browser.find_element_by_xpath(
                             f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
             except:
@@ -292,7 +293,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
         # table 1
         for i in range(1, 50):
             try:
-                content.get(name).get('table1').append(
+                content.get('table1').append(
                     Meta.browser.find_element_by_xpath(
                         f'//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
             except:
@@ -301,7 +302,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
         # table 2
         for i in range(1, 50):
             try:
-                content.get(name).get('table2').append(
+                content.get('table2').append(
                     Meta.browser.find_element_by_xpath(
                         f'//*[@id="tr_element_xplan_edit_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
             except:
@@ -314,7 +315,7 @@ def handle_leaf(_id: str, sleep: int = 1) -> dict:
 
 class InterfaceFetcher:
     def __init__(self):
-        self.db = Meta.db_default if Meta.company == 'ytml' else Meta.db_company
+        pass
 
     def fetch(self, sleep: int = 1):
         URL_INTERFACE = f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface'
@@ -334,18 +335,19 @@ class InterfaceFetcher:
         for node in menu:
             _id = node.get('id')
             node['children'] = self.r_dump_interface(_id, sleep)
-
-        import json
-        return json.dumps({'nodes': menu})
+            InterfaceNode(node).new()
 
     def r_dump_interface(self, _id: str, sleep: int = 1) -> list:
         id_list = []
 
-        # when a node is not a leaf, click it for getting children
+        # getting children when a node is not a leaf
         if re.search('^client_[0-9]+', _id):
-            Meta.browser.find_element_by_xpath(
-                f'//*[@id="{_id}"]/a/span[1]').click()
-            time.sleep(sleep)
+            try:
+                Meta.browser.find_element_by_xpath(
+                    f'//*[@id="{_id}"]/a/span[1]').click()
+                time.sleep(1.5)
+            except:
+                return id_list
 
             for child in range(1, 200):
                 try:
@@ -365,13 +367,14 @@ class InterfaceFetcher:
                             id = element.get_attribute('id'),
                             if text != 'Retirement Funds':
                                 child = self.r_dump_interface(id[0], sleep=sleep)
+                                # if an empty list returned, process leaf page
                                 if not child:
                                     id_list.append({
                                         'id': id[0],
                                         'text': text,
                                         'type': 'child',
-                                        'children': child
                                     })
+                                    self.dump_page(id[0], text)
                                 else:
                                     id_list.append({
                                         'id': id[0],
@@ -382,4 +385,179 @@ class InterfaceFetcher:
                     except:
                         break
 
+        print(id_list)
         return id_list
+
+    def dump_page(self, _id: str, text: str, sleep: int = 2):
+        """
+        called in `r_dump_interface()` when an empty list returned (current
+        node is a leaf), dump page content to database
+        """
+        try:
+            Meta.browser.find_element_by_xpath(
+                f'//*[@id="{_id}"]/a/span[1]').click()
+
+            time.sleep(sleep)
+            page = {}
+
+            name = Meta.browser.find_element_by_xpath(
+                '//*[@id="edit_interface_page"]/div[2]/div[3]/div/div[2]/table/tbody/tr[1]/td[2]/div/a/span').text
+            if re.findall('\[(.+?)\] (.+)', name):
+                name = '--'.join(re.findall('\[(.+?)\] (.+)', name)[0])
+            content = {name: []}
+
+            if Meta.browser.find_element_by_xpath(
+                    '//*[@id="entity_types_1"]').get_attribute('checked'):
+                content.get(name).append('individual')
+            if Meta.browser.find_element_by_xpath(
+                    '//*[@id="entity_types_2"]').get_attribute('checked'):
+                content.get(name).append('superfund')
+            if Meta.browser.find_element_by_xpath(
+                    '//*[@id="entity_types_3"]').get_attribute('checked'):
+                content.get(name).append('partnership')
+            if Meta.browser.find_element_by_xpath(
+                    '//*[@id="entity_types_4"]').get_attribute('checked'):
+                content.get(name).append('trust')
+            if Meta.browser.find_element_by_xpath(
+                    '//*[@id="entity_types_5"]').get_attribute('checked'):
+                content.get(name).append('company')
+            page['leaf_basic'] = content
+
+            # if content is a Group
+            content = {'group': []}
+            try:
+                Meta.browser.find_element_by_xpath(
+                    '//*[@id="tab-general"]/table/tbody/tr[2]/td[1]')
+            except:
+                pass
+            else:
+                for i in range(2, 50):
+                    try:
+                        if Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[2]/input').get_attribute(
+                            'checked'):
+                            content.get('group').append(
+                                Meta.browser.find_element_by_xpath(
+                                    f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[1]').text)
+                    except:
+                        break
+                page['leaf_group'] = content
+
+            # if content is a XPLAN collection, type 1
+            content = {'table1': [], 'table2': []}
+            try:
+                Meta.browser.find_element_by_xpath(
+                    '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
+            except:
+                pass
+            else:
+                if name.lower() in subgroup_name_ref:
+                    page['subgroup'] = subgroup_name_ref.get(name.lower())
+                # table 1
+                for i in range(1, 30):
+                    try:
+                        if Meta.browser.find_element_by_xpath(
+                                f'//*[@id="xstore_listfields_{i}"]').get_attribute(
+                            'checked'):
+                            content.get('table1').append(
+                                Meta.browser.find_element_by_xpath(
+                                    f'//*[@id="tr_element_xplan_definition"]/td/div/span[{i}]/label').text)
+
+                            if Meta.browser.find_element_by_xpath(
+                                    f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
+                                'checked'):
+                                content.get('table2').append(
+                                    Meta.browser.find_element_by_xpath(
+                                        f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
+                    except:
+                        break
+
+                # table 2
+                for i in range(1, 30):
+                    try:
+                        if Meta.browser.find_element_by_xpath(
+                                f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
+                            'checked'):
+                            content.get('table2').append(
+                                Meta.browser.find_element_by_xpath(
+                                    f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
+                    except:
+                        break
+
+                page['leaf_xplan'] = content
+
+            # if content is a XPLAN collection, type 2
+            try:
+                Meta.browser.find_element_by_xpath(
+                    '//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[1]')
+            except:
+                pass
+            else:
+                if name.lower() in subgroup_name_ref:
+                    page['subgroup'] = subgroup_name_ref.get(name.lower())
+                # table 1
+                for i in range(1, 50):
+                    try:
+                        content.get('table1').append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
+                    except:
+                        break
+
+                # table 2
+                for i in range(1, 50):
+                    try:
+                        content.get('table2').append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tr_element_xplan_edit_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
+                    except:
+                        break
+
+                page['leaf_xplan'] = content
+
+            InterfaceLeafPage(_id, text, page).new()
+
+        except Exception as e:
+            print(e)
+            pass
+
+    def update_node(self, name: str, include_page: bool = False):
+        node_dict = InterfaceNode.search({'text': name})
+        if not node_dict:
+            node_dict = InterfaceLeafPage.search({'text': name})
+
+        if node_dict:
+            _id = node_dict.get('id')
+
+            # refresh child list
+            if node_dict.get('type') == 'root':
+
+
+                # refresh child list, and if nodes in child list are leaves,
+                # refresh all leaves' page content
+                if include_page:
+                    pass
+
+
+            # refresh a leaf's page
+            elif node_dict.get('type') == 'child':
+                pass
+
+
+    def update_leaf_page(self, _id: str):
+        pass
+
+    def delete_node(self, name):
+        pass
+
+
+if __name__ == '__main__':
+
+    Meta.company = 'ytml'
+    Meta.company_username = 'ytml1'
+    Meta.company_password = ''
+    Meta.db_company = Meta.db_default
+
+    ifetcher = InterfaceFetcher()
+
+    ifetcher.fetch()
