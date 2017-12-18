@@ -22,7 +22,7 @@ class Fetcher:
         self.URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
 
     # TODO: along with Jison, support a list of group update, generate a list of 'to_json' result based on the list of groups
-    def run(self, group_only: str = None):
+    def fetch(self, group_only: str = None):
         """
         code is ugly, but the html content is a little bit complex and parsers
         like BeautifulSoup4 are hard to manipulate them because I am not very
@@ -113,9 +113,11 @@ class Fetcher:
                                 if former_group and former_group_id and len(
                                         sub_group_list):
                                     self.db.Group.update_one(
-                                        {'_id': ObjectId(former_group_id)}, {
-                                            '$set': {
-                                                'sub_groups': sub_group_list}})
+                                        {'_id': ObjectId(former_group_id)},
+                                        {'$set': {
+                                                'sub_groups': sub_group_list,
+                                            }
+                                        })
                                     sub_group_list = []
                                 former_group_id = Group(group_var,
                                                         group_name).new()
@@ -157,9 +159,10 @@ class Fetcher:
                                             self.db.SubGroup.update_one({
                                                 '_id': ObjectId(
                                                     former_sub_group_id)},
-                                                {
-                                                    '$set': {
-                                                        'variables': former_sub_group_variables}})
+                                                {'$set': {
+                                                        'variables': former_sub_group_variables
+                                                    }
+                                                })
                                             if group_var in to_json:
                                                 to_json[group_var].append({
                                                     former_sub_group: variables_to_json})
@@ -236,9 +239,11 @@ class Fetcher:
                             # end of loop in current group's [sub_group] - variable pairs,
                             # update last subgroup's variables
                             self.db.SubGroup.update_one(
-                                {'_id': ObjectId(former_sub_group_id)}, {
-                                    '$set': {
-                                        'variables': former_sub_group_variables}})
+                                {'_id': ObjectId(former_sub_group_id)},
+                                {'$set': {
+                                        'variables': former_sub_group_variables
+                                    }
+                                })
                             if group_var in to_json:
                                 to_json[group_var].append(
                                     {former_sub_group: variables_to_json})
