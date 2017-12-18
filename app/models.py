@@ -115,8 +115,9 @@ class InterfaceNode:
 
 
 class InterfaceLeafPage:
-    def __init__(self, id: str, page: dict):
+    def __init__(self, id: str, text: str, page: dict):
         self.id = id
+        self.text = text
         self.page = page
 
     def __repr__(self):
@@ -128,22 +129,23 @@ class InterfaceLeafPage:
     def new(self) -> str:
         document = {
             'id': self.id,
-            'page': []
+            'text': self.text,
+            'page': self.page
         }
-        legacy = Meta.db_company.InterfacePage.find_one({'id': self.id})
+        legacy = Meta.db_company.InterfaceLeafPage.find_one({'id': self.id})
         if not legacy:
-            return str(Meta.db_company.InterfacePage.insert(document))
+            return str(Meta.db_company.InterfaceLeafPage.insert(document))
         else:
             return str(legacy.get('_id'))
 
     @staticmethod
     def update_doc(_id: str, page: dict):
-        Meta.db_company.InterfacePage.update_one({'_id': ObjectId(id)},
+        Meta.db_company.InterfaceLeafPage.update_one({'_id': ObjectId(id)},
                                          {'$set': {'page': page}})
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_company.InterfacePage.find_one(locate)
+        return Meta.db_company.InterfaceLeafPage.find_one(locate)
 
 
 class AnonymousUser(AnonymousUserMixin):
