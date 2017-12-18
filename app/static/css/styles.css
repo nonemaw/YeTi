@@ -139,23 +139,23 @@ body {
     border:none;
 }
 
-#interface-tree-list {
-    overflow-y: scroll;
-}
-#interface-window {
-    overflow-y: scroll;
-}
+/*#interface-tree-list {*/
+    /*overflow-y: scroll;*/
+/*}*/
+/*#interface-window {*/
+    /*overflow-y: scroll;*/
+/*}*/
 
 .modal-content {
     background: #eaeaea;
 }
 
-.modal-dialog{
-    overflow-y: initial !important
-}
+/*.modal-dialog{*/
+    /*overflow-y: initial !important*/
+/*}*/
 .modal-body{
-    height: 50vh;
-    max-height: 50vh;
+    height: 75vh;
+    max-height: 75vh;
     overflow-y: auto;
 }
 
