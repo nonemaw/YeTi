@@ -221,7 +221,8 @@ function update_streamer(status_url, nanobar, status_div, id){
                             }
                             // an empty XPLAN colelction
                             else {
-                                interface_xplan_table1.append('<tr><td>/</td></tr>');
+                                $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
+                                $('#interface-xplan-table1').empty().append('<tr><td>/</td></tr>');
                                 $('#interface-xplan-table2-head').css('display', 'none');
                                 $('#interface-group-table-head').css('display', 'none');
                                 $('#interface-table-row').css('height', '30px');
@@ -258,7 +259,7 @@ function update_streamer(status_url, nanobar, status_div, id){
                     icompany.css('display', '');
                     ipartnership.css('display', '');
                 }
-                // update node
+                // not a leaf, update node
                 else {
                     var menu_list = data.result.data;
                     for (item in menu_list) {

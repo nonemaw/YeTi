@@ -34,7 +34,7 @@
             </div>
             <!-- end of search bar row -->
 
-            <!-- interface view, display when click `Interface` button -->
+            <!-- interface modal view, display when click `Interface` button -->
             <div class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
@@ -43,8 +43,8 @@
                             <h4 class="modal-title" id="myModalLabel"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company }} )</small></h4>
                         </div>
                         <div class="modal-body">
-                            <div class="row">
-                                <div id="interface-tree-list" class="col-md-5">
+                            <div class="row" style="height:100%;">
+                                <div id="interface-tree-list" class="col-md-5" style="height:100%;overflow-y: auto">
                                     <div id="interface-tree">
                                         <ul class="jstree-container-ul jstree-children">
                                             <li role="treeitem" class="jstree-node jstree-leaf">
@@ -54,12 +54,12 @@
                                         </ul>
                                     </div>
                                 </div>
-                                <div id="interface-window" class="col-md-7">
+                                <div id="interface-window" class="col-md-7" style="height:100%">
                                     <h4 id="interface-note" style="font-weight: bold"></h4>
                                     <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
                                     <button id="interface-title" style="font-size: 18px; display: none">/</button>
                                     <!-- interface collection table1 for xplan collection items -->
-                                    <div class="row" id="interface-table-row" style="height:200px">
+                                    <div class="row" id="interface-table-row" style="height:250px">
                                         <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table1-head">
                                             <table class="table table-scroll left-column-table" style="height:100px">
                                                 <thead>

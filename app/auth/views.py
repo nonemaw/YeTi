@@ -58,6 +58,23 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
+    # empty meta
+    try:
+        Meta.browser.get(f'https://{Meta.company}.xplan.iress.com.au/home/logoff?')
+        Meta.browser.quit()
+    except:
+        pass
+    Meta.company_username = None
+    Meta.company_password = None
+    Meta.db_company = None
+    Meta.crypto = None
+    Meta.jison = None
+    Meta.fetcher = None
+    Meta.browser = None
+    Meta.session_id = None
+    Meta.executor_url = None
+    Meta.current_url = None
+
     logout_user()
     flash('You have been logged out.', category='success')
     return redirect(url_for('main.index'))
