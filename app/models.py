@@ -9,18 +9,23 @@ from app import login_manager
 from common.meta import Meta
 
 
+"""
+Note: all DB model class are using legacy PyMongo method `insert()` to create
+new document into collection, rather than `insert_one()`, as `insert()` will
+return new `_id` directly but `insert_one()` returns a PyMongo insertion object
+"""
 class Group:
-    def __init__(self, var, name):
+    def __init__(self, var: str, name: str):
         self.var = var
         self.name = name
 
     def __repr__(self):
-        return '<Group {} - {}>'.format(self.var, self.name)
+        return str(self)
 
     def __str__(self):
-        return '<Group {} - {}>'.format(self.var, self.name)
+        return f'<Group {self.var} - {self.name}>'
 
-    def new(self):
+    def new(self) -> str:
         document = {
             'var': self.var,
             'name': self.name,
@@ -32,18 +37,31 @@ class Group:
         else:
             return str(legacy.get('_id'))
 
+    @staticmethod
+    def update_doc(id: str, sub_groups: list):
+        Meta.db_company.Group.update_one({'_id': ObjectId(id)},
+                                 {'$set': {'sub_groups': sub_groups}})
+
+    @staticmethod
+    def delete_doc(locate: dict):
+        Meta.db_company.Group.delete_one(locate)
+
+    @staticmethod
+    def search(locate: dict) -> dict:
+        return Meta.db_company.Group.find_one(locate)
+
 
 class SubGroup:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
     def __repr__(self):
-        return '<SubGroup {}>'.format(self.name)
+        return str(self)
 
     def __str__(self):
-        return '<SubGroup {}>'.format(self.name)
+        return f'<SubGroup {self.name}>'
 
-    def new(self):
+    def new(self) -> str:
         document = {
             'name': self.name,
             'variables': []
@@ -54,9 +72,78 @@ class SubGroup:
         else:
             return str(legacy.get('_id'))
 
-    def update_doc(self, id, variables: list):
+    @staticmethod
+    def update_doc(id: str, variables: list):
         Meta.db_company.SubGroup.update_one({'_id': ObjectId(id)},
                                  {'$set': {'variables': variables}})
+
+    @staticmethod
+    def delete_doc(locate: dict):
+        Meta.db_company.SubGroup.delete_one(locate)
+
+    @staticmethod
+    def search(locate: dict) -> dict:
+        return Meta.db_company.SubGroup.find_one(locate)
+
+
+class InterfaceNode:
+    def __init__(self, node: dict):
+        self.node = node
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return f'<InterfaceNode {self.node.get("id")} {self.node.get("text")}>'
+
+    def new(self) -> str:
+        document = self.node
+        legacy = Meta.db_company.InterfaceNode.find_one({'id': self.node.get('id')})
+        if not legacy:
+            return str(Meta.db_company.InterfaceNode.insert(document))
+        else:
+            return str(legacy.get('_id'))
+
+    @staticmethod
+    def update_doc(_id: str, child: list):
+        Meta.db_company.InterfaceNode.update_one({'_id': ObjectId(_id)},
+                                             {'$set': {'child': child}})
+
+    @staticmethod
+    def search(locate: dict) -> dict:
+        return Meta.db_company.InterfaceNode.find_one(locate)
+
+
+class InterfaceLeafPage:
+    def __init__(self, id: str, page: dict):
+        self.id = id
+        self.page = page
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return f'<InterfaceLeafPage {self.id}>'
+
+    def new(self) -> str:
+        document = {
+            'id': self.id,
+            'page': []
+        }
+        legacy = Meta.db_company.InterfacePage.find_one({'id': self.id})
+        if not legacy:
+            return str(Meta.db_company.InterfacePage.insert(document))
+        else:
+            return str(legacy.get('_id'))
+
+    @staticmethod
+    def update_doc(_id: str, page: dict):
+        Meta.db_company.InterfacePage.update_one({'_id': ObjectId(id)},
+                                         {'$set': {'page': page}})
+
+    @staticmethod
+    def search(locate: dict) -> dict:
+        return Meta.db_company.InterfacePage.find_one(locate)
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -83,10 +170,10 @@ class Role:
         self.default = role.get('default')
 
     def __repr__(self):
-        return '<Role {}>'.format(self.type)
+        return str(self)
 
     def __str__(self):
-        return '<Role {}>'.format(self.type)
+        return f'<Role {self.type}>'
 
     def add_role(self):
         document = {
@@ -115,7 +202,7 @@ class User:
     a base class for constructing user object
     """
 
-    def __init__(self, email, username, password, location):
+    def __init__(self, email: str, username: str, password: str, location: str):
         self.email = email
         self.username = username
         self.password = generate_password_hash(password)
@@ -132,12 +219,12 @@ class User:
                 .hexdigest()
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return str(self)
 
     def __str__(self):
-        return '<User {}>'.format(self.username)
+        return f'<User {self.username}>'
 
-    def new(self):
+    def new(self) -> str:
         document = {
             'email': self.email,
             'username': self.username,
@@ -153,13 +240,20 @@ class User:
         }
         return str(Meta.db_default.User.insert(document))
 
+    @staticmethod
+    def update_doc(locate: dict, update: dict):
+        Meta.db_default.User.update_one(locate, {'$set': update})
+
+    @staticmethod
+    def search(locate: dict) -> dict:
+        return Meta.db_company.User.find_one(locate)
+
 
 class UserUtl(UserMixin):
     """
     a utility class based from UserMixin for Flask 'current_user', operating
     current user utilities on a global level
     """
-
     def __init__(self, user: dict):
         """
         role: set role from string value role type to Role object, for further
@@ -179,10 +273,10 @@ class UserUtl(UserMixin):
         self.member_since = user.get('member_since')
 
     def __repr__(self):
-        return '<CurrentUser {}>'.format(self.username)
+        return str(self)
 
     def __str__(self):
-        return '<CurrentUser {}>'.format(self.username)
+        return f'<CurrentUser {self.username}>'
 
     def get_id(self):
         """
@@ -226,18 +320,18 @@ class UserUtl(UserMixin):
 
 
 class Snippet():
-    def __init__(self, group, scenario, code):
+    def __init__(self, group: str, scenario: str, code: str):
         self.group = group
         self.scenario = scenario
         self.code = code
 
     def __repr__(self):
-        return '<Snippet Scenario {}>'.format(self.scenario)
+        return str(self)
 
     def __str__(self):
-        return '<Snippet Scenario {}>'.format(self.scenario)
+        return f'<Snippet Scenario {self.scenario}>'
 
-    def new(self):
+    def new(self) -> tuple:
         # check duplication, it's ok if only group name or scenario name is same
         duplicated = False
         group_dict = Meta.db_default.SnippetGroup.find_one({'name': self.group})
@@ -276,19 +370,43 @@ class Snippet():
         else:
             return None, None
 
+    @staticmethod
+    def update_doc_group(locate: dict, update: dict):
+        Meta.db_default.SnippetGroup.update_one(locate, {'$set': update})
+
+    @staticmethod
+    def update_doc_scenario(locate: dict, update: dict):
+        Meta.db_default.SnippetScenario.update_one(locate, {'$set': update})
+
+    @staticmethod
+    def delete_doc_group(locate: dict):
+        Meta.db_default.SnippetGroup.delete_one(locate)
+
+    @staticmethod
+    def delete_doc_scenario(locate: dict):
+        Meta.db_default.SnippetScenario.delete_one(locate)
+
+    @staticmethod
+    def search_group(locate: dict) -> dict:
+        return Meta.db_company.SnippetGroup.find_one(locate)
+
+    @staticmethod
+    def search_scenario(locate: dict) -> dict:
+        return Meta.db_company.SnippetScenario.find_one(locate)
+
 
 class Ticket():
-    def __init__(self, ticket, description):
+    def __init__(self, ticket: str, description: str):
         self.ticket = ticket
         self.description = description
 
     def __repr__(self):
-        return '<Ticket {}>'.format(self.ticket)
+        return str(self)
 
     def __str__(self):
-        return '<Ticket {}>'.format(self.ticket)
+        return f'<Ticket {self.ticket}>'
 
-    def new(self):
+    def new(self) -> str:
         document = {
             'ticket': self.ticket,
             'description': self.ticket,
@@ -299,6 +417,7 @@ class Ticket():
         return str(Meta.db_default.Ticket.insert(document))
 
 
+login_manager.anonymous_user = AnonymousUser
 """
 It is not mandator but there are permission test like is_administrator() and
 can() in templates which are not defined to anonymous sessions (without login)
@@ -310,15 +429,12 @@ AnonymousUser(AnonymousUserMixin) for making those operations available.
 
 This can be tested by just commenting this line and check the Error message
 """
-login_manager.anonymous_user = AnonymousUser
-
-"""
-This callback is used to reload the user object from the user ID stored in the
-session (as current_user?)
-"""
-
 
 @login_manager.user_loader
 def load_user(user_id):
+    """
+    This callback is used to reload the user object from the user ID stored in the
+    session (as current_user?)
+    """
     user = Meta.db_default.User.find_one({'_id': ObjectId(user_id)})
     return UserUtl(user)  # this is current_user
