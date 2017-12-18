@@ -53,7 +53,7 @@ if __name__ == '__main__':
             client, Meta.company)
         Meta.jison = Jison(company=Meta.company)
         Meta.fetcher = Fetcher()
-        Meta.fetcher.run(groups)
+        Meta.fetcher.fetch(groups)
 
     # feature test
     elif args.searcher:

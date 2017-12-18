@@ -158,34 +158,31 @@ function update_streamer(status_url, nanobar, status_div, id){
                                 interface_xplan_table2.empty();
 
                                 var xplan_info = data.result.leaf_xplan;
-                                for (name in xplan_info) {
-                                    local_interface_table1_cache = {};
-                                    local_interface_table2_cache = {};
-                                    for (table in xplan_info[name]) {
-                                        if (table === 'table1') {
-                                            var _id1 = 0;
-                                            $('#interface-xplan-table1-title').text('List View');
-                                            $('#interface-table-row').css('height', '200px');
-                                            for (variable in xplan_info[name][table]) {
-                                                ++_id1;
-                                                interface_xplan_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + xplan_info[name][table][variable] + '</td></tr>');
-                                                local_interface_table1_cache[_id1] = xplan_info[name][table][variable];
-                                            }
-                                            $('#interface-xplan-table1-head').css('display', '');
+                                local_interface_table1_cache = {};
+                                local_interface_table2_cache = {};
+                                for (table in xplan_info) {
+                                    if (table === 'table1') {
+                                        var _id1 = 0;
+                                        $('#interface-xplan-table1-title').text('List View');
+                                        $('#interface-table-row').css('height', '200px');
+                                        for (variable in xplan_info[table]) {
+                                            ++_id1;
+                                            interface_xplan_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + xplan_info[table][variable] + '</td></tr>');
+                                            local_interface_table1_cache[_id1] = xplan_info[table][variable];
                                         }
-                                        else if (table === 'table2') {
-                                            var _id2 = 0;
-                                            $('#interface-xplan-table2-title').text('Edit View');
-                                            for (variable in xplan_info[name][table]) {
-                                                ++_id2;
-                                                interface_xplan_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + xplan_info[name][table][variable] + '</td></tr>');
-                                                local_interface_table2_cache[_id2] = xplan_info[name][table][variable];
-                                            }
-                                            $('#interface-xplan-table2-head').css('display', '');
+                                        $('#interface-xplan-table1-head').css('display', '');
+                                    }
+                                    else if (table === 'table2') {
+                                        var _id2 = 0;
+                                        $('#interface-xplan-table2-title').text('Edit View');
+                                        for (variable in xplan_info[table]) {
+                                            ++_id2;
+                                            interface_xplan_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + xplan_info[table][variable] + '</td></tr>');
+                                            local_interface_table2_cache[_id2] = xplan_info[table][variable];
                                         }
+                                        $('#interface-xplan-table2-head').css('display', '');
                                     }
                                 }
-
                                 // if XPLAN collection/group has a known subgroup
                                 if (data.result.subgroup) {
                                     current_subugroup = data.result.subgroup;
@@ -206,15 +203,13 @@ function update_streamer(status_url, nanobar, status_div, id){
                                 var group_info = data.result.leaf_group;
                                 interface_group_table.empty();
 
-                                for (name in group_info) {
-                                    local_interface_group_table_cache = {};
-                                    var _id3 = 0;
-                                    for (group in group_info[name]) {
-                                        for (variable in group_info[name][group]) {
-                                            ++ _id3;
-                                            interface_group_table.append('<tr class="g" id="tablethree_' + String(_id3) + '"><td>' + group_info[name][group][variable] + '</td></tr>');
-                                            local_interface_group_table_cache[_id3] = group_info[name][group][variable];
-                                        }
+                                local_interface_group_table_cache = {};
+                                var _id3 = 0;
+                                for (group in group_info) {
+                                    for (variable in group_info[group]) {
+                                        ++ _id3;
+                                        interface_group_table.append('<tr class="g" id="tablethree_' + String(_id3) + '"><td>' + group_info[group][variable] + '</td></tr>');
+                                        local_interface_group_table_cache[_id3] = group_info[group][variable];
                                     }
                                 }
                                 $('#interface-group-table-head').css('display', '');
