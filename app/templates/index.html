@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="row">
-                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".interface-modal" data-keyboard="false" data-backdrop="static" style="float: right; width: 60%">Interface</button>
+                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 60%">Interface</button>
                     </div>
                 </div>
             </div>
@@ -60,23 +60,36 @@
                                     <button id="interface-title" style="font-size: 18px; display: none">/</button>
                                     <!-- interface collection table1 for xplan collection items -->
                                     <div class="row" id="interface-table-row" style="height:200px">
-                                        <div class="col-md-6" style="height:100%">
-                                            <table class="table table-scroll left-column-table" id="interface-collection-table1-head" style="display:none;height:100px">
+                                        <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table1-head">
+                                            <table class="table table-scroll left-column-table" style="height:100px">
                                                 <thead>
                                                     <tr>
-                                                        <th id="interface-collection-table1-title"></th>
+                                                        <th id="interface-xplan-table1-title"></th>
+                                                    </tr>
                                                 </thead>
-                                                <tbody id="interface-collection-table1" style="overflow-y: auto">
+                                                <tbody id="interface-xplan-table1" style="overflow-y: auto">
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <div class="col-md-6" style="height:100%">
-                                            <table class="table table-scroll left-column-table" id="interface-collection-table2-head" style="display:none;height:100px">
+                                        <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table2-head">
+                                            <table class="table table-scroll left-column-table" style="height:100px">
                                                 <thead>
                                                     <tr>
-                                                        <th id="interface-collection-table2-title"></th>
+                                                        <th id="interface-xplan-table2-title"></th>
+                                                    </tr>
                                                 </thead>
-                                                <tbody id="interface-collection-table2" style="overflow-y: auto">
+                                                <tbody id="interface-xplan-table2" style="overflow-y: auto">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-11" style="display:none;height:100%" id="interface-group-table-head">
+                                            <table class="table table-scroll left-column-table" style="height:100px">
+                                                <thead>
+                                                    <tr>
+                                                        <th id="interface-group-table-title"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="interface-group-table" style="overflow-y: auto">
                                                 </tbody>
                                             </table>
                                         </div>

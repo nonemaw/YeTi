@@ -11,6 +11,7 @@ var icompany = $('#interface-company');
 var ipartnership = $('#interface-partnership');
 var local_interface_table1_cache = {};
 var local_interface_table2_cache = {};
+var local_interface_group_table_cache = {};
 var current_subugroup = undefined;
 
 function initialize_interface(id){
@@ -117,8 +118,9 @@ function update_streamer(status_url, nanobar, status_div, id){
                     isuperfund.css('display', 'none');
                     icompany.css('display', 'none');
                     ipartnership.css('display', 'none');
-                    $('#interface-collection-table1-head').css('display', 'none');
-                    $('#interface-collection-table2-head').css('display', 'none');
+                    $('#interface-xplan-table1-head').css('display', 'none');
+                    $('#interface-xplan-table2-head').css('display', 'none');
+                    $('#interface-group-table-head').css('display', 'none');
                 }
                 // leaf node
                 else if (data.result.leaf_basic) {
@@ -135,8 +137,9 @@ function update_streamer(status_url, nanobar, status_div, id){
                         // Group - Subgroup
                         if (group_subgroup_array.length === 2) {
                             $('#interface-table-row').css('height', '0');
-                            $('#interface-collection-table1-head').css('display', 'none');
-                            $('#interface-collection-table2-head').css('display', 'none');
+                            $('#interface-xplan-table1-head').css('display', 'none');
+                            $('#interface-xplan-table2-head').css('display', 'none');
+                            $('#interface-group-table-head').css('display', 'none');
                             itype.text('Variable');
                             ititle.text('[' + group_subgroup_array[0] + '] ' +  group_subgroup_array[1]);
                             ititle.css('display', '');
@@ -144,40 +147,41 @@ function update_streamer(status_url, nanobar, status_div, id){
 
                         // XPLAN collection
                         else if (group_subgroup_array.length === 1) {
-                            $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
-                            $('#interface-title').css('display', 'none');
-                            var interface_collection_table1 = $('#interface-collection-table1');
-                            var interface_collection_table2 = $('#interface-collection-table2');
-                            interface_collection_table1.empty();
-                            interface_collection_table2.empty();
+                            // XPLAN collection got some variables
+                            if (data.result.leaf_xplan) {
+                                $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
+                                $('#interface-title').css('display', 'none');
+                                $('#interface-group-table-head').css('display', 'none');
+                                var interface_xplan_table1 = $('#interface-xplan-table1');
+                                var interface_xplan_table2 = $('#interface-xplan-table2');
+                                interface_xplan_table1.empty();
+                                interface_xplan_table2.empty();
 
-                            // XPLAN collection/group got some variables
-                            if (data.result.leaf_collection) {
-                                var collection_info = data.result.leaf_collection;
-                                for (item in collection_info) {
+                                var xplan_info = data.result.leaf_xplan;
+                                for (name in xplan_info) {
                                     local_interface_table1_cache = {};
                                     local_interface_table2_cache = {};
-                                    for (table in collection_info[item]) {
+                                    for (table in xplan_info[name]) {
                                         if (table === 'table1') {
                                             var _id1 = 0;
-                                            $('#interface-collection-table1-title').text('List View');
+                                            $('#interface-xplan-table1-title').text('List View');
                                             $('#interface-table-row').css('height', '200px');
-                                            for (variable in collection_info[item][table]) {
+                                            for (variable in xplan_info[name][table]) {
                                                 ++_id1;
-                                                interface_collection_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + collection_info[item][table][variable] + '</td></tr>');
-                                                local_interface_table1_cache[_id1] = [collection_info[item][table][variable]];
+                                                interface_xplan_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + xplan_info[name][table][variable] + '</td></tr>');
+                                                local_interface_table1_cache[_id1] = xplan_info[name][table][variable];
                                             }
-                                            $('#interface-collection-table1-head').css('display', '');
+                                            $('#interface-xplan-table1-head').css('display', '');
                                         }
                                         else if (table === 'table2') {
                                             var _id2 = 0;
-                                            $('#interface-collection-table2-title').text('Edit View');
-                                            for (variable in collection_info[item][table]) {
+                                            $('#interface-xplan-table2-title').text('Edit View');
+                                            for (variable in xplan_info[name][table]) {
                                                 ++_id2;
-                                                interface_collection_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + collection_info[item][table][variable] + '</td></tr>');
-                                                local_interface_table2_cache[_id2] = [collection_info[item][table][variable]];
+                                                interface_xplan_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + xplan_info[name][table][variable] + '</td></tr>');
+                                                local_interface_table2_cache[_id2] = xplan_info[name][table][variable];
                                             }
-                                            $('#interface-collection-table2-head').css('display', '');
+                                            $('#interface-xplan-table2-head').css('display', '');
                                         }
                                     }
                                 }
@@ -190,13 +194,40 @@ function update_streamer(status_url, nanobar, status_div, id){
                                     current_subugroup = undefined;
                                 }
                             }
+                            // a Group got some variables
+                            else if (data.result.leaf_group) {
+                                $('#interface-xplan-table1-head').css('display', 'none');
+                                $('#interface-xplan-table2-head').css('display', 'none');
+                                $('#interface-type').text('Group Collection: ' + group_subgroup_array[0]);
+                                $('#interface-title').css('display', 'none');
+                                $('#interface-group-table-title').css('display', '').text('Group View');
+                                $('#interface-table-row').css('height', '200px');
+                                var interface_group_table = $('#interface-group-table');
+                                var group_info = data.result.leaf_group;
+                                interface_group_table.empty();
+
+                                for (name in group_info) {
+                                    local_interface_group_table_cache = {};
+                                    var _id3 = 0;
+                                    for (group in group_info[name]) {
+                                        for (variable in group_info[name][group]) {
+                                            ++ _id3;
+                                            interface_group_table.append('<tr class="g" id="tablethree_' + String(_id3) + '"><td>' + group_info[name][group][variable] + '</td></tr>');
+                                            local_interface_group_table_cache[_id3] = group_info[name][group][variable];
+                                        }
+                                    }
+                                }
+                                $('#interface-group-table-head').css('display', '');
+                            }
                             // an empty XPLAN colelction
                             else {
-                                interface_collection_table1.append('<tr><td>/</td></tr>');
-                                $('#interface-collection-table2-head').css('display', 'none');
+                                interface_xplan_table1.append('<tr><td>/</td></tr>');
+                                $('#interface-xplan-table2-head').css('display', 'none');
+                                $('#interface-group-table-head').css('display', 'none');
                                 $('#interface-table-row').css('height', '30px');
-                                $('#interface-collection-table1-title').text('(Collection is Empty)');
-                                $('#interface-collection-table1-head').css('display', '');
+                                $('#interface-xplan-table1-title').text('(Collection is Empty)');
+                                $('#interface-xplan-table1-head').css('display', '');
+                                $('#interface-group-table-title').css('display', 'none');
                             }
                             ititle.css('display', 'none');
                         }
@@ -243,8 +274,9 @@ function update_streamer(status_url, nanobar, status_div, id){
                     isuperfund.css('display', 'none');
                     icompany.css('display', 'none');
                     ipartnership.css('display', 'none');
-                    $('#interface-collection-table1-head').css('display', 'none');
-                    $('#interface-collection-table2-head').css('display', 'none');
+                    $('#interface-xplan-table1-head').css('display', 'none');
+                    $('#interface-xplan-table2-head').css('display', 'none');
+                    $('#interface-group-table-head').css('display', 'none');
                 }
             }
             else {
@@ -261,10 +293,10 @@ function update_streamer(status_url, nanobar, status_div, id){
 }
 
 // click on interface table if the table is not empty
-$('#interface-collection-table1').on('click','.t1',function(event){
+$('#interface-xplan-table1').on('click','.t1',function(event){
     // get table's row id, replace all leading non-digits with nothing
     var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
-    var var_var = local_interface_table1_cache[result_row_id][0];
+    var var_var = local_interface_table1_cache[result_row_id];
     if (current_subugroup !== undefined) {
         var pattern = current_subugroup + ':' + var_var;
         search(pattern, 5);
@@ -272,14 +304,29 @@ $('#interface-collection-table1').on('click','.t1',function(event){
 });
 
 // click on interface table if the table is not empty
-$('#interface-collection-table2').on('click','.t2',function(event){
+$('#interface-xplan-table2').on('click','.t2',function(event){
     // get table's row id, replace all leading non-digits with nothing
     var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
-    var var_var = local_interface_table2_cache[result_row_id][0];
+    var var_var = local_interface_table2_cache[result_row_id];
     if (current_subugroup !== undefined) {
         var pattern = current_subugroup + ':' + var_var;
         search(pattern, 5);
     }
+});
+
+// click on interface table if the table is not empty
+$('#interface-group-table').on('click','.g',function(event){
+    // get table's row id, replace all leading non-digits with nothing
+    var result_row_id = $(event.currentTarget).attr('id').replace( /^\D+/g, '');
+    var var_var = local_interface_group_table_cache[result_row_id];
+    var current_subugroup = var_var;
+
+    if (/\[.+\]/.test(var_var)) {
+        var_var = /\[.+\] *(.+)/.exec(var_var)[1];
+        current_subugroup = /\[(.+)\] *.+/.exec(current_subugroup)[1];
+    }
+    var pattern = current_subugroup + ':' + var_var;
+    search(pattern, 5);
 });
 
 // click on a interface variable name

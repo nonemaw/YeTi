@@ -204,9 +204,9 @@ def update_interface(self, _id: str) -> dict:
                 '//*[@id="entity_types_5"]').get_attribute('checked'):
             content.get(name).append('company')
         menu['leaf_basic'] = content
-        content = {name: {'table1': [], 'table2': []}}
 
-        # if content is a XPLAN collection or XPLAN group
+        # if content is a XPLAN collection, type 1
+        content = {name: {'table1': [], 'table2': []}}
         try:
             Meta.browser.find_element_by_xpath(
                 '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
@@ -246,9 +246,9 @@ def update_interface(self, _id: str) -> dict:
                 except:
                     break
 
-            menu['leaf_collection'] = content
+            menu['leaf_xplan'] = content
 
-        # if content is a XPLAN collection or XPLAN group
+        # if content is a XPLAN collection, type 2
         try:
             Meta.browser.find_element_by_xpath(
                 '//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[1]')
@@ -258,7 +258,7 @@ def update_interface(self, _id: str) -> dict:
             if name.lower() in subgroup_name_ref:
                 menu['subgroup'] = subgroup_name_ref.get(name.lower())
             # table 1
-            for i in range(1, 30):
+            for i in range(1, 50):
                 try:
                     content.get(name).get('table1').append(
                         Meta.browser.find_element_by_xpath(
@@ -267,7 +267,7 @@ def update_interface(self, _id: str) -> dict:
                     break
 
             # table 2
-            for i in range(1, 30):
+            for i in range(1, 50):
                 try:
                     content.get(name).get('table2').append(
                         Meta.browser.find_element_by_xpath(
@@ -275,7 +275,27 @@ def update_interface(self, _id: str) -> dict:
                 except:
                     break
 
-            menu['leaf_collection'] = content
+            menu['leaf_xplan'] = content
+
+        # if content is a Group
+        content = {name: {'group': []}}
+        try:
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="tab-general"]/table/tbody/tr[2]/td[1]')
+        except:
+            pass
+        else:
+            for i in range(2, 50):
+                try:
+                    if Meta.browser.find_element_by_xpath(
+                            f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[2]/input').get_attribute(
+                            'checked'):
+                        content.get(name).get('group').append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[1]').text)
+                except:
+                    break
+            menu['leaf_group'] = content
 
     # endif
     print(menu)
