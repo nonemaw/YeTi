@@ -8,6 +8,7 @@ from common.crypto import AESCipher
 from common.fetcher import Fetcher
 from fuzzier.jison import Jison
 from app.db import client, mongo_connect
+from app.models import User
 
 cities = [('New South Wales', ' New South Wales'),
           ('Australian Capital Territory', ' Australian Capital Territory'),
@@ -39,8 +40,8 @@ class LoginForm(FlaskForm):
                 headers=dict(
                     referer=f'https://{field.data.lower()}.xplan.iress.com.au'))
             Meta.company = field.data.lower()
-            Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
-                client, Meta.company)
+            Meta.db_company = Meta.db_default if Meta.company == 'ytml' \
+                else mongo_connect(client, Meta.company)
             Meta.crypto = AESCipher()
             Meta.jison = Jison(company=Meta.company)
             Meta.fetcher = Fetcher()
@@ -73,11 +74,11 @@ class RegForm(FlaskForm):
     """
 
     def validate_email(self, field):
-        if Meta.db_default.User.find_one({'email': field.data}):
+        if User.search({'email': field.data}):
             raise ValidationError('Email already registered.')
 
     def validate_username(self, field):
-        if Meta.db_default.User.find_one({'username': field.data}):
+        if User.search({'username': field.data}):
             raise ValidationError('Username already existed.')
 
 
@@ -90,7 +91,7 @@ class ChangeEmailForm(FlaskForm):
     submit = SubmitField('Update Email Address')
 
     def validate_email(self, field):
-        if Meta.db_default.User.find_one({'email': field.data}):
+        if User.search({'email': field.data}):
             raise ValidationError('Email already registered.')
 
 

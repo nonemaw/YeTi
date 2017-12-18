@@ -7,14 +7,11 @@ import os
 import logging
 
 from common.meta import Meta
-from bson import ObjectId
 from app.models import Group, SubGroup
 
 
 class Fetcher:
     def __init__(self):
-        self.db = Meta.db_default if Meta.company == 'ytml' else Meta.db_company
-
         self.BASE = f'https://{Meta.company}.xplan.iress.com.au'
         self.URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
         self.URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
@@ -84,9 +81,7 @@ class Fetcher:
                     for option in dropdown_options:
                         if option == '_loop_end' and not group_only:
                             # update former group
-                            self.db.Group.update_one(
-                                {'_id': ObjectId(former_group_id)},
-                                {'$set': {'sub_groups': sub_group_list}})
+                            Group.update_doc(former_group_id, sub_group_list)
                             break
 
                         try:
@@ -112,12 +107,7 @@ class Fetcher:
                                 # current group
                                 if former_group and former_group_id and len(
                                         sub_group_list):
-                                    self.db.Group.update_one(
-                                        {'_id': ObjectId(former_group_id)},
-                                        {'$set': {
-                                                'sub_groups': sub_group_list,
-                                            }
-                                        })
+                                    Group.update_doc(former_group_id, sub_group_list)
                                     sub_group_list = []
                                 former_group_id = Group(group_var,
                                                         group_name).new()
@@ -156,13 +146,7 @@ class Fetcher:
                                         # SubGroup's variables, then insert new current
                                         # SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
-                                            self.db.SubGroup.update_one({
-                                                '_id': ObjectId(
-                                                    former_sub_group_id)},
-                                                {'$set': {
-                                                        'variables': former_sub_group_variables
-                                                    }
-                                                })
+                                            SubGroup.update_doc(former_sub_group_id, former_sub_group_variables)
                                             if group_var in to_json:
                                                 to_json[group_var].append({
                                                     former_sub_group: variables_to_json})
@@ -238,12 +222,7 @@ class Fetcher:
 
                             # end of loop in current group's [sub_group] - variable pairs,
                             # update last subgroup's variables
-                            self.db.SubGroup.update_one(
-                                {'_id': ObjectId(former_sub_group_id)},
-                                {'$set': {
-                                        'variables': former_sub_group_variables
-                                    }
-                                })
+                            SubGroup.update_doc(former_sub_group_id, former_sub_group_variables)
                             if group_var in to_json:
                                 to_json[group_var].append(
                                     {former_sub_group: variables_to_json})
@@ -269,3 +248,14 @@ class Fetcher:
         else:
             Meta.jison.replace_object(group_only, json.dumps(to_json))
         to_json.clear()
+
+    def update_group(self, name: list or str):
+        if isinstance(name, str):
+            self.fetch(name)
+
+    def delete_group(self, name: str):
+        pass
+
+    def delete_subgroup(self, name: str):
+        pass
+

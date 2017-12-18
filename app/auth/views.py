@@ -39,7 +39,7 @@ def login():
     """
     form = LoginForm()
     if form.validate_on_submit():
-        user_dict = Meta.db_default.User.find_one({'email': form.email.data})
+        user_dict = User.search({'email': form.email.data})
         Meta.company = form.company.data
         # meta.crypto = AESCipher()
         # meta.company_username = form.company_username.data
@@ -60,7 +60,8 @@ def login():
 def logout():
     # empty meta
     try:
-        Meta.browser.get(f'https://{Meta.company}.xplan.iress.com.au/home/logoff?')
+        Meta.browser.get(
+            f'https://{Meta.company}.xplan.iress.com.au/home/logoff?')
         Meta.browser.quit()
     except:
         pass
@@ -86,7 +87,7 @@ def register():
     if form.validate_on_submit():
         User(email=form.email.data, username=form.username.data,
              password=form.password.data, location=form.location.data).new()
-        user_utl = UserUtl(Meta.db_default.User.find_one({'email': form.email.data}))
+        user_utl = UserUtl(User.search({'email': form.email.data}))
         token = user_utl.generate_token()
         send_email(user_utl.email, 'Confirm Your Account',
                    'auth/email/confirm', user=user_utl, token=token)
@@ -105,17 +106,17 @@ def confirm(token):
         data = s.load(token)  # data == {'ID': User.id}
     except BadSignature:
         return render_template('errors/bad_token.html')
+
     id = data.get('confirm')
-    user = Meta.db_default.User.find_one({'_id': ObjectId(id)})
+    user = User.search({'_id': ObjectId(id)})
     if user is None:
         flash('The confirmation link is invalid or has expired.',
               category='danger')
-    if user.is_confirmed:
+    if user.get('is_confirmed'):
         flash('Your account has already been confirmed.', category='danger')
         time.sleep(2)
         return redirect(url_for('main.index'))
-    Meta.db_default.User.update_one({'_id': ObjectId(id)},
-                       {'$set': {'is_confirmed': True}})
+    User.update_doc({'_id': ObjectId(id)}, {'is_confirmed': True})
     flash('You have confirmed your account successfully, Thank you!',
           category='success')
     time.sleep(2)
@@ -177,9 +178,8 @@ def change_email(token):
         return render_template('errors/bad_token.html')
     id = data.get('ID')
     new_email = data.get('new_email')
-    if new_email is None or \
-                    Meta.db_default.User.find_one({'email': new_email}) is not None or \
-                    Meta.db_default.User.find_one({'_id': ObjectId(id)}) is None:
+    if new_email is None or User.search({'email': new_email}) is None or \
+                            User.search({'_id': ObjectId(id)}) is None:
         flash('The confirmation link is invalid or has expired.',
               category='danger')
         time.sleep(2)
@@ -187,9 +187,8 @@ def change_email(token):
     avatar_hash = hashlib.md5(new_email.encode('utf-8') +
                               str(current_user.member_since). \
                               encode('utf-8')).hexdigest()
-    Meta.db_default.User.update_one({'_id': ObjectId(id)},
-                       {'$set': {'email': new_email,
-                                 'avatar_hash': avatar_hash}})
+    User.update_doc({'_id': ObjectId(id)},
+                    {'email': new_email, 'avatar_hash': avatar_hash})
     logout_user()
     flash(
         f'Your email address has been updated to {current_user.email} successfully, please login again.',
@@ -203,9 +202,8 @@ def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if verify_password(current_user.password, form.password.data):
-            Meta.db_default.User.update_one({'email': current_user.email},
-                               {'$set': {'password': generate_password_hash(
-                                   form.password_new.data)}})
+            User.update_doc({'email': current_user.email}, {
+                'password': generate_password_hash(form.password_new.data)})
             logout_user()
             flash('Your password has been updated, please login again.',
                   category='success')

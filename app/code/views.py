@@ -6,6 +6,7 @@ from flask_login import login_required
 from bson import ObjectId
 
 from . import code
+from app.models import Group, SubGroup
 from common.meta import Meta
 from common.code_tools import cleanup_mess, format
 import fuzzier.fuzzier as fuzzier
@@ -66,13 +67,13 @@ def subgroup(var):
     :return:
     """
     try:
-        subgroup_ids = Meta.db_company.Group.find_one({'var': var}).get(
+        subgroup_ids = Group.search({'var': var}).get(
             'sub_groups')
         result = []
         if subgroup_ids:
             for id in subgroup_ids:
-                result.append({id: Meta.db_company.SubGroup.find_one(
-                    {'_id': ObjectId(id)}).get('name')})
+                result.append({id: SubGroup.search({'_id': ObjectId(id)}).get(
+                    'name')})
         return json.dumps({'subgroup': result}), 200
     except:
         return json.dumps({'subgroup': []}), 500
@@ -82,9 +83,7 @@ def subgroup(var):
 @code.route('/acquire_variable/<id>', methods=['GET'])
 def variable(id):
     try:
-        variables = Meta.db_company.SubGroup.find_one(
-            {'_id': ObjectId(id)}).get(
-            'variables')
+        variables = SubGroup.search({'_id': ObjectId(id)}).get('variables')
         result = []
         if variables:
             for var in variables:
@@ -116,14 +115,12 @@ def do_search():
         try:
             for item in result_list:
                 group_var = item[1]
-                group_name = Meta.db_company.Group.find_one(
-                    {'var': group_var}).get('name')
+                group_name = Group.search({'var': group_var}).get('name')
                 subgroup = item[2]
                 var_var = item[3]
                 var_name = item[4]
 
-                subgroup_id_list = Meta.db_company.Group.find_one(
-                    {'var': group_var}).get(
+                subgroup_id_list = Group.search({'var': group_var}).get(
                     'sub_groups')
                 subgroups_with_same_name = Meta.db_company.SubGroup.find(
                     {'name': subgroup})
@@ -152,7 +149,7 @@ def acquire_search_result():
     received_json = request.json
 
     if received_json:
-        var_list = Meta.db_company.SubGroup.find_one(
+        var_list = SubGroup.search(
             {'_id': ObjectId(received_json.get('subgroup_id'))}).get(
             'variables')
         for item in var_list:
