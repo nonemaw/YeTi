@@ -59,7 +59,7 @@
                                     <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
                                     <button id="interface-title" style="font-size: 18px; display: none">/</button>
                                     <!-- interface collection table1 for xplan collection items -->
-                                    <div class="row" id="interface-table-row" style="height:250px">
+                                    <div class="row" id="interface-table-row" style="height:30vh">
                                         <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table1-head">
                                             <table class="table table-scroll left-column-table" style="height:100px">
                                                 <thead>
@@ -655,15 +655,10 @@
             initialize_interface();
 
             // click on interface menu
-            var selections = [];
-            var local_leaf_cache = {};
             $('#interface-tree').on("select_node.jstree", function (e, data) {
                 var id = data.node.id;
                 var text = data.node.text;
-                if (!selections.includes(id)) {
-                    selections.push(id);
-                    initialize_interface(id, text);
-                }
+                initialize_interface(id, text);
             });
         });
     </script>

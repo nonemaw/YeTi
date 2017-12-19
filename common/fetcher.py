@@ -6,6 +6,7 @@ import re
 import os
 import logging
 
+from bson import ObjectId
 from common.meta import Meta
 from app.models import Group, SubGroup
 
@@ -81,7 +82,9 @@ class Fetcher:
                     for option in dropdown_options:
                         if option == '_loop_end' and not group_only:
                             # update former group
-                            Group.update_doc(former_group_id, sub_group_list)
+                            Group.update_doc(
+                                {'_id': ObjectId(former_group_id)},
+                                {'sub_groups': sub_group_list})
                             break
 
                         try:
@@ -107,7 +110,9 @@ class Fetcher:
                                 # current group
                                 if former_group and former_group_id and len(
                                         sub_group_list):
-                                    Group.update_doc(former_group_id, sub_group_list)
+                                    Group.update_doc(
+                                        {'_id': ObjectId(former_group_id)},
+                                        {'sub_groups': sub_group_list})
                                     sub_group_list = []
                                 former_group_id = Group(group_var,
                                                         group_name).new()
@@ -146,7 +151,9 @@ class Fetcher:
                                         # SubGroup's variables, then insert new current
                                         # SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
-                                            SubGroup.update_doc(former_sub_group_id, former_sub_group_variables)
+                                            SubGroup.update_doc(
+                                                {'_id': ObjectId(former_sub_group_id)},
+                                                {'variables': former_sub_group_variables})
                                             if group_var in to_json:
                                                 to_json[group_var].append({
                                                     former_sub_group: variables_to_json})
@@ -222,7 +229,9 @@ class Fetcher:
 
                             # end of loop in current group's [sub_group] - variable pairs,
                             # update last subgroup's variables
-                            SubGroup.update_doc(former_sub_group_id, former_sub_group_variables)
+                            SubGroup.update_doc(
+                                {'_id': ObjectId(former_sub_group_id)},
+                                {'variables': former_sub_group_variables})
                             if group_var in to_json:
                                 to_json[group_var].append(
                                     {former_sub_group: variables_to_json})

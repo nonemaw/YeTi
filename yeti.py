@@ -22,7 +22,7 @@ if __name__ == '__main__':
                         help='Debug Mode')
     parser.add_argument('--fetcher', '-F', required=False, action='store_true',
                         help='Run Fetcher')
-    parser.add_argument('--searcher', '-S', required=False, action='store_true',
+    parser.add_argument('--search', '-S', required=False, action='store_true',
                         help='Test')
     args = parser.parse_args()
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         Meta.fetcher.fetch(groups)
 
     # feature test
-    elif args.searcher:
+    elif args.search:
         from fuzzier.fuzzier import search
         pattern = input('Input search pattern for test: ')
         search(pattern=pattern)

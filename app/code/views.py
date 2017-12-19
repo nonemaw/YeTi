@@ -6,7 +6,7 @@ from flask_login import login_required
 from bson import ObjectId
 
 from . import code
-from app.models import Group, SubGroup
+from app.models import Group, SubGroup, InterfaceLeafPage
 from common.meta import Meta
 from common.code_tools import cleanup_mess, format
 import fuzzier.fuzzier as fuzzier
@@ -160,3 +160,34 @@ def acquire_search_result():
                 return json.dumps({'variable': result}), 200
 
     return json.dumps({'variable': ''}), 500
+
+
+@login_required
+@code.route('/acquire_interface', methods=['GET'])
+def acquire_interface():
+    result = []
+    try:
+        root_nodes = Meta.db_company.InterfaceNode.find({}).sort([('id', 1)])
+        for node_dict in root_nodes:
+            # remove database _id serial number
+            del node_dict['_id']
+            result.append(node_dict)
+        return json.dumps({'root_nodes': result}), 200
+    except:
+        return json.dumps({'root_nodes': []}), 500
+
+
+@login_required
+@code.route('/acquire_leaf', methods=['POST'])
+def acquire_leaf():
+    received_json = request.json
+
+    if received_json:
+        _id = received_json.get('id')
+        leaf_content = InterfaceLeafPage.search({'id': _id})
+        # remove database _id serial number, this `_id` is not `id`
+        if leaf_content:
+            del leaf_content['_id']
+            return json.dumps({'leaf': leaf_content}), 200
+
+    return json.dumps({'leaf': {}}), 500

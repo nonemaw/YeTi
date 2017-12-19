@@ -97,7 +97,7 @@ def initialize_interface(self) -> dict:
     return {'status': 'Initialization Finished', 'result': menu}
 
 
-def get_menu(_id: int, menu: dict or list, dump: bool = False) -> bool:
+def get_menu(_id: int, menu: dict or list) -> bool:
     try:
         # find menu item with `hidden` tags
         Meta.browser.find_element_by_xpath(
@@ -106,7 +106,7 @@ def get_menu(_id: int, menu: dict or list, dump: bool = False) -> bool:
     except:
         # if there is no `hidden` tags, get id and text
         try:
-            if dump:
+            if isinstance(menu, list):
                 menu.append({
                     'id': Meta.browser.find_element_by_xpath(f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute('id'),
                     'text': Meta.browser.find_element_by_xpath(f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text,
@@ -317,7 +317,7 @@ class InterfaceFetcher:
     def __init__(self):
         pass
 
-    def fetch(self, sleep: int = 1):
+    def fetch(self, sleep: int = 1, text: str = None):
         URL_INTERFACE = f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface'
         menu = []
 
@@ -329,23 +329,28 @@ class InterfaceFetcher:
             time.sleep(1)
 
             for _id in range(1, 200):
-                if not get_menu(_id, menu, dump=True):
+                if not get_menu(_id, menu):
                     break
 
         for node in menu:
             _id = node.get('id')
+            if text and text.lower() in node.get('text').lower():
+                node['children'] = self.r_dump_interface(_id, sleep)
+                InterfaceNode(node).new(force=True)
+            else:
+                continue
+
             node['children'] = self.r_dump_interface(_id, sleep)
-            InterfaceNode(node).new()
+            InterfaceNode(node).new(force=True)
 
     def r_dump_interface(self, _id: str, sleep: int = 1) -> list:
         id_list = []
-
         # getting children when a node is not a leaf
         if re.search('^client_[0-9]+', _id):
             try:
                 Meta.browser.find_element_by_xpath(
                     f'//*[@id="{_id}"]/a/span[1]').click()
-                time.sleep(1.5)
+                time.sleep(2)
             except:
                 return id_list
 
@@ -364,31 +369,34 @@ class InterfaceFetcher:
 
                             text = Meta.browser.find_element_by_xpath(
                                 f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
-                            id = element.get_attribute('id'),
+                            child_id = element.get_attribute('id'),
+
+                            # something is wrong with page `Retirement Funds`,
+                            # skipped other wise page crashed
+
                             if text != 'Retirement Funds':
-                                child = self.r_dump_interface(id[0], sleep=sleep)
-                                # if an empty list returned, process leaf page
-                                if not child:
-                                    id_list.append({
-                                        'id': id[0],
-                                        'text': text,
-                                        'type': 'child',
-                                    })
-                                    self.dump_page(id[0], text)
+                                child_list = self.r_dump_interface(child_id[0], sleep=sleep)
+                                # if child is empty, process leaf page
+                                if not child_list:
+                                    leaf_type = self.dump_page(child_id[0], text)
+                                    if leaf_type:
+                                        id_list.append({
+                                            'id': child_id[0],
+                                            'text': text,
+                                            'type': leaf_type,
+                                        })
                                 else:
                                     id_list.append({
-                                        'id': id[0],
+                                        'id': child_id[0],
                                         'text': text,
                                         'type': 'root',
-                                        'children': child
+                                        'children': child_list
                                     })
                     except:
                         break
-
-        print(id_list)
         return id_list
 
-    def dump_page(self, _id: str, text: str, sleep: int = 2):
+    def dump_page(self, _id: str, text: str, sleep: int = 3) -> str:
         """
         called in `r_dump_interface()` when an empty list returned (current
         node is a leaf), dump page content to database
@@ -396,130 +404,137 @@ class InterfaceFetcher:
         try:
             Meta.browser.find_element_by_xpath(
                 f'//*[@id="{_id}"]/a/span[1]').click()
+        except:
+            return ''
 
-            time.sleep(sleep)
-            page = {}
+        time.sleep(sleep)
+        page = {}
+        leaf_type = 'other'
 
+        try:
             name = Meta.browser.find_element_by_xpath(
                 '//*[@id="edit_interface_page"]/div[2]/div[3]/div/div[2]/table/tbody/tr[1]/td[2]/div/a/span').text
             if re.findall('\[(.+?)\] (.+)', name):
                 name = '--'.join(re.findall('\[(.+?)\] (.+)', name)[0])
-            content = {name: []}
+                leaf_type = 'variable'
+        except:
+            name = '(Empty)'
+        content = {name: []}
 
-            if Meta.browser.find_element_by_xpath(
-                    '//*[@id="entity_types_1"]').get_attribute('checked'):
-                content.get(name).append('individual')
-            if Meta.browser.find_element_by_xpath(
-                    '//*[@id="entity_types_2"]').get_attribute('checked'):
-                content.get(name).append('superfund')
-            if Meta.browser.find_element_by_xpath(
-                    '//*[@id="entity_types_3"]').get_attribute('checked'):
-                content.get(name).append('partnership')
-            if Meta.browser.find_element_by_xpath(
-                    '//*[@id="entity_types_4"]').get_attribute('checked'):
-                content.get(name).append('trust')
-            if Meta.browser.find_element_by_xpath(
-                    '//*[@id="entity_types_5"]').get_attribute('checked'):
-                content.get(name).append('company')
-            page['leaf_basic'] = content
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_1"]').get_attribute('checked'):
+            content.get(name).append('individual')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_2"]').get_attribute('checked'):
+            content.get(name).append('superfund')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_3"]').get_attribute('checked'):
+            content.get(name).append('partnership')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_4"]').get_attribute('checked'):
+            content.get(name).append('trust')
+        if Meta.browser.find_element_by_xpath(
+                '//*[@id="entity_types_5"]').get_attribute('checked'):
+            content.get(name).append('company')
+        page['leaf_basic'] = content
 
-            # if content is a Group
-            content = {'group': []}
-            try:
-                Meta.browser.find_element_by_xpath(
-                    '//*[@id="tab-general"]/table/tbody/tr[2]/td[1]')
-            except:
-                pass
-            else:
-                for i in range(2, 50):
-                    try:
-                        if Meta.browser.find_element_by_xpath(
-                                f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[2]/input').get_attribute(
-                            'checked'):
-                            content.get('group').append(
-                                Meta.browser.find_element_by_xpath(
-                                    f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[1]').text)
-                    except:
-                        break
-                page['leaf_group'] = content
+        # if content is a Group
+        content = {'group': []}
+        try:
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="tab-general"]/table/tbody/tr[2]/td[1]')
+        except:
+            pass
+        else:
+            for i in range(2, 50):
+                try:
+                    if Meta.browser.find_element_by_xpath(
+                            f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[2]/input').get_attribute(
+                        'checked'):
+                        content.get('group').append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tab-general"]/table/tbody/tr[{i}]/td[1]').text)
+                except:
+                    break
+            page['leaf_group'] = content
+            leaf_type = 'group'
 
-            # if content is a XPLAN collection, type 1
-            content = {'table1': [], 'table2': []}
-            try:
-                Meta.browser.find_element_by_xpath(
-                    '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
-            except:
-                pass
-            else:
-                if name.lower() in subgroup_name_ref:
-                    page['subgroup'] = subgroup_name_ref.get(name.lower())
-                # table 1
-                for i in range(1, 30):
-                    try:
-                        if Meta.browser.find_element_by_xpath(
-                                f'//*[@id="xstore_listfields_{i}"]').get_attribute(
-                            'checked'):
-                            content.get('table1').append(
-                                Meta.browser.find_element_by_xpath(
-                                    f'//*[@id="tr_element_xplan_definition"]/td/div/span[{i}]/label').text)
+        # if content is a XPLAN collection, type 1
+        content = {'table1': [], 'table2': []}
+        try:
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="tr_element_xplan_definition"]/td/div/span[1]')
+        except:
+            pass
+        else:
+            if name.lower() in subgroup_name_ref:
+                page['subgroup'] = subgroup_name_ref.get(name.lower())
+            # table 1
+            for i in range(1, 30):
+                try:
+                    if Meta.browser.find_element_by_xpath(
+                            f'//*[@id="xstore_listfields_{i}"]').get_attribute(
+                        'checked'):
+                        content.get('table1').append(
+                            Meta.browser.find_element_by_xpath(
+                                f'//*[@id="tr_element_xplan_definition"]/td/div/span[{i}]/label').text)
 
-                            if Meta.browser.find_element_by_xpath(
-                                    f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
-                                'checked'):
-                                content.get('table2').append(
-                                    Meta.browser.find_element_by_xpath(
-                                        f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
-                    except:
-                        break
-
-                # table 2
-                for i in range(1, 30):
-                    try:
                         if Meta.browser.find_element_by_xpath(
                                 f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
                             'checked'):
                             content.get('table2').append(
                                 Meta.browser.find_element_by_xpath(
                                     f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
-                    except:
-                        break
+                except:
+                    break
 
-                page['leaf_xplan'] = content
-
-            # if content is a XPLAN collection, type 2
-            try:
-                Meta.browser.find_element_by_xpath(
-                    '//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[1]')
-            except:
-                pass
-            else:
-                if name.lower() in subgroup_name_ref:
-                    page['subgroup'] = subgroup_name_ref.get(name.lower())
-                # table 1
-                for i in range(1, 50):
-                    try:
-                        content.get('table1').append(
-                            Meta.browser.find_element_by_xpath(
-                                f'//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
-                    except:
-                        break
-
-                # table 2
-                for i in range(1, 50):
-                    try:
+            # table 2
+            for i in range(1, 30):
+                try:
+                    if Meta.browser.find_element_by_xpath(
+                            f'//*[@id="xstore_capturefields_{i}"]').get_attribute(
+                        'checked'):
                         content.get('table2').append(
                             Meta.browser.find_element_by_xpath(
-                                f'//*[@id="tr_element_xplan_edit_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
-                    except:
-                        break
+                                f'//*[@id="tr_element_xplan_edit_fields_definition"]/td/div/span[{i}]/label').text)
+                except:
+                    break
 
-                page['leaf_xplan'] = content
+            page['leaf_xplan'] = content
+            leaf_type = 'xplan'
 
-            InterfaceLeafPage(_id, text, page).new()
-
-        except Exception as e:
-            print(e)
+        # if content is a XPLAN collection, type 2
+        try:
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[1]')
+        except:
             pass
+        else:
+            if name.lower() in subgroup_name_ref:
+                page['subgroup'] = subgroup_name_ref.get(name.lower())
+            # table 1
+            for i in range(1, 50):
+                try:
+                    content.get('table1').append(
+                        Meta.browser.find_element_by_xpath(
+                            f'//*[@id="tr_element_xplan_list_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
+                except:
+                    break
+
+            # table 2
+            for i in range(1, 50):
+                try:
+                    content.get('table2').append(
+                        Meta.browser.find_element_by_xpath(
+                            f'//*[@id="tr_element_xplan_edit_tabs"]/td/div[1]/div[1]/table/tbody[1]/tr[{i}]/td[2]').text)
+                except:
+                    break
+
+            page['leaf_xplan'] = content
+            leaf_type = 'xplan'
+
+        InterfaceLeafPage(_id, text, page).new()
+        return leaf_type
 
     def update_node(self, name: str, include_page: bool = False):
         node_dict = InterfaceNode.search({'text': name})

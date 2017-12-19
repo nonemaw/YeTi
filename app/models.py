@@ -8,12 +8,13 @@ from bson import ObjectId
 from app import login_manager
 from common.meta import Meta
 
-
 """
 Note: all DB model class are using legacy PyMongo method `insert()` to create
 new document into collection, rather than `insert_one()`, as `insert()` will
 return new `_id` directly but `insert_one()` returns a PyMongo insertion object
 """
+
+
 class Group:
     def __init__(self, var: str, name: str):
         self.var = var
@@ -38,9 +39,8 @@ class Group:
             return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(id: str, sub_groups: list):
-        Meta.db_company.Group.update_one({'_id': ObjectId(id)},
-                                 {'$set': {'sub_groups': sub_groups}})
+    def update_doc(locate: dict, update: dict):
+        Meta.db_company.Group.update_one(locate, {'$set': update})
 
     @staticmethod
     def delete_doc(locate: dict):
@@ -73,9 +73,8 @@ class SubGroup:
             return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(id: str, variables: list):
-        Meta.db_company.SubGroup.update_one({'_id': ObjectId(id)},
-                                 {'$set': {'variables': variables}})
+    def update_doc(locate: dict, update: dict):
+        Meta.db_company.SubGroup.update_one(locate, {'$set': update})
 
     @staticmethod
     def delete_doc(locate: dict):
@@ -96,18 +95,45 @@ class InterfaceNode:
     def __str__(self):
         return f'<InterfaceNode {self.node.get("id")} {self.node.get("text")}>'
 
-    def new(self) -> str:
-        document = self.node
-        legacy = Meta.db_company.InterfaceNode.find_one({'id': self.node.get('id')})
+    def new(self, force: bool = False) -> str:
+        """
+        normally when `new()` is called and a legacy data already exists, it
+        does nothing but just return legacy data's serial number
+
+        when option `force` is enabled, the `new()` method will try to update
+        information to the data if legacy data already exists
+        """
+        legacy = Meta.db_company.InterfaceNode.find_one(
+            {'id': self.node.get('id')})
         if not legacy:
-            return str(Meta.db_company.InterfaceNode.insert(document))
-        else:
+            return str(Meta.db_company.InterfaceNode.insert(self.node))
+        elif force:
+            pushed_list = [x for x in self.node.get('children') if
+                           x not in legacy.get('children')]
+            if pushed_list:
+                Meta.db_company.InterfaceNode.update_one(
+                    {'id': self.node.get('id')},
+                    {
+                        '$set': {
+                            'text': self.node.get('text'),
+                            'type': self.node.get('type')},
+                        '$push': {
+                            'children': {'$each': pushed_list}}
+                    })
+            else:
+                Meta.db_company.InterfaceNode.update_one(
+                    {'id': self.node.get('id')},
+                    {'$set': {
+                        'text': self.node.get('text'),
+                        'type': self.node.get('type'),
+                        'children': self.node.get('children')
+                    }})
             return str(legacy.get('_id'))
+        return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(_id: str, child: list):
-        Meta.db_company.InterfaceNode.update_one({'_id': ObjectId(_id)},
-                                             {'$set': {'child': child}})
+    def update_doc(locate: dict, update: dict):
+        Meta.db_company.InterfaceNode.update_one(locate, {'$set': update})
 
     @staticmethod
     def search(locate: dict) -> dict:
@@ -126,7 +152,7 @@ class InterfaceLeafPage:
     def __str__(self):
         return f'<InterfaceLeafPage {self.id}>'
 
-    def new(self) -> str:
+    def new(self, force: bool = False) -> str:
         document = {
             'id': self.id,
             'text': self.text,
@@ -135,13 +161,20 @@ class InterfaceLeafPage:
         legacy = Meta.db_company.InterfaceLeafPage.find_one({'id': self.id})
         if not legacy:
             return str(Meta.db_company.InterfaceLeafPage.insert(document))
-        else:
+        elif force:
+            Meta.db_company.InterfaceLeafPage.update_one(
+                {'id': self.id},
+                {'$set': {
+                    'text': self.text,
+                    'page': self.page
+                }})
+
             return str(legacy.get('_id'))
+        return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(_id: str, page: dict):
-        Meta.db_company.InterfaceLeafPage.update_one({'_id': ObjectId(id)},
-                                         {'$set': {'page': page}})
+    def update_doc(locate: dict, update: dict):
+        Meta.db_company.InterfaceLeafPage.update_one(locate, {'$set': update})
 
     @staticmethod
     def search(locate: dict) -> dict:
@@ -204,21 +237,23 @@ class User:
     a base class for constructing user object
     """
 
-    def __init__(self, email: str, username: str, password: str, location: str):
+    def __init__(self, email: str, username: str, password: str,
+                 location: str):
         self.email = email
         self.username = username
         self.password = generate_password_hash(password)
         self.location = location
         self.avatar_hash = None
         if self.email == current_app.config['SITE_ADMIN']:
-            self.role = Meta.db_default.Role.find_one({'permission': 0xff}).get('type')
+            self.role = Meta.db_default.Role.find_one(
+                {'permission': 0xff}).get('type')
         else:
-            self.role = Meta.db_default.Role.find_one({'default': True}).get('type')
+            self.role = Meta.db_default.Role.find_one(
+                {'default': True}).get('type')
         if self.email is not None and self.avatar_hash is None:
-            self.avatar_hash = hashlib.md5(self.email.encode('utf-8') +
-                                           str(datetime.utcnow()).encode(
-                                               'utf-8')) \
-                .hexdigest()
+            self.avatar_hash = hashlib.md5(
+                self.email.encode('utf-8') +
+                str(datetime.utcnow()).encode('utf-8')).hexdigest()
 
     def __repr__(self):
         return str(self)
@@ -256,6 +291,7 @@ class UserUtl(UserMixin):
     a utility class based from UserMixin for Flask 'current_user', operating
     current user utilities on a global level
     """
+
     def __init__(self, user: dict):
         """
         role: set role from string value role type to Role object, for further
@@ -266,7 +302,8 @@ class UserUtl(UserMixin):
         self.username = user.get('username')
         self.password = user.get('password')  # store hash result
         self.is_confirmed = user.get('is_confirmed')
-        self.role = Role(Meta.db_default.Role.find_one({'type': user.get('role')}))
+        self.role = Role(
+            Meta.db_default.Role.find_one({'type': user.get('role')}))
         self.name = user.get('name')
         self.location = user.get('location')
         self.about_me = user.get('about_me')
@@ -308,7 +345,8 @@ class UserUtl(UserMixin):
 
     def ping(self):
         Meta.db_default.User.update_one({'email': self.email},
-                           {'$set': {'last_login': datetime.utcnow()}})
+                                        {'$set': {
+                                            'last_login': datetime.utcnow()}})
 
     def generate_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -336,12 +374,14 @@ class Snippet():
     def new(self) -> tuple:
         # check duplication, it's ok if only group name or scenario name is same
         duplicated = False
-        group_dict = Meta.db_default.SnippetGroup.find_one({'name': self.group})
+        group_dict = Meta.db_default.SnippetGroup.find_one(
+            {'name': self.group})
         if group_dict:
             # group existing, check scenario name
             old_scenario_id_list = group_dict.get('scenarios')
             for id in old_scenario_id_list:
-                if Meta.db_default.SnippetScenario.find_one({'_id': ObjectId(id)}).get(
+                if Meta.db_default.SnippetScenario.find_one(
+                        {'_id': ObjectId(id)}).get(
                         'name') == self.scenario:
                     # both group and scenario are duplicated, you are in big trouble, skipped
                     duplicated = True
@@ -359,8 +399,9 @@ class Snippet():
             if group_dict:
                 # update new scenario id into existing group
                 group_id = str(group_dict.get('_id'))
-                Meta.db_default.SnippetGroup.update_one({'name': self.group}, {
-                    '$push': {'scenarios': scenario_id}})
+                Meta.db_default.SnippetGroup.update_one({'name': self.group},
+                                                        {'$push': {
+                                                            'scenarios': scenario_id}})
             else:
                 # insert new group for the new scenario
                 document = {
@@ -431,6 +472,7 @@ AnonymousUser(AnonymousUserMixin) for making those operations available.
 
 This can be tested by just commenting this line and check the Error message
 """
+
 
 @login_manager.user_loader
 def load_user(user_id):
