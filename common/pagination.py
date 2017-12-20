@@ -64,8 +64,7 @@ class Pagination:
 
 class PaginationSnippet(Pagination):
     def __init__(self, current_page: int, per_page: int = 15):
-        super(PaginationSnippet, self).__init__(current_page,
-                                                per_page=per_page)
+        super().__init__(current_page, per_page=per_page)
         self.snippets = Meta.db_default.SnippetScenario.find({}).sort([('name', 1)])
         self.total_count = self.snippets.count()
         self.current_num = self.total_count - (

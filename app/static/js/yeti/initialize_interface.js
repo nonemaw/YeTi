@@ -318,7 +318,7 @@ function initialize_interface(id){
                     });
             },
             error: function () {
-                alert('Unexpected error during initialize_interface()');
+                alert('Notice from Interface: Information out of date, please login again');
             }
         });
     }

@@ -11,7 +11,7 @@ from app.decorators import admin_required
 from app.models import User
 from common.pagination import PaginationSnippet
 from common.meta import Meta
-from common.interface_fetcher import initialize_interface, update_interface
+# from common.interface_fetcher import initialize_interface, update_interface
 
 
 @main.route('/test')
@@ -297,51 +297,51 @@ def acquire_snippet_scenario(_id):
         return json.dumps({'scenario': []}), 500
 
 
-@login_required
-@main.route('/initialize_interface')
-def _initialize_interface():
-    task = initialize_interface.delay()
-    return jsonify({}), 202, {
-        'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
-
-
-@login_required
-@main.route('/update_interface', methods=['GET', 'POST'])
-def _update_interface():
-    task = update_interface.delay(_id=request.json.get('id'))
-    return jsonify({}), 202, {
-        'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
-
-
-@login_required
-@main.route('/interface_streamer/<task_id>')
-def interface_streamer(task_id):
-    task = initialize_interface.AsyncResult(task_id)
-    if task.state == 'PENDING':
-        # task is pending
-        response = {
-            'state': task.state,
-            'current': 0,
-            'total': 1,
-            'status': 'Pending...'
-        }
-    elif task.state != 'FAILURE':
-        # task is running
-        response = {
-            'state': task.state,
-            'current': task.info.get('current', 0),
-            'total': task.info.get('total', 1),
-            'status': task.info.get('status', '')
-        }
-        if 'result' in task.info:
-            # task finished, get menu data
-            response['result'] = task.info.get('result')
-    else:
-        # task failed
-        response = {
-            'state': task.state,
-            'current': 1,
-            'total': 1,
-            'status': str(task.info)  # this is the exception raised
-        }
-    return jsonify(response)
+# @login_required
+# @main.route('/initialize_interface')
+# def _initialize_interface():
+#     task = initialize_interface.delay()
+#     return jsonify({}), 202, {
+#         'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
+#
+#
+# @login_required
+# @main.route('/update_interface', methods=['GET', 'POST'])
+# def _update_interface():
+#     task = update_interface.delay(_id=request.json.get('id'))
+#     return jsonify({}), 202, {
+#         'streamer_URL': url_for('main.interface_streamer', task_id=task.id)}
+#
+#
+# @login_required
+# @main.route('/interface_streamer/<task_id>')
+# def interface_streamer(task_id):
+#     task = initialize_interface.AsyncResult(task_id)
+#     if task.state == 'PENDING':
+#         # task is pending
+#         response = {
+#             'state': task.state,
+#             'current': 0,
+#             'total': 1,
+#             'status': 'Pending...'
+#         }
+#     elif task.state != 'FAILURE':
+#         # task is running
+#         response = {
+#             'state': task.state,
+#             'current': task.info.get('current', 0),
+#             'total': task.info.get('total', 1),
+#             'status': task.info.get('status', '')
+#         }
+#         if 'result' in task.info:
+#             # task finished, get menu data
+#             response['result'] = task.info.get('result')
+#     else:
+#         # task failed
+#         response = {
+#             'state': task.state,
+#             'current': 1,
+#             'total': 1,
+#             'status': str(task.info)  # this is the exception raised
+#         }
+#     return jsonify(response)
