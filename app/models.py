@@ -8,6 +8,7 @@ from bson import ObjectId
 from app import login_manager
 from common.meta import Meta
 
+
 """
 Note: all DB model class are using legacy PyMongo method `insert()` to create
 new document into collection, rather than `insert_one()`, as `insert()` will
@@ -44,7 +45,15 @@ class Group:
 
     @staticmethod
     def delete_doc(locate: dict):
+        to_be_deleted = Meta.db_company.Group.find_one(locate)
+        sub_groups = to_be_deleted.get('sub_groups')
         Meta.db_company.Group.delete_one(locate)
+
+        for sub_group_id in sub_groups:
+            try:
+                SubGroup.delete_doc({'_id': ObjectId(sub_group_id)})
+            except:
+                pass
 
     @staticmethod
     def search(locate: dict) -> dict:
@@ -108,8 +117,12 @@ class InterfaceNode:
         if not legacy:
             return str(Meta.db_company.InterfaceNode.insert(self.node))
         elif force:
-            pushed_list = [x for x in self.node.get('children') if
-                           x not in legacy.get('children')]
+            pushed_list = [x for x in self.node.get('children')
+                           if x.get('text') not in
+                               [l.get('text') for l in legacy.get('children')]
+                          ]
+            # `pushed_list` is a list of {child} which are not in legacy children
+            # is `pushed_list` then append each {child} to legacy's children list
             if pushed_list:
                 Meta.db_company.InterfaceNode.update_one(
                     {'id': self.node.get('id')},
@@ -120,6 +133,8 @@ class InterfaceNode:
                         '$push': {
                             'children': {'$each': pushed_list}}
                     })
+            # if `pushed_list` is empty, just make current children to overwrite
+            # legacy's children
             else:
                 Meta.db_company.InterfaceNode.update_one(
                     {'id': self.node.get('id')},
@@ -128,6 +143,7 @@ class InterfaceNode:
                         'type': self.node.get('type'),
                         'children': self.node.get('children')
                     }})
+
             return str(legacy.get('_id'))
         return str(legacy.get('_id'))
 
@@ -236,7 +252,6 @@ class User:
     """
     a base class for constructing user object
     """
-
     def __init__(self, email: str, username: str, password: str,
                  location: str):
         self.email = email
@@ -291,7 +306,6 @@ class UserUtl(UserMixin):
     a utility class based from UserMixin for Flask 'current_user', operating
     current user utilities on a global level
     """
-
     def __init__(self, user: dict):
         """
         role: set role from string value role type to Role object, for further
