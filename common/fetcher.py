@@ -13,11 +13,7 @@ from app.models import Group, SubGroup
 
 class Fetcher:
     def __init__(self):
-        self.BASE = f'https://{Meta.company}.xplan.iress.com.au'
-        self.URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
-        self.URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
-        self.URL_WALKER = ''.join([f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
-        self.URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
+        pass
 
     # TODO: along with Jison, support a list of group update, generate a list of 'to_json' result based on the list of groups
     def fetch(self, group_only: str = None):
@@ -27,6 +23,12 @@ class Fetcher:
         good at grabbing HTML content with BS4 methods, therefore regex is
         mainly used
         """
+        BASE = f'https://{Meta.company}.xplan.iress.com.au'
+        URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
+        URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
+        URL_WALKER = ''.join([f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
+        URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
+
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
         json_directory = os.path.join(parent_path, 'fuzzier', 'json')
@@ -56,11 +58,11 @@ class Fetcher:
                     "redirecturl": ''
                 }
                 # send POST to login page
-                session.post(self.URL_LOGIN, data=payload,
-                             headers=dict(referer=self.URL_LOGIN))
+                session.post(URL_LOGIN, data=payload,
+                             headers=dict(referer=URL_LOGIN))
                 # try to get main list page content
-                fields = session.get(self.URL_LIST,
-                                     headers=dict(referer=self.URL_LIST))
+                fields = session.get(URL_LIST,
+                                     headers=dict(referer=URL_LIST))
 
                 if re.search(r'permission_error', fields.text):
                     # login failed
@@ -103,6 +105,7 @@ class Fetcher:
                                 # can be also a `group_name`)
                                 else:
                                     group_only = group_var
+                                    Group.delete_doc({'var': group_only})
 
                             if group_var != former_group:
                                 # if moved to a new group, update the former group's
@@ -114,17 +117,17 @@ class Fetcher:
                                         {'_id': ObjectId(former_group_id)},
                                         {'sub_groups': sub_group_list})
                                     sub_group_list = []
-                                former_group_id = Group(group_var,
-                                                        group_name).new()
+                                former_group_id = Group(str(group_var),
+                                                        str(group_name)).new()
                                 former_group = group_var
 
                             logger.info(
                                 f'Processing {group_var} - {group_name}')
                             all_subgroup_variable = re.sub(
                                 r'<td align.+<\/td>\n', '',
-                                session.get(self.URL_WALKER.format(group_var),
+                                session.get(URL_WALKER.format(group_var),
                                             headers=dict(
-                                                referer=self.URL_WALKER.format(
+                                                referer=URL_WALKER.format(
                                                     group_var))).text)
 
                             former_sub_group = ''
@@ -169,25 +172,25 @@ class Fetcher:
                                         sub_group_list.append(
                                             former_sub_group_id)
 
-                                    logger.info(f'Fetching {self.BASE}{href}')
+                                    logger.info(f'Fetching {BASE}{href}')
                                     if '/ufield/edit/entity_' in href:
-                                        usage = f'$entity.{href.split("/ufield/edit/entity_")[1].replace("/", ".")}'
+                                        usage = f'$client.{href.split("/ufield/edit/entity_")[1].replace("/", ".")}'
                                     elif '/ufield/edit/entity' in href:
-                                        usage = f'$entity.{href.split("/ufield/edit/entity/")[1]}'
+                                        usage = f'$client.{href.split("/ufield/edit/entity/")[1]}'
                                     else:
-                                        usage = f'$entity.{href.split("/ufield/edit/")[1].replace("/", ".")}'
+                                        usage = f'$client.{href.split("/ufield/edit/")[1].replace("/", ".")}'
 
                                     # information collection to a variable finished:
                                     # var / var_name / sub_group / var_type / usage
                                     if var_type == 'Multi' or var_type == 'Choice':
                                         multi = {}
-                                        session.get(self.BASE + href,
+                                        session.get(BASE + href,
                                                     headers=dict(
-                                                        referer=self.BASE + href))
+                                                        referer=BASE + href))
                                         multi_content = session.get(
-                                            f'{self.BASE}/ufield/list_options',
+                                            f'{BASE}/ufield/list_options',
                                             headers=dict(
-                                                referer=self.BASE + href))
+                                                referer=BASE + href))
                                         multi_content = re.sub(
                                             r'(?:&#xA0;|<img)', '\n',
                                             multi_content.text)
@@ -246,14 +249,14 @@ class Fetcher:
                     # endfor
 
                 # endif, logout
-                session.get(self.URL_LOGOUT)
+                session.get(URL_LOGOUT)
             except KeyboardInterrupt:
                 logger.info('Received keyboard interruption, logging out ...')
-                session.get(self.URL_LOGOUT)
+                session.get(URL_LOGOUT)
 
         import json
         if not group_only:
-            Meta.jison.json_to_file(json.dumps(to_json))
+            Meta.jison.write(json.dumps(to_json))
         else:
             Meta.jison.replace_object(group_only, json.dumps(to_json))
         to_json.clear()
@@ -267,4 +270,3 @@ class Fetcher:
 
     def delete_subgroup(self, name: str):
         pass
-
