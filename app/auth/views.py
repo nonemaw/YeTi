@@ -65,17 +65,8 @@ def logout():
         Meta.browser.quit()
     except:
         pass
-    Meta.company_username = None
-    Meta.company_password = None
-    Meta.db_company = None
-    Meta.crypto = None
-    Meta.jison = None
-    Meta.fetcher = None
-    Meta.browser = None
-    Meta.session_id = None
-    Meta.executor_url = None
-    Meta.current_url = None
 
+    Meta.empty()
     logout_user()
     flash('You have been logged out.', category='success')
     return redirect(url_for('main.index'))
