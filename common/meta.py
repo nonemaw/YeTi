@@ -29,4 +29,26 @@ class Meta:
     executor_url = None
     current_url = None
 
-    statistic = {}
+    @staticmethod
+    def empty(attribute=None):
+        """
+        empty Meta's all attributes or one/some specific attributes
+        """
+        if not attribute:
+            for attr in filter(
+                    lambda x: not x.startswith('__') and
+                              not callable(getattr(Meta, x)), dir(Meta)):
+                setattr(Meta, attr, None)
+
+        elif isinstance(attribute, str):
+            try:
+                setattr(Meta, attribute, None)
+            except:
+                pass
+
+        elif isinstance(attribute, list):
+            for attr in attribute:
+                try:
+                    setattr(Meta, attr, None)
+                except:
+                    pass
