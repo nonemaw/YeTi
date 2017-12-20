@@ -22,6 +22,8 @@ if __name__ == '__main__':
                         help='Debug Mode')
     parser.add_argument('--fetcher', '-F', required=False, action='store_true',
                         help='Run Fetcher')
+    parser.add_argument('--ifetcher', '-IF', required=False, action='store_true',
+                        help='Run Interface Fetcher')
     parser.add_argument('--search', '-S', required=False, action='store_true',
                         help='Test')
     args = parser.parse_args()
@@ -36,9 +38,7 @@ if __name__ == '__main__':
         company, username, password = input(
             'Please input company, username and password: ').split(' ')
         groups = input('Please input groups (optional): ')
-        if groups:
-            groups = groups
-        else:
+        if not groups:
             groups = None
 
         from common.fetcher import Fetcher
@@ -54,6 +54,28 @@ if __name__ == '__main__':
         Meta.jison = Jison(company=Meta.company)
         Meta.fetcher = Fetcher()
         Meta.fetcher.fetch(groups)
+
+    # feature test
+    elif args.ifetcher:
+        company, username, password = input(
+            'Please input company, username and password: ').split(' ')
+        text = input('Please input node (optional): ')
+        if not text:
+            text = None
+
+        from common.interface_fetcher import InterfaceFetcher
+        from common.meta import Meta
+        from fuzzier.jison import Jison
+        from app.db import mongo_connect, client
+
+        Meta.company = company
+        Meta.company_username = username
+        Meta.company_password = password
+        Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
+            client, Meta.company)
+        Meta.jison = Jison(company=Meta.company)
+        Meta.interface_fetcher = InterfaceFetcher()
+        Meta.interface_fetcher.fetch(text=text)
 
     # feature test
     elif args.search:

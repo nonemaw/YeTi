@@ -4,7 +4,6 @@ from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_moment import Moment
-from flask_pagedown import PageDown
 from config import config, Config
 from celery import Celery
 
@@ -12,7 +11,6 @@ from celery import Celery
 bootstrap = Bootstrap()
 mail = Mail()
 moment = Moment()
-pagedown = PageDown()
 
 login_manager = LoginManager()           # provide login service
 login_manager.session_protection = 'strong'
@@ -31,7 +29,6 @@ def create_app(config_name):
     mail.init_app(app)
     moment.init_app(app)
     login_manager.init_app(app)
-    pagedown.init_app(app)
     celery.conf.update(app.config)
 
     from .main import main as main_blueprint

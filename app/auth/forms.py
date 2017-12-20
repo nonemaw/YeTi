@@ -6,6 +6,7 @@ from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 from common.meta import Meta
 from common.crypto import AESCipher
 from common.fetcher import Fetcher
+from common.interface_fetcher import InterfaceFetcher
 from fuzzier.jison import Jison
 from app.db import client, mongo_connect
 from app.models import User
@@ -40,11 +41,12 @@ class LoginForm(FlaskForm):
                 headers=dict(
                     referer=f'https://{field.data.lower()}.xplan.iress.com.au'))
             Meta.company = field.data.lower()
-            Meta.db_company = Meta.db_default if Meta.company == 'ytml' \
-                else mongo_connect(client, Meta.company)
+            Meta.db_company = Meta.db_default if Meta.company == 'ytml' else \
+                mongo_connect(client, Meta.company)
             Meta.crypto = AESCipher()
             Meta.jison = Jison(company=Meta.company)
             Meta.fetcher = Fetcher()
+            Meta.interface_fetcher = InterfaceFetcher()
         except:
             raise ValidationError(
                 f'Company name \"{field.data}\" invalid, no such XPLAN site.')
@@ -64,14 +66,6 @@ class RegForm(FlaskForm):
     password2 = PasswordField('Confirm password', validators=[DataRequired()])
     location = SelectField('Where are you from?', choices=cities)
     submit = SubmitField('Register')
-
-    """
-    Auto-validation
-
-    validate_xxx() is pre-defined methods in WTF_Form which used to validate
-    data in form automatically. Once data is entered into the form the relating
-    method will be called automatically based on field name 
-    """
 
     def validate_email(self, field):
         if User.search({'email': field.data}):
