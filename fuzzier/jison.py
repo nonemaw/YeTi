@@ -53,9 +53,16 @@ class Jison:
             except:
                 raise JsonSyntaxError('Jison got an invalid Json string')
         elif company:
-            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   'json', f'{self.company}.json'), 'r') as F:
+            try:
+                with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                       'json', f'{self.company}.json'), 'r') as F:
+                        self.json = F.readline().strip()
+            # file does not exist
+            except:
+                F = open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                       'json', f'{self.company}.json'), 'w+')
                 self.json = F.readline().strip()
+                F.close()
         else:
             raise Exception('No Json string has been provided')
         self.length = len(self.json)
@@ -199,20 +206,20 @@ class Jison:
         self.index = 0
         return self.result
 
-    def json_to_file(self, json_string):
+    def write(self, json_string):
         if isinstance(json_string, str):
             try:
                 literal_eval(json_string)
             except:
                 raise JsonSyntaxError(
-                    'Jison.json_to_file() got an invalid Json string')
+                    'Jison.write() got an invalid Json string')
             self.json = json_string
         elif isinstance(json_string, dict):
             import json
             self.json = json.dumps(json_string)
         else:
             raise Exception(
-                f'Jison.json_to_file() only accepts type "str" or "dict", but got {type(json_string)}')
+                f'Jison.write() only accepts type "str" or "dict", but got {type(json_string)}')
 
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'json', f'{self.company}.json'), 'w') as F:
