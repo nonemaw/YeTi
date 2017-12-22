@@ -104,19 +104,60 @@ class InterfaceNode:
     def __str__(self):
         return f'<InterfaceNode {self.node.get("id")} {self.node.get("text")}>'
 
-    def new(self, force: bool = False) -> str:
+    def get_id(self, depth: int = 0) -> tuple:
+        """
+        return child id and MongoDB query syntax based on depth
+        """
+        if depth:
+            node_id = ''
+            query_base = ''
+            try:
+                node_dict = self.node
+                while depth:
+                    node_dict = node_dict.get('children')[0]
+                    node_id = node_dict.get('id')
+                    query_base = f'children.{query_base}'
+                    depth -= 1
+
+                return f'{query_base}id', node_id
+
+            except:
+                return '', ''
+        return '', ''
+
+    def new(self, force: bool = False, depth: int = 0) -> str:
         """
         normally when `new()` is called and a legacy data already exists, it
         does nothing but just return legacy data's serial number
 
         when option `force` is enabled, the `new()` method will try to update
         information to the data if legacy data already exists
+
+        depth is used for controlling update depth, e.g. if I get following
+        data with depth is 3:
+            depth = 0     depth = 1     depth = 2     depth = 3
+            {'children': [{'children': [{'children': [{'id': 'custom_page_207_0_5',
+                                                       'text': 'Trust Name',
+                                                       'type': 'variable'}],
+                                         'id': 'client_52-2-0',
+                                         'text': 'Trust Details',
+                                         'type': 'root'}],
+                           'id': 'client_52-2',
+                           'text': 'FMD Trust SoA Wizard',
+                           'type': 'root'}],
+             'id': 'client_52',
+             'text': 'FMD SoA Wizard',
+             'type': 'root'}
+
+        then I ONLY update/insert the content of the leaf node on depth = 3
+        (when depth = 0 is the normal case)
         """
         legacy = Meta.db_company.InterfaceNode.find_one(
             {'id': self.node.get('id')})
         if not legacy:
             return str(Meta.db_company.InterfaceNode.insert(self.node))
-        elif force:
+
+        elif force and not depth:
             pushed_list = [x for x in self.node.get('children')
                            if x.get('text') not in
                                [l.get('text') for l in legacy.get('children')]
@@ -144,7 +185,27 @@ class InterfaceNode:
                         'children': self.node.get('children')
                     }})
 
-            return str(legacy.get('_id'))
+        elif depth:
+            import re
+            query, child_node_id = self.get_id(depth)
+
+            # child node is a root node
+            if re.search('^client_[0-9]+', child_node_id):
+                Meta.db_company.InterfaceNode.update_one(
+                    {
+                        'id': self.node.get('id'),
+                        query: child_node_id
+                    },
+                    {'$set': {
+
+                    }}
+                )
+            # child node is a leaf
+            else:
+                pass
+
+
+
         return str(legacy.get('_id'))
 
     @staticmethod
@@ -298,7 +359,7 @@ class User:
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_company.User.find_one(locate)
+        return Meta.db_default.User.find_one(locate)
 
 
 class UserUtl(UserMixin):
@@ -414,8 +475,7 @@ class Snippet():
                 # update new scenario id into existing group
                 group_id = str(group_dict.get('_id'))
                 Meta.db_default.SnippetGroup.update_one({'name': self.group},
-                                                        {'$push': {
-                                                            'scenarios': scenario_id}})
+                                        {'$push': {'scenarios': scenario_id}})
             else:
                 # insert new group for the new scenario
                 document = {
@@ -445,11 +505,11 @@ class Snippet():
 
     @staticmethod
     def search_group(locate: dict) -> dict:
-        return Meta.db_company.SnippetGroup.find_one(locate)
+        return Meta.db_default.SnippetGroup.find_one(locate)
 
     @staticmethod
     def search_scenario(locate: dict) -> dict:
-        return Meta.db_company.SnippetScenario.find_one(locate)
+        return Meta.db_default.SnippetScenario.find_one(locate)
 
 
 class Ticket():
