@@ -58,10 +58,12 @@ if __name__ == '__main__':
     # feature test
     elif args.ifetcher:
         company, username, password = input(
-            'Please input company, username and password: ').split(' ')
-        text = input('Please input node (optional): ')
-        if not text:
-            text = None
+            'Please input company, username and password: ').split(',')
+        specific = input('Please input specific nodes (optional): ')
+        if not specific:
+            specific = []
+        else:
+            specific = [x.strip() for x in specific.split(',') if x]
 
         from common.interface_fetcher import InterfaceFetcher
         from common.meta import Meta
@@ -75,7 +77,7 @@ if __name__ == '__main__':
             client, Meta.company)
         Meta.jison = Jison(company=Meta.company)
         Meta.interface_fetcher = InterfaceFetcher()
-        Meta.interface_fetcher.fetch(text=text)
+        Meta.interface_fetcher.fetch(specific=specific)
 
     # feature test
     elif args.search:
