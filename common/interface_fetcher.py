@@ -9,7 +9,6 @@ from selenium import webdriver
 from app.models import InterfaceNode, InterfaceLeafPage
 
 
-
 # # RUN WORKER: celery -A common.interface_fetcher worker --pool=solo -l info
 # @celery.task(bind=True)
 # def initialize_interface(self) -> dict:
@@ -262,7 +261,7 @@ from app.models import InterfaceNode, InterfaceLeafPage
 
 
 class InterfaceFetcher:
-    def __init__(self, add_on: dict = None):
+    def __init__(self):
         self.subgroup_name_ref = {
             'telephone/email list': 'Contact',
             'address list': 'Address',
@@ -281,8 +280,6 @@ class InterfaceFetcher:
             'general insurance policies': 'Risk',
             'medical insurance': 'Medical Insurance',
         }
-        if add_on:
-            self.subgroup_name_ref.update(add_on)
 
     @staticmethod
     def create_driver(driver: str = 'phantomjs'):
@@ -293,7 +290,7 @@ class InterfaceFetcher:
                     executable_path='common/phantomjs')
             else:
                 Meta.browser = webdriver.Chrome(
-                    executable_path='common/chromedriver')
+                    executable_path='./chromedriver')
 
             Meta.session_id = Meta.browser.session_id
             Meta.executor_url = Meta.browser.command_executor._url
@@ -322,10 +319,12 @@ class InterfaceFetcher:
                 Meta.company_username)
             Meta.browser.find_element_by_id('password').send_keys(
                 Meta.company_password)
-            Meta.browser.find_element_by_xpath('//*[@id="xiled-page-content"]/div/form/div[2]/input').click()
+            Meta.browser.find_element_by_xpath(
+                '//*[@id="xiled-page-content"]/div/form/div[2]/input').click()
         finally:
             return
 
+    @staticmethod
     def test_login(menu: dict = None, dump: bool = False) -> bool:
         Meta.browser.get(
             f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface')
@@ -335,7 +334,8 @@ class InterfaceFetcher:
         if re.search(r'permission_error', inner_html):
             # login failed
             if not dump:
-                menu['error'] = 'Unable to load Interface View, please ensure the correctness of username/password, and no other is using this account.'
+                menu[
+                    'error'] = 'Unable to load Interface View, please ensure the correctness of username/password, and no other is using this account.'
 
             return False
         return True
@@ -349,7 +349,7 @@ class InterfaceFetcher:
         Meta.session_id = None
         Meta.executor_url = None
 
-    def fetch(self, sleep: int = 1, text: str = None,
+    def fetch(self, sleep: int = 1, specific: list = None,
               driver: str = 'chromedriver'):
         URL_INTERFACE = f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface'
         menu = []
@@ -367,14 +367,24 @@ class InterfaceFetcher:
 
         for node in menu:
             _id = node.get('id')
-            if text and text.lower() in node.get('text').lower():
-                node['children'] = self.r_dump_interface(_id, sleep)
-                InterfaceNode(node).new(force=True)
-            elif text:
+            if specific and specific[0].lower() in node.get('text').lower():
+                specific.pop(0)
+                node['children'] = self.r_dump_interface(_id, sleep, specific)
+                #InterfaceNode(node).new(force=True, depth=len(specific))
+
+                from pprint import pprint
+                pprint(node)
+
+                InterfaceFetcher.quit_driver()
+                break
+            elif specific:
                 continue
 
             node['children'] = self.r_dump_interface(_id, sleep)
-            InterfaceNode(node).new(force=True)
+            #InterfaceNode(node).new(force=True)
+            from pprint import pprint
+            pprint(node)
+            InterfaceFetcher.quit_driver()
 
     def get_menu(self, _id: int, menu: dict or list) -> bool:
         try:
@@ -401,9 +411,12 @@ class InterfaceFetcher:
             except:
                 return False
 
-    def r_dump_interface(self, _id: str, sleep: int = 1) -> list:
+    def r_dump_interface(self, _id: str, sleep: int = 1, specific: list = None) -> list:
+        # id_list (nodes in current menu) returned as child_list of upper recursion
         id_list = []
-        # getting children when a node is not a leaf
+
+        # getting child list when a node is not a leaf, else return `[]` directly
+        # to upper recursion, to indicate current node is a leaf
         if re.search('^client_[0-9]+', _id):
             try:
                 Meta.browser.find_element_by_xpath(
@@ -422,34 +435,40 @@ class InterfaceFetcher:
                         element = Meta.browser.find_element_by_xpath(
                             f'//*[@id="{_id}"]/ul/li[{child}]')
 
-                        if not re.search('(_gap|_title)',
-                                         element.get_attribute('rel')):
-
-                            text = Meta.browser.find_element_by_xpath(
-                                f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
-                            child_id = element.get_attribute('id'),
+                        if not re.search('(_gap|_title)', element.get_attribute('rel')):
+                            text = Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
+                            child_id = element.get_attribute('id')
 
                             # something is wrong with page `Retirement Funds`,
                             # skipped other wise page crashed
-
                             if text != 'Retirement Funds':
-                                child_list = self.r_dump_interface(child_id[0], sleep=sleep)
-                                # if child is empty, process leaf page
+                                specific_flag = False
+                                if specific and specific[0].lower() in text.lower():
+                                    specific.pop(0)
+                                    specific_flag = True
+                                elif specific:
+                                    continue
+
+                                child_list = self.r_dump_interface(child_id, sleep, specific)
+                                # if current node's child is empty, process leaf page
                                 if not child_list:
-                                    leaf_type = self.dump_page(child_id[0], text)
+                                    leaf_type = self.dump_page(child_id, text)
                                     if leaf_type:
                                         id_list.append({
-                                            'id': child_id[0],
+                                            'id': child_id,
                                             'text': text,
                                             'type': leaf_type,
                                         })
                                 else:
                                     id_list.append({
-                                        'id': child_id[0],
+                                        'id': child_id,
                                         'text': text,
                                         'type': 'root',
                                         'children': child_list
                                     })
+
+                                if specific_flag:
+                                    return id_list
                     except:
                         break
         return id_list
@@ -591,7 +610,8 @@ class InterfaceFetcher:
             page['leaf_xplan'] = content
             leaf_type = 'xplan'
 
-        InterfaceLeafPage(_id, text, page).new()
+        #InterfaceLeafPage(_id, text, page).new()
+        print(f'leaf page {_id}, {text}')
         return leaf_type
 
     def update_node(self, name: str, include_page: bool = False):
@@ -621,3 +641,21 @@ class InterfaceFetcher:
 
     def delete_node(self, name):
         pass
+
+
+if __name__ == '__main__':
+    from app.db import mongo_connect, client
+
+    specific = input('specific nodes (optional): ')
+    if not specific:
+        specific = []
+    else:
+        specific = [x.strip() for x in specific.split(',') if x]
+
+    Meta.company = 'ytml'
+    Meta.company_username = 'ytml1'
+    Meta.company_password = ''
+    Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
+        client, Meta.company)
+    Meta.interface_fetcher = InterfaceFetcher()
+    Meta.interface_fetcher.fetch(specific=specific)
