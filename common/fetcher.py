@@ -17,12 +17,8 @@ class Fetcher:
 
     # TODO: along with Jison, support a list of group update, generate a list of 'to_json' result based on the list of groups
     def fetch(self, group_only: str = None):
-        """
-        code is ugly, but the html content is a little bit complex and parsers
-        like BeautifulSoup4 are hard to manipulate them because I am not very
-        good at grabbing HTML content with BS4 methods, therefore regex is
-        mainly used
-        """
+        # TODO: code is ugly, will build on BS4 in the future
+
         BASE = f'https://{Meta.company}.xplan.iress.com.au'
         URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
         URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
@@ -270,3 +266,21 @@ class Fetcher:
 
     def delete_subgroup(self, name: str):
         pass
+
+
+if __name__ == '__main__':
+    from app.db import mongo_connect, client
+
+    specific = input('specific nodes (optional): ')
+    if not specific:
+        specific = []
+    else:
+        specific = [x.strip() for x in specific.split(',') if x]
+
+    Meta.company = 'ytml'
+    Meta.company_username = 'ytml1'
+    Meta.company_password = ''
+    Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
+        client, Meta.company)
+    Meta.fetcher = Fetcher()
+    Meta.fetcher.fetch()
