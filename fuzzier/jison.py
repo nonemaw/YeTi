@@ -50,6 +50,7 @@ class Jison:
         self.TRUE = 9
         self.FALSE = 10
         self.NULL = 11
+        self.BREAK = 12
 
         self.index = 0
         self.success = True
@@ -62,6 +63,7 @@ class Jison:
 
         # object_list is for store multiple object in a list
         self.chunk_location_list = []
+        self.single_object = False
         self.multi_object = False
 
         # search_result stores search results
@@ -145,10 +147,8 @@ class Jison:
             return {}
 
         self.obj_name = obj_name
+        self.single_object = True
         self.parse(recursion=0)
-        self.index = 0
-        self.recursion_depth = 0
-        self.obj_name = ''
 
         if not self.chunk_location:
             return {}
@@ -174,11 +174,6 @@ class Jison:
         self.multi_object = True
         self.parse(recursion=0)
 
-        self.index = 0
-        self.recursion_depth = 0
-        self.multi_object = False
-        self.obj_name = ''
-
         if not self.chunk_location_list:
             return []
 
@@ -189,7 +184,6 @@ class Jison:
             result_dict = self.parse()
             if result_dict:
                 returned_list.append(result_dict)
-            self.index = 0
 
         self.load_json(cache)
         self.chunk_location_list.clear()
@@ -217,14 +211,11 @@ class Jison:
         if len(new_chunk) > 2:
             self.obj_name = obj_name
             self.parse(recursion=0)
-            self.index = 0
-            self.obj_name = ''
 
             if self.chunk_location:
                 self.json = f'{self.json[0:self.chunk_location[0]]}{new_chunk[1:-1]}{self.json[self.chunk_location[1]:]}'
                 self.length = len(self.json)
                 self.chunk_location.clear()
-                self.recursion_depth = 0
                 if self.file_name:
                     self.write(skip_check=True)
                     return 'True'
@@ -233,10 +224,10 @@ class Jison:
 
             else:
                 # if search failed, do not throw exception
-                return 'False'
+                return '<no object matched>'
         else:
             # an empty `new_chunk`: {}
-            return 'False'
+            return '<no object matched>'
 
     def remove_object(self, obj_name: str) -> str:
         """
@@ -246,8 +237,6 @@ class Jison:
         """
         self.obj_name = obj_name
         self.parse(recursion=0)
-        self.index = 0
-        self.obj_name = ''
 
         if self.chunk_location:
             left = self.chunk_location[0]
@@ -278,7 +267,6 @@ class Jison:
 
             self.json = f'{self.json[:left]}{self.json[right:]}'
             self.length = len(self.json)
-            self.recursion_depth = 0
             self.chunk_location.clear()
 
             if self.file_name:
@@ -289,11 +277,10 @@ class Jison:
 
         # if search failed, do not throw exception
         else:
-            return 'False'
+            return '<no object matched>'
 
     def search(self, pattern: str, ratio_method, count: int = 8) -> list:
         self.ratio_method = ratio_method
-        self.pattern = pattern
         self.result_length = int(count)
         self.deep = 0
         self.is_var_value = True
@@ -304,10 +291,11 @@ class Jison:
 
         # a pattern can be a simple string (for variable search)
         # or a combination of 'sub_group:variable_name'
-        if ':' in self.pattern:
-            self.pattern = [p.strip() for p in self.pattern.split(':') if p]
+        if re.search(':',pattern):
+            self.pattern = [p.strip() for p in pattern.split(':') if p]
+        else:
+            self.pattern = pattern
         self.parse()
-        self.index = 0
 
         returned_result = self.search_result
         self.search_result.clear()
@@ -344,8 +332,19 @@ class Jison:
 
         if self.json:
             result_dict = self.scanner(recursion)
+
+            # reset data after each parse operation
             self.index = 0
+            self.recursion_depth = 0
+            if self.obj_name:
+                self.obj_name = ''
+            if self.single_object:
+                self.single_object = False
+            if self.multi_object:
+                self.multi_object = False
+
             return result_dict
+
         else:
             raise JsonSyntaxError('No Json string provided')
 
@@ -366,7 +365,11 @@ class Jison:
             return self.parse_number()
         if token == self.OBJ_OPEN:
             # '{'
-            return self.parse_object(recursion)
+            returned = self.parse_object(recursion)
+            if returned != self.BREAK:
+                return returned
+            else:
+                return
         if token == self.ARR_OPEN:
             # '['
             return self.parse_array(recursion)
@@ -388,12 +391,12 @@ class Jison:
         self.success = False
         raise JsonSyntaxError(f'Json syntax error at index {self.index}')
 
-    def check_token(self):
+    def check_token(self) -> int:
         """ check next token but not move index
         """
         return self.go_to_next_token(check_token=True)
 
-    def go_to_next_token(self, check_token: bool = False):
+    def go_to_next_token(self, check_token: bool = False) -> int:
         self.ignore_white_space()
         index = self.index
 
@@ -459,7 +462,7 @@ class Jison:
                 return self.NULL
         return self.NONE
 
-    def parse_object(self, recursion: int = None):
+    def parse_object(self, recursion: int = None) -> dict:
         """ a '{'
         """
         if recursion is not None:
@@ -485,6 +488,9 @@ class Jison:
                     # condition for search object - chunk_location position 1
                     # object ends with `}`
                     self.chunk_location.append(self.index)
+                    if self.single_object:  # TODO: break operation when single obj search's condition matched
+                        pass
+
                     if self.multi_object:
                         self.chunk_location_list.append(self.chunk_location)
                         self.chunk_location = []
@@ -507,6 +513,9 @@ class Jison:
                             self.chunk_location.append(self.index - 1)
                         else:
                             self.chunk_location.append(self.index - 2)
+                        if self.single_object:  # TODO: break operation when single obj search's condition matched
+                            pass
+
                         if self.multi_object:
                             self.chunk_location_list.append(self.chunk_location)
                             self.chunk_location = []
@@ -539,7 +548,7 @@ class Jison:
                         f'Json syntax error at index {self.index}')
                 table[key] = value
 
-    def parse_array(self, recursion: int = None):
+    def parse_array(self, recursion: int = None) -> list:
         """ a '['
         """
         array = []
@@ -559,14 +568,14 @@ class Jison:
             else:
                 value = self.scanner(recursion)
                 if not self.success:
-                    self.success = False
                     raise JsonSyntaxError(
                         f'Json syntax error at index {self.index}')
                 array.append(value)
         return array
 
-    def parse_string(self):
+    def parse_string(self) -> str or tuple:
         # anything begin with `"`
+        anchor = 0
         if self.obj_name:
             anchor = self.index
 
@@ -683,7 +692,7 @@ class Jison:
 
         return string
 
-    def parse_number(self):
+    def parse_number(self) -> int:
         self.ignore_white_space()
         pointer = self.index
         number = 0
@@ -708,10 +717,3 @@ class Jison:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t' \
                 or self.json[self.index] == '\n':
             self.index += 1
-
-if __name__ == '__main__':
-    from pprint import pprint
-    jison = Jison()
-    jison.load_json("""{"id": 1, "result": {"data": {"interface_type": "client", "is_new": 0, "node_type": "menu_item", "publishable": false, "is_wizard_subpage": true, "can_import_export": false, "children": [{"interface_type": "client", "is_new": 0, "header": "title", "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Business Risk Management Wizard", "entity_type_condition_active": null, "condition_type": "AND", "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_0", "url_target": "", "field_index": 0, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": false, "menu_path": "", "element_type": "title", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Gap", "entity_type_condition_active": null, "condition_type": "AND", "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_1", "url_target": "", "field_index": 1, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": false, "menu_path": "", "element_type": "gap", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"text": "<p><font size="2">This wizard is designed to walk you through the Risk Management issues that may be facing your Business clients. It is important to note that while some of the areas or risk being addressed may not apply to your client at this stage, the report will still make note of these areas of risk. This is important for compliance and informs your client of potential risk exposures that may eventuate before your next review.</font></p>", "interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "<p><font size="2">This wizard is designed to walk you through the Risk Management issues that may be facing your Business clients. It is important to note that while some of the areas or risk being addressed may not apply to your client at this stage, the report will still make note of these areas of risk. This is important for compliance and informs your client of potential risk exposures that may eventuate before your next review.</font></p>", "ishtml": true, "entity_type_condition_active": null, "condition_type": "AND", "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_2", "url_target": "", "field_index": 2, "percent_width": "100", "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": false, "align": "left", "menu_path": "", "element_type": "text", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Gap", "entity_type_condition_active": null, "condition_type": "AND", "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_3", "url_target": "", "field_index": 3, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": false, "menu_path": "", "element_type": "gap", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"interface_type": "client", "is_new": 0, "height": "200", "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "entity_lookup_header": "", "is_scenario_wizard": 0, "has_conditions": null, "title": "Adviser", "xplanname": "category", "entity_type_condition_active": null, "entity_search_status": [0], "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": true, "immutable": 0, "subpage_index": 0, "client_group_member": 0, "entity_lookup_text": "", "new_entity_msg": "", "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_4", "new_entity_default_entity_status": 0, "url_target": "", "field_index": 4, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": true, "menu_path": "", "client_group_relation": 0, "element_type": "xplan", "mode": "edit", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"requirement": -1, "wrap_title": "", "interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Insurance Adviser", "tooltip": "", "entity_type_condition_active": null, "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_5", "url_target": "", "post": "", "field_index": 5, "partner_page_status": "none", "entity_type_condition": [], "alternative_title": "", "url": "", "hidden_xlite": false, "entity_type": "client", "menu_path": "", "element_type": "field", "fieldname": "client_adviser_insurance", "mode": "edit", "custom_page_name": "business_risk", "show_default": 0, "entity_types": ["partnership", "company"], "display": "regular"}, {"requirement": -1, "wrap_title": "", "interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Meeting Date", "tooltip": "", "entity_type_condition_active": null, "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_6", "url_target": "", "post": "", "field_index": 6, "partner_page_status": "none", "entity_type_condition": [], "alternative_title": "", "url": "", "hidden_xlite": false, "entity_type": "scenario", "menu_path": "", "element_type": "field", "fieldname": "business_risk_meeting_date", "mode": "edit", "custom_page_name": "business_risk", "show_default": 0, "entity_types": ["partnership", "company"], "display": "regular"}, {"interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Gap", "entity_type_condition_active": null, "condition_type": "AND", "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_7", "url_target": "", "field_index": 7, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": false, "menu_path": "", "element_type": "gap", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"requirement": -1, "wrap_title": "", "interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Contact Person First Name", "tooltip": "", "entity_type_condition_active": null, "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_8", "url_target": "", "post": "", "field_index": 8, "partner_page_status": "none", "entity_type_condition": [], "alternative_title": "", "url": "", "hidden_xlite": false, "entity_type": "scenario", "menu_path": "", "element_type": "field", "fieldname": "business_risk_contact_fname", "mode": "edit", "custom_page_name": "business_risk", "show_default": 0, "entity_types": ["partnership", "company"], "display": "regular"}, {"requirement": -1, "wrap_title": "", "interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Contact Person Surname", "tooltip": "", "entity_type_condition_active": null, "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_9", "url_target": "", "post": "", "field_index": 9, "partner_page_status": "none", "entity_type_condition": [], "alternative_title": "", "url": "", "hidden_xlite": false, "entity_type": "scenario", "menu_path": "", "element_type": "field", "fieldname": "business_risk_contact_sname", "mode": "edit", "custom_page_name": "business_risk", "show_default": 0, "entity_types": ["partnership", "company"], "display": "regular"}, {"interface_type": "client", "is_new": 0, "height": "200", "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "entity_lookup_header": "", "is_scenario_wizard": 0, "has_conditions": null, "title": "Telephone/Email List", "xplanname": "contact", "entity_type_condition_active": null, "entity_search_status": [0], "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": true, "immutable": 0, "subpage_index": 0, "client_group_member": 0, "entity_lookup_text": "", "new_entity_msg": "", "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_10", "new_entity_default_entity_status": 0, "url_target": "", "field_index": 10, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": true, "menu_path": "", "client_group_relation": 0, "element_type": "xplan", "mode": "edit", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"interface_type": "client", "preserve_order": 0, "is_new": 0, "height": "100", "groupname": "entity_address", "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "entity_lookup_header": "", "is_scenario_wizard": 0, "has_conditions": null, "title": "Address", "entity_type_condition_active": null, "groupfilter": "", "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": true, "immutable": 0, "subpage_index": 0, "client_group_member": 0, "entity_lookup_text": "", "new_entity_msg": "", "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_11", "entity_search_status": [0], "url_target": "", "field_index": 11, "partner_page_status": "none", "entity_type_condition": [], "custom_text": "", "alternative_title": "", "url": "", "hidden_xlite": false, "entity_type": "client", "menu_path": "", "client_group_relation": 0, "new_entity_default_entity_status": 0, "element_type": "group", "mode": "edit", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"], "display": "regular"}, {"interface_type": "client", "is_new": 0, "height": "200", "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "entity_lookup_header": "", "is_scenario_wizard": 0, "has_conditions": null, "title": "Address List", "xplanname": "contact_address", "entity_type_condition_active": null, "entity_search_status": ["0"], "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "client_group_member": 0, "entity_lookup_text": "", "new_entity_msg": "", "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_12", "new_entity_default_entity_status": 0, "url_target": "", "field_index": 12, "partner_page_status": "none", "entity_type_condition": [], "url": "", "hidden_xlite": false, "menu_path": "", "client_group_relation": 0, "element_type": "xplan", "mode": "edit", "custom_page_name": "business_risk", "entity_types": ["partnership", "company"]}, {"requirement": -1, "wrap_title": "", "interface_type": "client", "is_new": 0, "node_type": "page_element", "publishable": false, "is_wizard_subpage": 0, "can_import_export": false, "children": [], "is_scenario_wizard": 0, "has_conditions": null, "title": "Include Recommendations on each section of Report?", "tooltip": "This field will condition where Product Recommendations are displayed in the Risk Report. If you select Yes Product Recommendations will be displayed at the bottom of each area of risk as well as the final Recommendation page. If you select no, product recommendations will only be displayed on the final Recommendation page. ", "entity_type_condition_active": null, "locales": [], "removable": 1, "is_wizard": 0, "show_top_nav": 0, "hidden": false, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": 0, "node_id": "business_risk_0_13", "url_target": "", "post": "", "field_index": 13, "partner_page_status": "none", "entity_type_condition": [], "alternative_title": "", "url": "", "hidden_xlite": false, "entity_type": "scenario", "menu_path": "", "element_type": "field", "fieldname": "business_risk_include_recs_in_report", "mode": "edit", "custom_page_name": "business_risk", "show_default": 0, "entity_types": ["partnership", "company"], "display": "regular"}], "is_scenario_wizard": 1, "has_conditions": false, "title": "Report Overview", "removable": true, "is_wizard": true, "show_top_nav": null, "hidden": 0, "immutable": 0, "subpage_index": 0, "editable": 1, "has_conditions_partner_page": false, "node_id": "client_4-6-0", "url_target": "", "partner_page_status": "none", "url": "", "hidden_xlite": false, "menu_path": "4/6/0", "custom_page_name": "business_risk"}, "ok": true, "error": ""}, "error": null}""")
-    print(jison.json)
-    print(jison.parse())
