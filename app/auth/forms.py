@@ -45,7 +45,7 @@ class LoginForm(FlaskForm):
                 mongo_connect(client, Meta.company)
             Meta.crypto = AESCipher()
             Meta.jison = Jison()
-            Meta.jison.load_json(company=Meta.company)
+            Meta.jison.load_json(file_name=Meta.company)
             Meta.fetcher = Fetcher()
             Meta.interface_fetcher = InterfaceFetcher()
         except:

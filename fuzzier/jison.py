@@ -288,9 +288,14 @@ class Jison:
         else:
             return '<no object matched>'
 
-    def search(self, pattern: str, ratio_method, count: int = 8) -> list:
+    def search(self, pattern: str, ratio_method, count: int = 8, threshold: float = 0.15) -> list:
+        """
+        ratio_method must return a valid positive float number as ratio ranges
+        in (0, 1]
+        """
         self.ratio_method = ratio_method
         self.result_length = int(count)
+        self.threshold = threshold
         self.deep = 0
         self.is_var_value = True
         self.skipped = False
@@ -299,7 +304,7 @@ class Jison:
         self.sub = ''
 
         # a pattern can be a simple string (for variable search)
-        # or a combination of 'sub_group:variable_name'
+        # or a combination of 'parent_pattern:pattern'
         if re.search(':', pattern):
             self.pattern = [p.strip() for p in pattern.split(':') if p]
         else:
@@ -307,7 +312,7 @@ class Jison:
         self.parse()
 
         returned_result = self.search_result
-        self.search_result.clear()
+        self.search_result = []
 
         return returned_result
 
@@ -673,8 +678,8 @@ class Jison:
                     raise Exception('An invalid search pattern')
                 self.is_var_value = True
 
-                if current_ratio > 0.15:
-                    if len(self.search_result) == self.search_result:
+                if current_ratio > self.threshold:
+                    if len(self.search_result) == self.result_length:
                         stored_ratio_result = [i[0] for i in
                                                self.search_result]
                         min_ratio = min(stored_ratio_result)
