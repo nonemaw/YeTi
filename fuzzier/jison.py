@@ -37,6 +37,7 @@ class Jison:
     5. Json object replacement
        (find and replace any single Json object)
     """
+
     def __init__(self):
         self.NONE = 0
         self.OBJ_OPEN = 1
@@ -50,7 +51,6 @@ class Jison:
         self.TRUE = 9
         self.FALSE = 10
         self.NULL = 11
-        self.BREAK = 12
 
         self.index = 0
         self.success = True
@@ -63,6 +63,7 @@ class Jison:
 
         # object_list is for store multiple object in a list
         self.chunk_location_list = []
+        self.obj_location_list = {}  # TODO: dict for locating all objects during one parse rather than parse every time for requesting different objs
         self.single_object = False
         self.multi_object = False
 
@@ -84,6 +85,7 @@ class Jison:
             raise InvalidJson('Empty Json string provided')
 
     def dict_to_json_string(self, json_content: dict) -> str:
+        # TODO: get ride of json library
         import json
         return json.dumps(json_content)
 
@@ -96,7 +98,7 @@ class Jison:
 
         return multi_suber.sub(run, text)
 
-    def load_json(self, json_string = None, file_name: str = None):
+    def load_json(self, json_string=None, file_name: str = None):
         """
         if Json string is manually provided then Json in file is ignored
 
@@ -116,9 +118,10 @@ class Jison:
 
         elif file_name:
             def convert_file():
-                with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                       'json', f'{self.file_name}.json'),
-                          'r') as F:
+                with open(os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)),
+                        'json', f'{self.file_name}.json'),
+                        'r') as F:
                     for line in F:
                         yield line.strip()
 
@@ -136,7 +139,7 @@ class Jison:
 
         self.length = len(self.json)
 
-    def get_single_object(self, obj_name: str) -> dict:
+    def get_single_object(self, obj_name: str, value_only: bool = False):
         """
         return a matched object key-value pair
 
@@ -161,9 +164,15 @@ class Jison:
         self.load_json(cache)
         self.chunk_location.clear()
 
-        return returned_dict
+        if returned_dict:
+            if value_only:
+                return returned_dict.get(obj_name)
+            return returned_dict
 
-    def get_multi_object(self, obj_name: str) -> list:
+        return {}
+
+    def get_multi_object(self, obj_name: str,
+                         value_only: bool = False) -> list:
         """
         return a list of all matched object key-value pairs with same key value
         """
@@ -183,7 +192,10 @@ class Jison:
             self.load_json(f'{{{cache[chunk[0]:chunk[1]]}}}')
             result_dict = self.parse()
             if result_dict:
-                returned_list.append(result_dict)
+                if value_only:
+                    returned_list.append(result_dict.get(obj_name))
+                else:
+                    returned_list.append(result_dict)
 
         self.load_json(cache)
         self.chunk_location_list.clear()
@@ -205,9 +217,6 @@ class Jison:
             raise Exception(
                 f'Jison.replace_object() only accepts type "str" or "dict", but got "{type(new_chunk)}"')
 
-        # TODO: support a list of obj_name's replacement rather than only one
-        # TODO: obj_name = ['a', 'b', 'c']
-        # TODO: new_chunk = [chunk1, chunk2, chunk3]
         if len(new_chunk) > 2:
             self.obj_name = obj_name
             self.parse(recursion=0)
@@ -291,7 +300,7 @@ class Jison:
 
         # a pattern can be a simple string (for variable search)
         # or a combination of 'sub_group:variable_name'
-        if re.search(':',pattern):
+        if re.search(':', pattern):
             self.pattern = [p.strip() for p in pattern.split(':') if p]
         else:
             self.pattern = pattern
@@ -302,7 +311,7 @@ class Jison:
 
         return returned_result
 
-    def write(self, json_string = None, skip_check = False):
+    def write(self, json_string=None, skip_check=False):
         if not skip_check and json_string:
 
             if isinstance(json_string, str):
@@ -314,12 +323,14 @@ class Jison:
                     f'Jison.write() only accepts type "str" or "dict", but got {type(json_string)}')
 
             with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   'json', f'{self.file_name}.json'), 'w') as F:
+                                   'json', f'{self.file_name}.json'),
+                      'w') as F:
                 F.write(json_string)
 
         elif skip_check:
             with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   'json', f'{self.file_name}.json'), 'w') as F:
+                                   'json', f'{self.file_name}.json'),
+                      'w') as F:
                 F.write(self.json)
 
         else:
@@ -328,7 +339,8 @@ class Jison:
 
     def parse(self, recursion: int = None) -> dict:
         if not hasattr(self, 'json'):
-            raise JsonNotLoaded('Json string is not loaded\nPlease load Json string by running Jison.load_json() before any operation')
+            raise JsonNotLoaded(
+                'Json string is not loaded\nPlease load Json string by running Jison.load_json() before any operation')
 
         if self.json:
             result_dict = self.scanner(recursion)
@@ -357,19 +369,13 @@ class Jison:
         token = self.check_token()
         if token == self.STRING:
             # '"'
-            if self.obj_name:
-                return self.parse_string()[0]
-            return self.parse_string()
+            return self.parse_string()[0]
         if token == self.NUMBER:
             # '0123456789-'
             return self.parse_number()
         if token == self.OBJ_OPEN:
             # '{'
-            returned = self.parse_object(recursion)
-            if returned != self.BREAK:
-                return returned
-            else:
-                return
+            return self.parse_object(recursion)
         if token == self.ARR_OPEN:
             # '['
             return self.parse_array(recursion)
@@ -389,7 +395,8 @@ class Jison:
             pass
 
         self.success = False
-        raise JsonSyntaxError(f'Json syntax error at index {self.index}')
+        raise JsonSyntaxError(
+            f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
 
     def check_token(self) -> int:
         """ check next token but not move index
@@ -479,7 +486,7 @@ class Jison:
             if token == self.NONE:
                 self.success = False
                 raise JsonSyntaxError(
-                    f'Json syntax error at index {self.index}')
+                    f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
             elif token == self.COMMA:
                 self.go_to_next_token()
             elif token == self.OBJ_CLOSE:
@@ -488,7 +495,8 @@ class Jison:
                     # condition for search object - chunk_location position 1
                     # object ends with `}`
                     self.chunk_location.append(self.index)
-                    if self.single_object:  # TODO: break operation when single obj search's condition matched
+                    if self.single_object:
+                        # TODO: break operation when single obj search's condition matched
                         pass
 
                     if self.multi_object:
@@ -513,11 +521,13 @@ class Jison:
                             self.chunk_location.append(self.index - 1)
                         else:
                             self.chunk_location.append(self.index - 2)
-                        if self.single_object:  # TODO: break operation when single obj search's condition matched
+                        if self.single_object:
+                            # TODO: break operation when single obj search's condition matched
                             pass
 
                         if self.multi_object:
-                            self.chunk_location_list.append(self.chunk_location)
+                            self.chunk_location_list.append(
+                                self.chunk_location)
                             self.chunk_location = []
 
                 if recursion is not None and self.obj_name:
@@ -527,25 +537,25 @@ class Jison:
                         self.chunk_location.append(location)
                         self.recursion_depth = recursion
                 else:
-                    key = self.parse_string()
+                    key = self.parse_string()[0]
 
                 if not self.success:
                     raise JsonSyntaxError(
-                        f'Json syntax error at index {self.index}')
+                        f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
 
                 # a ':'
                 token = self.go_to_next_token()
                 if token != self.COLON:
                     self.success = False
                     raise JsonSyntaxError(
-                        f'Json syntax error at index {self.index}')
+                        f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
 
                 # a value
                 value = self.scanner(recursion)
                 if not self.success:
                     self.success = False
                     raise JsonSyntaxError(
-                        f'Json syntax error at index {self.index}')
+                        f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
                 table[key] = value
 
     def parse_array(self, recursion: int = None) -> list:
@@ -559,7 +569,7 @@ class Jison:
             if token == self.NONE:
                 self.success = False
                 raise JsonSyntaxError(
-                    f'Json syntax error at index {self.index}')
+                    f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
             elif token == self.COMMA:
                 self.go_to_next_token()
             elif token == self.ARR_CLOSE:
@@ -569,15 +579,13 @@ class Jison:
                 value = self.scanner(recursion)
                 if not self.success:
                     raise JsonSyntaxError(
-                        f'Json syntax error at index {self.index}')
+                        f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
                 array.append(value)
         return array
 
-    def parse_string(self) -> str or tuple:
+    def parse_string(self) -> tuple:
         # anything begin with `"`
-        anchor = 0
-        if self.obj_name:
-            anchor = self.index
+        anchor = self.index
 
         self.ignore_white_space()
         string = ''
@@ -625,7 +633,8 @@ class Jison:
                 string += char
         if not done:
             self.success = False
-            raise JsonSyntaxError(f'Json syntax error at index {self.index}')
+            raise JsonSyntaxError(
+                f'Json syntax error at index {self.index}, character "{self.json[self.index]}"')
 
         if self.ratio_method:
             if self.deep == 1:
@@ -666,15 +675,17 @@ class Jison:
 
                 if current_ratio > 0.15:
                     if len(self.search_result) == self.search_result:
-                        stored_ratio_result = [i[0] for i in self.search_result]
+                        stored_ratio_result = [i[0] for i in
+                                               self.search_result]
                         min_ratio = min(stored_ratio_result)
                         if current_ratio >= max(stored_ratio_result):
                             for index, item in enumerate(self.search_result):
                                 if item[0] == min_ratio:
                                     self.search_result[index] = [current_ratio,
-                                                          self.group, self.sub,
-                                                          self.var_name,
-                                                          string]
+                                                                 self.group,
+                                                                 self.sub,
+                                                                 self.var_name,
+                                                                 string]
                                     break
                         else:
                             pass
@@ -687,14 +698,12 @@ class Jison:
                 self.var_name = string
                 self.is_var_value = False
 
-        if self.obj_name:
-            return string, anchor
+        return string, anchor
 
-        return string
-
-    def parse_number(self) -> int:
+    def parse_number(self) -> float or int:
         self.ignore_white_space()
         pointer = self.index
+        is_float = False
         number = 0
 
         while pointer < self.length:
@@ -702,9 +711,11 @@ class Jison:
                 break
             else:
                 pointer += 1
+                if self.json[pointer] in '.eE':
+                    is_float = True
 
         try:
-            number = int(self.json[self.index:pointer])
+            number = float(self.json[self.index:pointer]) if is_float else int(self.json[self.index:pointer])
         except:
             self.success = False
         else:
@@ -717,3 +728,14 @@ class Jison:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t' \
                 or self.json[self.index] == '\n':
             self.index += 1
+
+
+if __name__ == '__main__':
+    jison = Jison()
+    jison.load_json({"sample": "Jison", "params": [
+        {"key1": "main", "key2": "client", "key3": "0/0", "key4": 0,
+         "key5": 2},
+        {"key1": "sub", "key2": "parent", "c1": None, "c2": True}], "id": 1})
+
+    obj = jison.get_single_object('key1')
+    print(obj)
