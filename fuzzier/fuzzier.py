@@ -60,5 +60,4 @@ def ratio(target: str, pattern: str):
 def search(pattern: str, count: int = 8) -> list:
     result = Meta.jison.search(pattern=pattern, ratio_method=ratio,
                                count=count)
-
     return result

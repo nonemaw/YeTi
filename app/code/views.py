@@ -106,12 +106,12 @@ def do_search():
     """
     received_json = request.json
     if received_json:
-
         result_list = sorted(fuzzier.search(received_json.get('pattern'),
                                             int(received_json.get('count'))),
                              key=lambda item: item[0],
                              reverse=True)
         returned_list = []
+
         try:
             for item in result_list:
                 group_var = item[1]
