@@ -308,6 +308,8 @@ function initialize_interface(id){
                         variable: {icon: "/static/img/jstree_icons/var.png"},
                         group: {icon: "/static/img/jstree_icons/group.png"},
                         xplan: {icon: "/static/img/jstree_icons/xplan.png"},
+                        gap: {icon: "/static/img/jstree_icons/gap.png"},
+                        title: {icon: "/static/img/jstree_icons/title.png"},
                         default : {}
                     },
                     plugins: ["search", "themes", "types"]
