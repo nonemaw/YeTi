@@ -5,6 +5,7 @@ import os
 import json
 from pprint import pprint
 from jison import Jison
+from bs4 import BeautifulSoup
 
 
 TEST_URL = 'https://ytml.xplan.iress.com.au/RPC2/'
@@ -91,14 +92,82 @@ def handle_leaf(node_id: str, menu_path: str, session: requests.sessions.Session
     leaf_req.get('params')[0]['subpage_index'] = subpage_index
     leaf_req.get('params')[0]['field_index'] = field_index
 
-    pprint(leaf_req)
-
-
     jison.load_json(session.post(TEST_URL, json=leaf_req, headers=interface_header).json())
+    leaf_type = jison.get_single_object('title', value_only=True).lower()
+    page = {}
 
-    print(jison.parse())
+    if leaf_type == 'xplan':
+        page_html = jison.get_multi_object('html')[2].get('html')
+    else:
+        page_html = jison.get_multi_object('html')[0].get('html')
+    soup = soup = BeautifulSoup(page_html, 'html5lib')
 
+    # basic information for each page
+    try:
+        name = soup.find('option', {'selected': True}).getText()
+        if re.findall('\[(.+?)\] (.+)', name):
+            name = '--'.join(re.findall('\[(.+?)\] (.+)', name)[0])
+    except:
+        name = '(Empty)'
+    content = {name: []}
 
+    if soup.find('input', {'checked': True, 'id': 'entity_types_1'}):
+        content.get(name).append('individual')
+    if soup.find('input', {'checked': True, 'id': 'entity_types_2'}):
+        content.get(name).append('superfund')
+    if soup.find('input', {'checked': True, 'id': 'entity_types_3'}):
+        content.get(name).append('partnership')
+    if soup.find('input', {'checked': True, 'id': 'entity_types_4'}):
+        content.get(name).append('trust')
+    if soup.find('input', {'checked': True, 'id': 'entity_types_5'}):
+        content.get(name).append('company')
+    page['leaf_basic'] = content
+
+    # try to acquire table content if a `xplan` page
+    if leaf_type == 'xplan':
+        content = {'table1': [], 'table2': []}
+
+        leaf_req_xtable.get('params')[0]['element_name'] = jison.get_single_object('element_name').get('element_name')
+        leaf_req_xtable['method'] = table1_method
+        jison.load_json(session.post(TEST_URL, json=leaf_req_xtable, headers=interface_header).json())
+
+        # if this `xplan` page has list with tabs
+        # process table content
+        table_html = jison.get_single_object('tabs_html', value_only=True)
+        if table_html:
+            list_view_html = table_html.get('_above-tabs')
+            full_view_html = table_html.get('_hidden-items')
+
+            page['leaf_xplan'] = content
+
+        # if this `xplan` page has list with checkbox or empty page
+        # process `page_html`
+        else:
+            for input in soup.find_all('input', {'checked': 'checked', 'name': 'xstore_listfields'}):
+                content.get('table1').append(input.findNext('label').getText())
+
+            for input in soup.find_all('input', {'checked': 'checked', 'name': 'xstore_capturefields'}):
+                content.get('table2').append(input.findNext('label').getText())
+
+            page['leaf_xplan'] = content
+
+    # not an `xplan` page
+    else:
+        if leaf_type == 'group':
+            content = {'group': []}
+
+            for option in soup.find('select', {'id': 'select_fields_0'}).find_all('option'):
+                content.get('group').append(option.getText())
+
+            page['leaf_group'] = content
+
+        elif leaf_type == 'field':
+            leaf_type = 'variable'
+
+    page['leaf_type'] = leaf_type
+    pprint(page)
+
+    return leaf_type
 
 def get_children(menu_path: str, session: requests.sessions.Session, jison: Jison) -> list:
     """
@@ -181,8 +250,8 @@ def test(password: str):
         session.post(URL_LOGIN, data=payload, headers=header)
         r = session.get(URL_HOME)
 
-
-        if re.search(r'permission_error|Login for User', r.text): 
+        #try:
+        if re.search(r'permission_error|Login for User', r.text):
             # login failed
             raise Exception('Currently there is another user using this XPLAN account.')
 
@@ -215,12 +284,16 @@ def test(password: str):
         #
         # print(json.dumps(session.post(TEST_URL, json=menu_req, headers=interface_header).json()))
 
-        handle_leaf('custom_page_208_2_8', '52/3/2', session, jison)
+        handle_leaf('client_contact_0_2', '1/1', session, jison)  # xplan page with checkbox table
+        # handle_leaf('balancesheet_0_10', '3/1', session, jison)   # xplan page two tables
+        # handle_leaf('client_contact_0_8', '1/1', session, jison)  # xplan page (empty)
+        # handle_leaf('client_contact_0_1', '1/1', session, jison)  # group
+        # handle_leaf('client_contact_0_3', '1/1', session, jison)  # var
 
 
-
+    #except Exception as e:
+        # print(e)
         session.get(URL_LOGOUT)
-
 
 if __name__ == '__main__':
     password = 'Passw0rdOCT'
