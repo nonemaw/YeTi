@@ -733,14 +733,3 @@ class Jison:
         while self.json[self.index] == ' ' or self.json[self.index] == '\t' \
                 or self.json[self.index] == '\n':
             self.index += 1
-
-
-if __name__ == '__main__':
-    jison = Jison()
-    jison.load_json({"sample": "Jison", "params": [
-        {"key1": "main", "key2": "client", "key3": "0/0", "key4": 0,
-         "key5": 2},
-        {"key1": "sub", "key2": "parent", "c1": None, "c2": True}], "id": 1})
-
-    obj = jison.get_single_object('key1')
-    print(obj)
