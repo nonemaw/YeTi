@@ -544,6 +544,9 @@ class InterfaceFetcher:
         except:
             pass
         else:
+
+            print(name.lower())
+
             if name.lower() in self.subgroup_name_ref:
                 page['subgroup'] = self.subgroup_name_ref.get(name.lower())
             # table 1
@@ -653,8 +656,8 @@ if __name__ == '__main__':
         specific = [x.strip() for x in specific.split(',') if x]
 
     Meta.company = 'ytml'
-    Meta.company_username = 'ytml1'
-    Meta.company_password = ''
+    Meta.company_username = 'ytml2'
+    Meta.company_password = 'Passw0rdOCT'
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()
