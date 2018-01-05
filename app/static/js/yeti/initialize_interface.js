@@ -298,26 +298,33 @@ function initialize_interface(id){
                 var root_nodes = data.root_nodes;
                 itree.jstree({
                     core: {
-                        themes: { 'name': 'proton', 'responsive': true },
-                        check_callback : true,
+                        themes: {'name': 'proton', 'responsive': true},
+                        check_callback: true,
                         data: root_nodes
                     },
                     types: {
-                        root: {icon: "glyphicon glyphicon-folder-close"},
-                        other: {icon: "/static/img/jstree_icons/blank.png"},
+                        root: {icon: "/static/img/jstree_icons/root.png"},
+                        // root: {icon: "glyphicon glyphicon-folder-close"},
+                        other: {icon: "/static/img/jstree_icons/full.png"},
                         variable: {icon: "/static/img/jstree_icons/var.png"},
                         group: {icon: "/static/img/jstree_icons/group.png"},
                         xplan: {icon: "/static/img/jstree_icons/xplan.png"},
                         gap: {icon: "/static/img/jstree_icons/gap.png"},
                         title: {icon: "/static/img/jstree_icons/title.png"},
-                        default : {}
+                        wizard: {icon: "/static/img/jstree_icons/wizard.png"},
+                        default: {}
                     },
                     plugins: ["search", "themes", "types"]
-                }).on('open_node.jstree', function (e, data) {
-                        data.instance.set_icon(data.node, "glyphicon glyphicon-folder-open");
-                    }).on('close_node.jstree', function (e, data) {
-                        data.instance.set_icon(data.node, "glyphicon glyphicon-folder-close");
-                    });
+                })
+                // }).on(
+                //         'open_node.jstree', function (e, data) {
+                //             data.instance.set_icon(data.node, "glyphicon glyphicon-folder-open");
+                //         }
+                //     ).on(
+                //         'close_node.jstree', function (e, data) {
+                //             data.instance.set_icon(data.node, "glyphicon glyphicon-folder-close");
+                //         }
+                //     );
             },
             error: function () {
                 alert('Notice from Interface: Information out of date, please login again');
@@ -345,13 +352,18 @@ function initialize_interface(id){
                     var group_subgroup_array = item.split('--');
 
                     // Group - Subgroup
-                    if (group_subgroup_array.length === 2) {
+                    if (group_subgroup_array.length === 2 || leaf_content.page.leaf_type === 'variable') {
                         $('#interface-table-row').css('height', '0');
                         $('#interface-xplan-table1-head').css('display', 'none');
                         $('#interface-xplan-table2-head').css('display', 'none');
                         $('#interface-group-table-head').css('display', 'none');
                         itype.text('Variable');
-                        ititle.text('[' + group_subgroup_array[0] + '] ' +  group_subgroup_array[1]);
+                        if (group_subgroup_array.length === 2) {
+                            ititle.text('[' + group_subgroup_array[0] + '] ' + group_subgroup_array[1]);
+                        }
+                        else if (group_subgroup_array.length === 1) {
+                            ititle.text('[empty] ' + group_subgroup_array[0]);
+                        }
                         ititle.css('display', '');
                     }
 
@@ -359,8 +371,8 @@ function initialize_interface(id){
                     else if (group_subgroup_array.length === 1) {
                         // XPLAN collection got some variables
                         if (leaf_content.page.leaf_xplan) {
-                            $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
-                            $('#interface-title').css('display', 'none');
+                            itype.text('XPLAN Item Collection: ' + group_subgroup_array[0]);
+                            ititle.css('display', 'none');
                             $('#interface-group-table-head').css('display', 'none');
                             var interface_xplan_table1 = $('#interface-xplan-table1');
                             var interface_xplan_table2 = $('#interface-xplan-table2');

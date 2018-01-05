@@ -131,10 +131,6 @@ body {
    background: #eaeaea !important;
 }
 
-#interface-window {
-    border-left: 2px dashed #848383;
-}
-
 #interface-title {
     border:none;
 }
@@ -145,7 +141,11 @@ body {
 /*#interface-window {*/
     /*overflow-y: scroll;*/
 /*}*/
-
+@media (min-width: 992px) {
+    .modal-lg {
+        width: 60vw;
+    }
+}
 .modal-content {
     background: #eaeaea;
 }
@@ -157,6 +157,9 @@ body {
     height: 65vh;
     max-height: 65vh;
     overflow-y: auto;
+}
+.modal {
+    padding-left: 52vh;
 }
 
 hr {
