@@ -44,8 +44,7 @@ class LoginForm(FlaskForm):
             Meta.db_company = Meta.db_default if Meta.company == 'ytml' else \
                 mongo_connect(client, Meta.company)
             Meta.crypto = AESCipher()
-            Meta.jison = Jison()
-            Meta.jison.load_json(file_name=Meta.company)
+            Meta.jison = Jison(file_name=Meta.company)
             Meta.fetcher = Fetcher()
             Meta.interface_fetcher = InterfaceFetcher()
         except:
