@@ -56,7 +56,7 @@ class Jison:
         self.success = True
 
         # object (dict) manipulation:
-        # old_chunk: for get_single_object()/remove_object()/replace_object()
+        # old_chunk: for get_object()/remove_object()/replace_object()
         # new_chunk: for replace_object()
         self.chunk_location = []
         self.obj_name = ''
@@ -142,7 +142,7 @@ class Jison:
 
         self.length = len(self.json)
 
-    def get_single_object(self, obj_name: str, value_only: bool = False):
+    def get_object(self, obj_name: str, value_only: bool = False):
         """
         return a matched object key-value pair
 
