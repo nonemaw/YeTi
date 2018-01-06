@@ -6,6 +6,7 @@ from jison import Jison
 from bs4 import BeautifulSoup
 from common.meta import Meta
 from app.models import InterfaceNode, InterfaceLeafPage
+from pprint import pprint as pp
 
 class InterfaceFetcher:
     URL_SOURCE = f'https://{Meta.company}.xplan.iress.com.au/RPC2/'
@@ -33,70 +34,6 @@ class InterfaceFetcher:
         'Accept-Encoding': 'gzip',
         'Content-Type': 'application/json',
         'referer': 'https://ytml.xplan.iress.com.au/factfind/edit_interface',
-    }
-
-    menu_req = {
-        "method": "ajax.MenuTreeAjax_rpc_load_node_gG7QNYAS_",
-        "params": [{
-            "interface_type": "client",
-            "menu_path": ""
-        }],
-        "id": 1
-    }
-
-    """
-    FMD SoA Wizard - [client_52]
-        FMD SMSF SoA Wizard - [client_52-3]
-            Assets & Liabilities - [client_52-3-1]
-                    -> `52-3-1` as `menu_path`
-                Add Assets and Liabilities - [custom_page_208_1_12]
-                    -> `custom_page_208` as `custom_page_name`
-                    -> `12` as `field_index`
-                    -> `1` as `subpage_index`
-    """
-    leaf_req = {
-        "method":"ajax.PageElementSettingAjax_rpc_html_kYjvPyv3_",
-        "params":[
-            {
-                "custom_page_name": "",  # TODO
-                "interface_type": "client",
-                "menu_path": "",         # TODO
-                "field_index": 0,
-                "subpage_index": 0,      # TODO
-                "element_type": "",
-            }
-        ],
-        "id":1
-    }
-
-    table1_method = "ajax.XplanElementListSettingAjax_rpc_html_WEaBDM8__"
-    table2_method = "ajax.XplanElementEditSettingAjax_rpc_html_HBm947gH_"
-    leaf_req_xtable = {
-        "method": "",
-        "params": [
-            {
-                "has_partner": False,
-                "domain": "factfind",
-                "guid": "00000000-0000-0000-0000-000000000000",
-                "cover_type": "",
-                "coa_access": False,
-                "entity_type": 0,
-                "locale": "AU",
-                "custom_page_name": "",
-                "editable": False,
-                "subpage_index": 0,
-                "partnerid": 0,
-                "mode": "edit",
-                "extra_params": "",
-                "field_index": 7,
-                "is_partner": False,
-                "entityid": 0,
-                "list_name": "",
-                "element_name": "",      # TODO
-                "render_method": "factfind"
-            }
-        ],
-        "id": 1
     }
 
     def update_name_ref(self, name_chunk: dict):
@@ -127,6 +64,14 @@ class InterfaceFetcher:
             header = {
                 'referer': URL_LOGIN
             }
+            menu_post = {
+                "method": "ajax.MenuTreeAjax_rpc_load_node_gG7QNYAS_",
+                "params": [{
+                    "interface_type": "client",
+                    "menu_path": ''
+                }],
+                "id": 1
+            }
 
             # send POST to login page, check login status
             session.post(URL_LOGIN, data=payload, headers=header)
@@ -134,8 +79,8 @@ class InterfaceFetcher:
             if re.search(r'permission_error|Login for User', r.text):
                 raise Exception('Currently there is another user using this XPLAN account.')
 
-            Meta.jison.load_json(session.post(self.URL_SOURCE, json=self.menu_req, headers=self.interface_header).json())
-            menu_nodes = Meta.jison.get_single_object('children')
+            Meta.jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
+            menu_nodes = Meta.jison.get_object('children')
 
             menu = []
             for node in menu_nodes.get('children'):
@@ -167,13 +112,12 @@ class InterfaceFetcher:
                     elif specific:
                         continue
 
-                    threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
                     # children = self.r_dump_interface(menu_path, session)
                     # if children:
                     #     node['children'] = children
                     # else:
                     #     node['type'] = 'other'
-                    # InterfaceNode(node).new(force=True)
+                    threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
 
             if threads:
                 for _t in threads:
@@ -186,7 +130,7 @@ class InterfaceFetcher:
                     result_cache.update(_q.get())
 
                 for node in menu:
-                    children = result_cache.get(node.get('node_id'))
+                    children = result_cache.get(node.get('id'))
                     if children:
                         node['children'] = children
                     else:
@@ -200,15 +144,24 @@ class InterfaceFetcher:
         get `children` under current `menu_path`
 
         then acquire `sub_children` for each child in `children`
+
+        `_q` is a queue for thread, indicating method is running as a thread
         """
-        self.menu_req.get('params')[0]['menu_path'] = menu_path
+        menu_post = {
+            "method": "ajax.MenuTreeAjax_rpc_load_node_gG7QNYAS_",
+            "params": [{
+                "interface_type": "client",
+                "menu_path": menu_path
+            }],
+            "id": 1
+        }
+
         if _q is not None:
             jison = Jison()
         else:
             jison = Meta.jison
-
-        jison.load_json(session.post(self.URL_SOURCE, json=self.menu_req, headers=self.interface_header).json())
-        local_children = jison.get_single_object('children')
+        jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
+        local_children = jison.get_object('children')
 
         children = []
         # loop in `children`, acquire `sub_children` for each child
@@ -220,6 +173,7 @@ class InterfaceFetcher:
             child_id = child.get('node_id')
             child_path = re.search('client_([0-9_\-]+)', child_id)
             specific_flag = False
+            sub_children = []
 
             if specific and specific[0].lower() in text.lower():
                 specific.pop(0)
@@ -231,9 +185,6 @@ class InterfaceFetcher:
             if child_path:
                 child_path = child_path.group(1).replace('-', '/')
                 sub_children = self.r_dump_interface(child_path, session, _q=_q, specific=specific)
-            # leaf case (id not starts with `client_xxx`)
-            else:
-                sub_children = []
 
             # if current child has no children and with a valid leaf id (a leaf)
             if not sub_children and re.search('(.+)_([\d]+_[\d]+)', child_id):
@@ -273,19 +224,28 @@ class InterfaceFetcher:
     def dump_leaf_page(self, node_id: str, menu_path: str, text: str, session: requests.sessions.Session, _q: queue.Queue = None) -> str:
         custom_page_name, index = re.search('(.+)_([\d]+_[\d]+)', node_id).groups()
         subpage_index, field_index = [int(i) for i in index.split('_')]
-
-        self.leaf_req.get('params')[0]['menu_path'] = menu_path
-        self.leaf_req.get('params')[0]['custom_page_name'] = custom_page_name
-        self.leaf_req.get('params')[0]['subpage_index'] = subpage_index
-        self.leaf_req.get('params')[0]['field_index'] = field_index
+        leaf_post = {
+            "method": "ajax.PageElementSettingAjax_rpc_html_kYjvPyv3_",
+            "params": [
+                {
+                    "custom_page_name": custom_page_name,
+                    "interface_type": "client",
+                    "menu_path": menu_path,
+                    "field_index": field_index,
+                    "subpage_index": subpage_index,
+                    "element_type": "",
+                }
+            ],
+            "id": 1
+        }
 
         if _q is not None:
             jison = Jison()
         else:
             jison = Meta.jison
 
-        jison.load_json(session.post(self.URL_SOURCE, json=self.leaf_req, headers=self.interface_header).json())
-        leaf_type = jison.get_single_object('title', value_only=True).lower()
+        jison.load_json(session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header).json())
+        leaf_type = jison.get_object('title', value_only=True).lower()
 
         if leaf_type in ['gap', 'title', 'text']:
             return leaf_type
@@ -329,14 +289,42 @@ class InterfaceFetcher:
             if name.lower() in self.subgroup_name_ref:
                 page['subgroup'] = self.subgroup_name_ref.get(name.lower())
 
+            table1_method = "ajax.XplanElementListSettingAjax_rpc_html_WEaBDM8__"
+            table2_method = "ajax.XplanElementEditSettingAjax_rpc_html_HBm947gH_"
+            leaf_post_xtable = {
+                "method": "",
+                "params": [
+                    {
+                        "has_partner": False,
+                        "domain": "factfind",
+                        "guid": "00000000-0000-0000-0000-000000000000",
+                        "cover_type": "",
+                        "coa_access": False,
+                        "entity_type": 0,
+                        "locale": "AU",
+                        "custom_page_name": "",
+                        "editable": False,
+                        "subpage_index": 0,
+                        "partnerid": 0,
+                        "mode": "edit",
+                        "extra_params": "",
+                        "field_index": 7,
+                        "is_partner": False,
+                        "entityid": 0,
+                        "list_name": "",
+                        "element_name": jison.get_object('element_name').get('element_name'),
+                        "render_method": "factfind"
+                    }
+                ],
+                "id": 1
+            }
 
-            self.leaf_req_xtable.get('params')[0]['element_name'] = jison.get_single_object('element_name').get('element_name')
-            self.leaf_req_xtable['method'] = self.table1_method
-            jison.load_json(session.post(self.URL_SOURCE, json=self.leaf_req_xtable, headers=self.interface_header).json())
+            leaf_post_xtable['method'] = table1_method
+            jison.load_json(session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header).json())
 
             # if this `xplan` page has list with tabs
             # process table content
-            table_html = jison.get_single_object('tabs_html', value_only=True)
+            table_html = jison.get_object('tabs_html', value_only=True)
             if table_html:
                 list_view_html = table_html.get('_above-tabs')
                 full_view_html = table_html.get('_hidden-items')
@@ -384,7 +372,8 @@ if __name__ == '__main__':
     password = 'Passw0rdOCT'
     from app.db import mongo_connect, client
 
-    specific = input('specific nodes (optional): ')
+    specific = []
+    #specific = input('specific nodes (optional): ')
     if not specific:
         specific = []
     else:
