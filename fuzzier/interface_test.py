@@ -48,12 +48,7 @@ class InterfaceFetcher:
                 except:
                     pass
 
-    def fetch(self, specific: list = None):
-        URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
-        URL_HOME = f'https://{Meta.company}.xplan.iress.com.au/dashboard/mainhtml'
-        URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
-
-
+    def fetch(self, specific: list = None, thread: bool = True):
         with requests.session() as session:
             payload = {
                 "userid": Meta.company_username,
@@ -62,7 +57,7 @@ class InterfaceFetcher:
                 "redirecturl": ''
             }
             header = {
-                'referer': URL_LOGIN
+                'referer': f'https://{Meta.company}.xplan.iress.com.au/home'
             }
             menu_post = {
                 "method": "ajax.MenuTreeAjax_rpc_load_node_gG7QNYAS_",
@@ -74,8 +69,8 @@ class InterfaceFetcher:
             }
 
             # send POST to login page, check login status
-            session.post(URL_LOGIN, data=payload, headers=header)
-            r = session.get(URL_HOME)
+            session.post(f'https://{Meta.company}.xplan.iress.com.au/home', data=payload, headers=header)
+            r = session.get(f'https://{Meta.company}.xplan.iress.com.au/dashboard/mainhtml')
             if re.search(r'permission_error|Login for User', r.text):
                 raise Exception('Currently there is another user using this XPLAN account.')
 
@@ -112,12 +107,15 @@ class InterfaceFetcher:
                     elif specific:
                         continue
 
-                    # children = self.r_dump_interface(menu_path, session)
-                    # if children:
-                    #     node['children'] = children
-                    # else:
-                    #     node['type'] = 'other'
-                    threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
+                    if thread:
+                        threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
+                    else:
+                        children = self.r_dump_interface(menu_path, session)
+                        if children:
+                            node['children'] = children
+                        else:
+                            node['type'] = 'other'
+                        InterfaceNode(node).new(force=True)
 
             if threads:
                 for _t in threads:
@@ -137,7 +135,7 @@ class InterfaceFetcher:
                         node['type'] = 'other'
                     InterfaceNode(node).new(force=True)
 
-            session.get(URL_LOGOUT)
+            session.get(f'https://{Meta.company}.xplan.iress.com.au/home/logoff?')
 
     def r_dump_interface(self, menu_path: str, session: requests.sessions.Session, node_id: str = None, _q: queue.Queue = None, specific: list = None) -> list:
         """
@@ -158,9 +156,12 @@ class InterfaceFetcher:
 
         if _q is not None:
             jison = Jison()
+            cookies = session.cookies.get_dict()
+            _session = requests.session()
+            jison.load_json(_session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header, cookies=cookies).json())
         else:
             jison = Meta.jison
-        jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
+            jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
         local_children = jison.get_object('children')
 
         children = []
@@ -241,10 +242,12 @@ class InterfaceFetcher:
 
         if _q is not None:
             jison = Jison()
+            cookies = session.cookies.get_dict()
+            _session = requests.session()
+            jison.load_json(_session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header, cookies=cookies).json())
         else:
             jison = Meta.jison
-
-        jison.load_json(session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header).json())
+            jison.load_json(session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header).json())
         leaf_type = jison.get_object('title', value_only=True).lower()
 
         if leaf_type in ['gap', 'title', 'text']:
@@ -320,7 +323,10 @@ class InterfaceFetcher:
             }
 
             leaf_post_xtable['method'] = table1_method
-            jison.load_json(session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header).json())
+            if _q is not None:
+                jison.load_json(_session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header, cookies=cookies).json())
+            else:
+                jison.load_json(session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header).json())
 
             # if this `xplan` page has list with tabs
             # process table content
@@ -363,7 +369,7 @@ class InterfaceFetcher:
                 leaf_type = 'variable'
 
         page['leaf_type'] = leaf_type
-        InterfaceLeafPage(node_id, text, page).new()
+        InterfaceLeafPage(node_id, text, menu_path, page).new()
 
         return leaf_type
 
@@ -386,4 +392,4 @@ if __name__ == '__main__':
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()
-    Meta.interface_fetcher.fetch(specific)
+    Meta.interface_fetcher.fetch()

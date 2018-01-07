@@ -9,11 +9,9 @@ from app import login_manager
 from common.meta import Meta
 
 
-"""
-Note: all DB model class are using legacy PyMongo method `insert()` to create
-new document into collection, rather than `insert_one()`, as `insert()` will
-return new `_id` directly but `insert_one()` returns a PyMongo insertion object
-"""
+# Note: all DB model class are using legacy PyMongo method `insert()` to create
+# new document into collection, rather than `insert_one()`, as `insert()` will
+# return new `_id` directly
 
 
 class Group:
@@ -218,9 +216,10 @@ class InterfaceNode:
 
 
 class InterfaceLeafPage:
-    def __init__(self, id: str, text: str, page: dict):
+    def __init__(self, id: str, text: str, menu_path: str, page: dict):
         self.id = id
         self.text = text
+        self.menu_path = menu_path
         self.page = page
 
     def __repr__(self):
@@ -233,6 +232,7 @@ class InterfaceLeafPage:
         document = {
             'id': self.id,
             'text': self.text,
+            'menu_path': self.menu_path,
             'page': self.page
         }
         legacy = Meta.db_company.InterfaceLeafPage.find_one({'id': self.id})
@@ -243,6 +243,7 @@ class InterfaceLeafPage:
                 {'id': self.id},
                 {'$set': {
                     'text': self.text,
+                    'menu_path': self.menu_path,
                     'page': self.page
                 }})
 
