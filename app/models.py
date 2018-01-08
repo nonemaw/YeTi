@@ -216,9 +216,10 @@ class InterfaceNode:
 
 
 class InterfaceLeafPage:
-    def __init__(self, id: str, text: str, menu_path: str, page: dict):
+    def __init__(self, id: str, text: str, leaf_type: str, menu_path: str, page: dict):
         self.id = id
         self.text = text
+        self.leaf_type = leaf_type
         self.menu_path = menu_path
         self.page = page
 
@@ -232,6 +233,7 @@ class InterfaceLeafPage:
         document = {
             'id': self.id,
             'text': self.text,
+            'leaf_type': self.leaf_type,
             'menu_path': self.menu_path,
             'page': self.page
         }
@@ -243,6 +245,7 @@ class InterfaceLeafPage:
                 {'id': self.id},
                 {'$set': {
                     'text': self.text,
+                    'leaf_type': self.leaf_type,
                     'menu_path': self.menu_path,
                     'page': self.page
                 }})
