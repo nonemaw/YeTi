@@ -6,7 +6,6 @@ from jison import Jison
 from bs4 import BeautifulSoup
 from common.meta import Meta
 from app.models import InterfaceNode, InterfaceLeafPage
-from pprint import pprint as pp
 
 class InterfaceFetcher:
     URL_SOURCE = f'https://{Meta.company}.xplan.iress.com.au/RPC2/'
@@ -157,8 +156,7 @@ class InterfaceFetcher:
         if _q is not None:
             jison = Jison()
             cookies = session.cookies.get_dict()
-            _session = requests.session()
-            jison.load_json(_session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header, cookies=cookies).json())
+            jison.load_json(requests.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header, cookies=cookies).json())
         else:
             jison = Meta.jison
             jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
@@ -242,9 +240,7 @@ class InterfaceFetcher:
 
         if _q is not None:
             jison = Jison()
-            cookies = session.cookies.get_dict()
-            _session = requests.session()
-            jison.load_json(_session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header, cookies=cookies).json())
+            jison.load_json(requests.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header, cookies=session.cookies.get_dict()).json())
         else:
             jison = Meta.jison
             jison.load_json(session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header).json())
@@ -271,18 +267,18 @@ class InterfaceFetcher:
             name = '(Empty)'
         if name == 'Client':
             name = text
-        content = {name: []}
+        content = {'entities': []}
 
         if soup.find('input', {'checked': True, 'id': 'entity_types_1'}):
-            content.get(name).append('individual')
+            content.get('entities').append('individual')
         if soup.find('input', {'checked': True, 'id': 'entity_types_2'}):
-            content.get(name).append('superfund')
+            content.get('entities').append('superfund')
         if soup.find('input', {'checked': True, 'id': 'entity_types_3'}):
-            content.get(name).append('partnership')
+            content.get('entities').append('partnership')
         if soup.find('input', {'checked': True, 'id': 'entity_types_4'}):
-            content.get(name).append('trust')
+            content.get('entities').append('trust')
         if soup.find('input', {'checked': True, 'id': 'entity_types_5'}):
-            content.get(name).append('company')
+            content.get('entities').append('company')
         page['leaf_basic'] = content
 
         # try to acquire table content if an `xplan` page
@@ -290,7 +286,7 @@ class InterfaceFetcher:
             content = {'table1': [], 'table2': []}
 
             if name.lower() in self.subgroup_name_ref:
-                page['subgroup'] = self.subgroup_name_ref.get(name.lower())
+                content['subgroup'] = self.subgroup_name_ref.get(name.lower())
 
             table1_method = "ajax.XplanElementListSettingAjax_rpc_html_WEaBDM8__"
             table2_method = "ajax.XplanElementEditSettingAjax_rpc_html_HBm947gH_"
@@ -324,7 +320,7 @@ class InterfaceFetcher:
 
             leaf_post_xtable['method'] = table1_method
             if _q is not None:
-                jison.load_json(_session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header, cookies=cookies).json())
+                jison.load_json(requests.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header, cookies=session.cookies.get_dict()).json())
             else:
                 jison.load_json(session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header).json())
 
@@ -368,8 +364,7 @@ class InterfaceFetcher:
             elif leaf_type == 'field':
                 leaf_type = 'variable'
 
-        page['leaf_type'] = leaf_type
-        InterfaceLeafPage(node_id, text, menu_path, page).new()
+        InterfaceLeafPage(node_id, text, leaf_type, menu_path, page).new()
 
         return leaf_type
 
@@ -392,4 +387,4 @@ if __name__ == '__main__':
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()
-    Meta.interface_fetcher.fetch()
+    Meta.interface_fetcher.fetch(thread=False)
