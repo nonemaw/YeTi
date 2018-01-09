@@ -4,7 +4,7 @@ import threading
 import multiprocessing as mp
 from multiprocessing.managers import BaseManager
 import queue
-from jison import Jison
+from fuzzier.jison import Jison
 from bs4 import BeautifulSoup
 from common.meta import Meta
 from app.models import InterfaceNode, InterfaceLeafPage
@@ -36,10 +36,9 @@ class InterfaceFetcher:
     }
 
     interface_header = {
-        'Accept': 'text/plain',
         'Accept-Encoding': 'gzip',
         'Content-Type': 'application/json',
-        'referer': 'https://ytml.xplan.iress.com.au/factfind/edit_interface',
+        'referer': f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface',
     }
     def __init__(self):
         MetaManager.register('Meta', Meta)
@@ -79,11 +78,19 @@ class InterfaceFetcher:
             # send POST to login page, check login status
             session.post(f'https://{Meta.company}.xplan.iress.com.au/home', data=payload, headers=header)
             r = session.get(f'https://{Meta.company}.xplan.iress.com.au/dashboard/mainhtml')
+
             if re.search(r'permission_error|Login for User', r.text):
                 raise Exception('Currently there is another user using this XPLAN account.')
 
             Meta.jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
             menu_nodes = Meta.jison.get_object('children')
+
+
+
+
+
+
+
 
             menu = []
             for node in menu_nodes.get('children'):
@@ -102,12 +109,10 @@ class InterfaceFetcher:
                 })
 
             threads = []
-            counter = 0
             _q = queue.Queue()
             for node in menu:
                 menu_path = re.search('client_([0-9_\-]+)', node.get('id'))
                 if menu_path:
-                    counter += 1
                     menu_path = menu_path.group(1).replace('-', '/')
                     if specific and specific[0].lower() in node.get('text').lower():
                         specific.pop(0)
@@ -117,9 +122,9 @@ class InterfaceFetcher:
                     elif specific:
                         continue
 
-                    if thread and (counter == 4 or counter == 6):
+                    if thread:
                         threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
-                    elif not thread and (counter == 4 or counter == 6):
+                    else:
                         children = self.r_dump_interface(menu_path, session)
                         if children:
                             node['children'] = children
@@ -375,15 +380,12 @@ class InterfaceFetcher:
             elif leaf_type == 'field':
                 leaf_type = 'variable'
 
-        InterfaceLeafPage(node_id, text, leaf_type, menu_path, page).new()
-
-        print(f'Leaf "{text}" done')
+        InterfaceLeafPage(node_id, name, leaf_type, menu_path, page).new()
 
         return leaf_type
 
 
 if __name__ == '__main__':
-    password = 'Passw0rdOCT'
     from app.db import mongo_connect, client
 
     specific = []
@@ -391,12 +393,12 @@ if __name__ == '__main__':
     if not specific:
         specific = []
     else:
-        specific = [x.strip() for x in specific.split(',') if x]
+        specific = [x.strip() for x in specific if x]
 
     Meta.jison = Jison()
-    Meta.company = 'ytml'
-    Meta.company_username = 'ytml2'
-    Meta.company_password = password
+    Meta.company = 'fmd'
+    Meta.company_username = 'DXu'
+    Meta.company_password = ''
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()

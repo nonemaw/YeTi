@@ -9,6 +9,7 @@ import logging
 from bson import ObjectId
 from common.meta import Meta
 from app.models import Group, SubGroup
+from fuzzier.jison import Jison
 
 
 class Fetcher:
@@ -17,7 +18,7 @@ class Fetcher:
 
     # TODO: along with Jison, support a list of group update, generate a list of 'to_json' result based on the list of groups
     def fetch(self, group_only: str = None):
-        # TODO: code is ugly, will build on BS4 in the future
+        # TODO: code is ugly, will refactored in the future
 
         BASE = f'https://{Meta.company}.xplan.iress.com.au'
         URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
@@ -252,7 +253,7 @@ class Fetcher:
 
         import json
         if not group_only:
-            Meta.jison.write(json.dumps(to_json))
+            Meta.jison.write(json.dumps(to_json), file_name=Meta.company)
         else:
             Meta.jison.replace_object(group_only, json.dumps(to_json))
         to_json.clear()
@@ -277,9 +278,10 @@ if __name__ == '__main__':
     else:
         specific = [x.strip() for x in specific.split(',') if x]
 
-    Meta.company = 'ytml'
-    Meta.company_username = 'ytml1'
+    Meta.company = 'fmd'
+    Meta.company_username = 'DXu'
     Meta.company_password = ''
+    Meta.jison = Jison()
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.fetcher = Fetcher()
