@@ -51,7 +51,7 @@ if __name__ == '__main__':
         Meta.company_password = password
         Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
             client, Meta.company)
-        Meta.jison = Jison(company=Meta.company)
+        Meta.jison = Jison(file_name=Meta.company)
         Meta.fetcher = Fetcher()
         Meta.fetcher.fetch(groups)
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         Meta.company_password = password
         Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
             client, Meta.company)
-        Meta.jison = Jison(company=Meta.company)
+        Meta.jison = Jison(file_name=Meta.company)
         Meta.interface_fetcher = InterfaceFetcher()
         Meta.interface_fetcher.fetch(specific=specific)
 

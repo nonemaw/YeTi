@@ -362,7 +362,7 @@ function initialize_interface(id){
                         ititle.text('[' + group_subgroup_array[0] + '] ' + group_subgroup_array[1]);
                     }
                     else if (group_subgroup_array.length === 1) {
-                        ititle.text('[empty] ' + group_subgroup_array[0]);
+                        ititle.text('[ / ] ' + group_subgroup_array[0]);
                     }
                     ititle.css('display', '');
                 }
@@ -524,12 +524,21 @@ $('#interface-group-table').on('click','.g',function(event){
 ititle.on('click', function(){
     var title = ititle.text();
     var variable = '_NONE';
+    var current_subugroup = '/';
 
     if (/\[.+\]/.test(title)) {
-        variable = /\[.+\] *(.+)/.exec(title)[1];
+        re_result = /\[ *(.+) *\] *(.+)/.exec(title);
+        current_subugroup = re_result[1];
+        variable = re_result[2];
     }
     if (variable !== '_NONE') {
-        search(variable, 1);
+        if (current_subugroup !== '/') {
+            pattern = current_subugroup + ':' + variable;
+        }
+        else {
+            pattern = variable;
+        }
+        search(pattern, 5);
     }
     return false;
 });
