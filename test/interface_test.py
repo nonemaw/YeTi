@@ -1,11 +1,18 @@
 import requests
 import re
 import threading
+import multiprocessing as mp
+from multiprocessing.managers import BaseManager
 import queue
 from jison import Jison
 from bs4 import BeautifulSoup
 from common.meta import Meta
 from app.models import InterfaceNode, InterfaceLeafPage
+
+
+class MetaManager(BaseManager):
+    pass
+
 
 class InterfaceFetcher:
     URL_SOURCE = f'https://{Meta.company}.xplan.iress.com.au/RPC2/'
@@ -34,6 +41,8 @@ class InterfaceFetcher:
         'Content-Type': 'application/json',
         'referer': 'https://ytml.xplan.iress.com.au/factfind/edit_interface',
     }
+    def __init__(self):
+        MetaManager.register('Meta', Meta)
 
     def update_name_ref(self, name_chunk: dict):
         if isinstance(name_chunk, dict):
@@ -93,10 +102,12 @@ class InterfaceFetcher:
                 })
 
             threads = []
+            counter = 0
             _q = queue.Queue()
             for node in menu:
                 menu_path = re.search('client_([0-9_\-]+)', node.get('id'))
                 if menu_path:
+                    counter += 1
                     menu_path = menu_path.group(1).replace('-', '/')
                     if specific and specific[0].lower() in node.get('text').lower():
                         specific.pop(0)
@@ -106,9 +117,9 @@ class InterfaceFetcher:
                     elif specific:
                         continue
 
-                    if thread:
+                    if thread and (counter == 4 or counter == 6):
                         threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
-                    else:
+                    elif not thread and (counter == 4 or counter == 6):
                         children = self.r_dump_interface(menu_path, session)
                         if children:
                             node['children'] = children
@@ -366,6 +377,8 @@ class InterfaceFetcher:
 
         InterfaceLeafPage(node_id, text, leaf_type, menu_path, page).new()
 
+        print(f'Leaf "{text}" done')
+
         return leaf_type
 
 
@@ -387,4 +400,4 @@ if __name__ == '__main__':
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()
-    Meta.interface_fetcher.fetch(thread=False)
+    Meta.interface_fetcher.fetch(thread=True)
