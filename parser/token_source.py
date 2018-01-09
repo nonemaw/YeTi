@@ -1,5 +1,4 @@
-
-from annoying_char import annoying_guys_cleaner
+from parser.annoying_char import annoying_guys_cleaner
 
 
 class TokenType:

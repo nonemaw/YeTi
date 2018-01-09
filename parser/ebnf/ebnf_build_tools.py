@@ -1,4 +1,4 @@
-from ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
+from parser.ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
 
 
 class BuildTracker:
@@ -73,9 +73,8 @@ class Lexer:
             if self.current_token.position[0] > self.last_token.position[2]:
                 self.last_token = self.current_token
             elif self.current_token.position[0] == self.last_token.position[
-                2] and \
-                            self.current_token.position[1] > \
-                            self.last_token.position[3]:
+                2] and self.current_token.position[1] > \
+                       self.last_token.position[3]:
                 self.last_token = self.current_token
             self.h_index = self.anchor_stack.pop()
             self.current_token = self.history[self.h_index]

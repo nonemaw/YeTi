@@ -1,6 +1,6 @@
 import re
-from token_source import *
-from ebnf.errors import TokenTypeError
+from parser.token_source import *
+from parser.ebnf.errors import TokenTypeError
 
 
 class Scanner:

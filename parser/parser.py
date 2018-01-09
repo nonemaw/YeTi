@@ -1,9 +1,9 @@
 import os
-from ebnf.ebnf_scanner import EBNFScanner, SourceFile
-from ebnf.ebnf_grammar_reverse_builder import EBNFGrammarReverseBuilder
-from ebnf.ebnf_grammar_source import *
-from reserved_names import ReservedNames
-from scanner import Scanner  # must be imported
+from parser.ebnf.ebnf_scanner import EBNFScanner, SourceFile
+from parser.ebnf.ebnf_grammar_reverse_builder import EBNFGrammarReverseBuilder
+from parser.ebnf.ebnf_grammar_source import *
+from parser.reserved_names import ReservedNames
+from parser.scanner import Scanner  # must be imported
 
 
 def parser_generator(grammar: str = 'xplan', template_tag: str = None,

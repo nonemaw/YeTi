@@ -1,6 +1,6 @@
 import re
-from token_source import PositionTracker, SourceFile
-from ebnf.errors import TokenTypeError
+from parser.token_source import PositionTracker, SourceFile
+from parser.ebnf.errors import TokenTypeError
 
 
 class TokenType:

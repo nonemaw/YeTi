@@ -1,5 +1,5 @@
-from ebnf.ebnf_grammar_obj import *
-from ebnf.errors import GrammarNotExists, SyntaxError
+from parser.ebnf.ebnf_grammar_obj import *
+from parser.ebnf.errors import GrammarNotExists, SyntaxError
 
 
 class EBNFAtom:
