@@ -15,7 +15,6 @@ class MetaManager(BaseManager):
 
 
 class InterfaceFetcher:
-    URL_SOURCE = f'https://{Meta.company}.xplan.iress.com.au/RPC2/'
     subgroup_name_ref = {
         'telephone/email list': 'Contact',
         'address list': 'Address',
@@ -35,12 +34,14 @@ class InterfaceFetcher:
         'medical insurance': 'Medical Insurance',
     }
 
-    interface_header = {
-        'Accept-Encoding': 'gzip',
-        'Content-Type': 'application/json',
-        'referer': f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface',
-    }
+
     def __init__(self):
+        self.interface_header = {
+            'Content-Type': 'application/json',
+            'referer': f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface',
+        }
+        self.URL_SOURCE = f'https://{Meta.company}.xplan.iress.com.au/RPC2/'
+
         MetaManager.register('Meta', Meta)
 
     def update_name_ref(self, name_chunk: dict):
@@ -63,9 +64,6 @@ class InterfaceFetcher:
                 "rolename": "User",
                 "redirecturl": ''
             }
-            header = {
-                'referer': f'https://{Meta.company}.xplan.iress.com.au/home'
-            }
             menu_post = {
                 "method": "ajax.MenuTreeAjax_rpc_load_node_gG7QNYAS_",
                 "params": [{
@@ -76,7 +74,7 @@ class InterfaceFetcher:
             }
 
             # send POST to login page, check login status
-            session.post(f'https://{Meta.company}.xplan.iress.com.au/home', data=payload, headers=header)
+            session.post(f'https://{Meta.company}.xplan.iress.com.au/home', data=payload)
             r = session.get(f'https://{Meta.company}.xplan.iress.com.au/dashboard/mainhtml')
 
             if re.search(r'permission_error|Login for User', r.text):
@@ -84,13 +82,6 @@ class InterfaceFetcher:
 
             Meta.jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
             menu_nodes = Meta.jison.get_object('children')
-
-
-
-
-
-
-
 
             menu = []
             for node in menu_nodes.get('children'):
@@ -398,7 +389,7 @@ if __name__ == '__main__':
     Meta.jison = Jison()
     Meta.company = 'fmd'
     Meta.company_username = 'DXu'
-    Meta.company_password = ''
+    Meta.company_password = 'Summer2017'
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()

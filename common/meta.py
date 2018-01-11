@@ -19,8 +19,8 @@ class Meta:
     # `jison` is an instance of Jison parser
     jison = None
 
-    # `fetcher` is an instance of Fetcher/Interface Fetcher
-    fetcher = None
+    # `fetchers` are instances of Fetcher/Interface Fetcher
+    menu_fetcher = None
     interface_fetcher = None
 
     # browser is used for fetch interface menu

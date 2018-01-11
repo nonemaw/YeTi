@@ -5,7 +5,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 from common.meta import Meta
 from common.crypto import AESCipher
-from common.fetcher import Fetcher
+from crawlers.menu_fetcher import MenuFetcher
 from common.interface_fetcher import InterfaceFetcher
 from fuzzier.jison import Jison
 from app.db import client, mongo_connect
@@ -45,7 +45,7 @@ class LoginForm(FlaskForm):
                 mongo_connect(client, Meta.company)
             Meta.crypto = AESCipher()
             Meta.jison = Jison(file_name=Meta.company)
-            Meta.fetcher = Fetcher()
+            Meta.menu_fetcher = MenuFetcher()
             Meta.interface_fetcher = InterfaceFetcher()
         except:
             raise ValidationError(

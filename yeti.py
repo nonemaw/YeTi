@@ -41,7 +41,7 @@ if __name__ == '__main__':
         if not groups:
             groups = None
 
-        from common.fetcher import Fetcher
+        from crawlers.menu_fetcher import MenuFetcher
         from common.meta import Meta
         from fuzzier.jison import Jison
         from app.db import mongo_connect, client
@@ -52,8 +52,8 @@ if __name__ == '__main__':
         Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
             client, Meta.company)
         Meta.jison = Jison(file_name=Meta.company)
-        Meta.fetcher = Fetcher()
-        Meta.fetcher.fetch(groups)
+        Meta.menu_fetcher = MenuFetcher()
+        Meta.menu_fetcher.fetch(groups)
 
     # feature test
     elif args.ifetcher:
