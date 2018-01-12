@@ -1,6 +1,6 @@
 import re
-from parser.token_source import *
-from parser.ebnf.errors import TokenTypeError
+from token_source import *
+from ebnf.errors import TokenTypeError
 
 
 class Scanner:
@@ -585,17 +585,11 @@ class Scanner:
         return self.build_token(TokenType.EOF, self.source_file.eof)
 
 
-"""
-RUN THIS FOR DEBUG ONLY:
-PUT `code.txt` WITH THIS FILE UNDER SAME DIRECTORY FOR TEST
-
-BY CHANGING THE `template_tag` TO TEST THE FEATURE ON A TEMPLATE LANGUAGE
-"""
 if __name__ == '__main__':
     import os
 
     this_path = os.path.dirname(os.path.realpath(__file__))
-    scanner = Scanner(SourceFile(os.path.join(this_path, 'code.txt')),
+    scanner = Scanner(SourceFile(os.path.join(this_path, 'source', 'sample.txt')),
                       template_tag='<::>')
 
     while scanner.current_char != scanner.source_file.eof:

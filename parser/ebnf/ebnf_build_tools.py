@@ -1,11 +1,10 @@
-from parser.ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
+from ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
 
 
 class BuildTracker:
     """
     tracker used for building productions
     """
-
     def __init__(self, grammar_dict: dict):
         self.grammars = grammar_dict  # record all available grammar object
         self.on_track = []  # record all tracked grammar's name

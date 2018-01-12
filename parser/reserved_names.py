@@ -9,16 +9,16 @@ class ReservedNames:
     matched by NAME grammar because they cannot be a variable name, but matched
     by STRING grammar instead
     """
-    names = ['and', 'assert', 'break', 'class', 'continue', 'def', 'del',
+    names = {'and', 'assert', 'break', 'class', 'continue', 'def', 'del',
              'elif',
              'else', 'except', 'finally', 'for', 'from', 'global', 'if',
              'import',
              'in', 'is', 'lambda', 'not', 'or', 'pass', 'raise', 'return',
              'try',
-             'while']
+             'while'}
 
     @staticmethod
     def add_name(*names):
         for name in names:
             if name not in ReservedNames.names:
-                ReservedNames.names.append(name)
+                ReservedNames.names.add(name)

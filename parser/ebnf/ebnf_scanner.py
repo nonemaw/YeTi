@@ -1,6 +1,6 @@
 import re
-from parser.token_source import PositionTracker, SourceFile
-from parser.ebnf.errors import TokenTypeError
+from token_source import PositionTracker, SourceFile
+from ebnf.errors import TokenTypeError
 
 
 class TokenType:
@@ -326,7 +326,7 @@ if __name__ == '__main__':
     import os
 
     this_path = os.path.dirname(os.path.realpath(__file__))
-    scanner = EBNFScanner(SourceFile(os.path.join(this_path, 'grammar.ebnf')))
+    scanner = EBNFScanner(SourceFile(os.path.join(this_path, 'grammars', 'xplan.ebnf')))
 
     while scanner.current_char != scanner.source_file.eof:
         token = scanner.get_token()
