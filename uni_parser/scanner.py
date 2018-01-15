@@ -1,6 +1,6 @@
 import re
-from token_source import *
-from ebnf.errors import TokenTypeError
+from uni_parser.token_source import *
+from uni_parser.ebnf.errors import TokenTypeError
 
 
 class Scanner:
@@ -589,7 +589,7 @@ if __name__ == '__main__':
     import os
 
     this_path = os.path.dirname(os.path.realpath(__file__))
-    scanner = Scanner(SourceFile(os.path.join(this_path, 'source', 'sample.txt')),
+    scanner = Scanner(SourceFile(os.path.join(this_path, 'sources', 'sample.txt')),
                       template_tag='<::>')
 
     while scanner.current_char != scanner.source_file.eof:

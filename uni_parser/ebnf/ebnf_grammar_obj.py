@@ -1,8 +1,8 @@
-from ebnf.errors import UnknownGrammarObj
-from ebnf.ebnf_ast import Ast
-from ebnf.ebnf_build_tools import Lexer, BuildTracker
-from token_source import TokenType
-from reserved_names import *
+from uni_parser.ebnf.errors import UnknownGrammarObj
+from uni_parser.ebnf.ebnf_ast import Ast
+from uni_parser.ebnf.ebnf_build_tools import Lexer, BuildTracker
+from uni_parser.token_source import TokenType
+from uni_parser.reserved_names import *
 import re
 
 

@@ -1,4 +1,4 @@
-from annoying_char import annoying_guys_cleaner
+from uni_parser.annoying_char import annoying_guys_cleaner
 
 
 class TokenType:
@@ -213,9 +213,6 @@ class SourceFile:
             return self.eof
 
         if b'\xe2' in char or b'\xc3' in char:
-
-            print(char)
-
             if len(char) == 1:
                 annoying_guy = char
                 annoying_guy += self.look_ahead(1, annoying=True)
@@ -244,7 +241,7 @@ class SourceFile:
         elif self.source_code:
             nth = self.index + nth - 1
             if nth < len(self.source_code):
-                char = self.source_code[nth]
+                char = self.source_code[nth].encode()
             else:
                 return self.eof
 
@@ -264,9 +261,11 @@ class SourceFile:
                     return self.eof
 
         elif self.source_code:
-            nth = self.index + nth - 1
+            index = self.index
+            self.index += nth
+            nth = index + nth - 1
             if nth < len(self.source_code):
-                char = self.source_code[nth]
+                char = self.source_code[nth].encode()
             else:
                 return self.eof
 

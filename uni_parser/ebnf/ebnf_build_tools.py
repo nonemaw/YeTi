@@ -1,4 +1,4 @@
-from ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
+from uni_parser.ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
 
 
 class BuildTracker:

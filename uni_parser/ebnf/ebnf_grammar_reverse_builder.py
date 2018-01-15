@@ -1,5 +1,5 @@
 import re
-from ebnf.ebnf_ast import Ast
+from uni_parser.ebnf.ebnf_ast import Ast
 
 
 class EBNFGrammarReverseBuilder:
