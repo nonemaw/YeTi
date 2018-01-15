@@ -4,43 +4,43 @@ from uni_parser.ebnf.errors import GrammarNotExists, SyntaxError
 
 class EBNFAtom:
     # match the `name` of a grammar
-    NAME    = LiteralGrammar(re.compile('[a-zA-Z_\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*'), 'NAME')
+    NAME    = Literal(re.compile('[a-zA-Z_\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*'), 'NAME')
     # match the value of `number` of a grammar
-    NUMBER  = LiteralGrammar(re.compile('-?[0-9]{0,10}'), 'NUMBER')
+    NUMBER  = Literal(re.compile('-?[0-9]{0,10}'), 'NUMBER')
     # match the value of `string` of a grammar, with format in `' ... '`
-    STRING  = LiteralGrammar(re.compile('\'[\w\W]*?\''), 'STRING')  # which already includes some atoms like 'True', ',', '.', etc.
+    STRING  = Literal(re.compile('\'[\w\W]*?\''), 'STRING')  # which already includes some atoms like 'True', ',', '.', etc.
 
-    NEWLINE = LiteralGrammar(r'\n', 'NEWLINE')
-    STAR    = LiteralGrammar('*', 'STAR', escape=True)
-    PLUS    = LiteralGrammar('+', 'PLUS', escape=True)
-    ALT     = LiteralGrammar('|', 'ALT', escape=True)
-    EXCEP   = LiteralGrammar('-', 'EXCEP', escape=True)
-    LREP    = LiteralGrammar('{', 'LREP', escape=True)
-    RREP    = LiteralGrammar('}', 'RREP', escape=True)
-    LGR     = LiteralGrammar('(', 'LGR', escape=True)
-    RGR     = LiteralGrammar(')', 'RGR', escape=True)
-    LOP     = LiteralGrammar('[', 'LOP', escape=True)
-    ROP     = LiteralGrammar(']', 'ROP', escape=True)
-    DEF     = LiteralGrammar('::=', 'DEF', escape=True)  # DEF should be assigned manually
-    EPSILON_EXPR = LiteralGrammar('_e', 'EPSILON_EXPR', escape=True)
-    EPSILON      = EpsilonGrammar()
+    NEWLINE = Literal(r'\n', 'NEWLINE')
+    STAR    = Literal('*', 'STAR', escape=True)
+    PLUS    = Literal('+', 'PLUS', escape=True)
+    ALT     = Literal('|', 'ALT', escape=True)
+    EXCEP   = Literal('-', 'EXCEP', escape=True)
+    LREP    = Literal('{', 'LREP', escape=True)
+    RREP    = Literal('}', 'RREP', escape=True)
+    LGR     = Literal('(', 'LGR', escape=True)
+    RGR     = Literal(')', 'RGR', escape=True)
+    LOP     = Literal('[', 'LOP', escape=True)
+    ROP     = Literal(']', 'ROP', escape=True)
+    DEF     = Literal('::=', 'DEF', escape=True)  # DEF should be assigned manually
+    EPSILON_EXPR = Literal('_e', 'EPSILON_EXPR', escape=True)
+    EPSILON      = Epsilon()
 
 
 class EBNF:
     # `test` is the top level statement
     # `test`: (( `\n` )* (define)+ ( `\n` )*)+
-    test = BaseGrammar(
+    test = Base(
         [
-            GroupGrammar(
+            Group(
                 [
-                    GroupGrammar(
+                    Group(
                         [EBNFAtom.NEWLINE],
                     ),
-                    GroupGrammar(
+                    Group(
                         [Refer('define')],
                         repeat=(1, -1)
                     ),
-                    GroupGrammar(
+                    Group(
                         [EBNFAtom.NEWLINE],
                     ),
                 ],
@@ -51,7 +51,7 @@ class EBNF:
     )
 
     # `define`: NAME '::=' expr
-    define = BaseGrammar(
+    define = Base(
         [
             EBNFAtom.NAME,
             EBNFAtom.DEF,
@@ -62,12 +62,12 @@ class EBNF:
 
     # `repetition`: '+' | '*' | '{' n1 n2 '}'
     # [ expr ] was handled in token scanner, will be convert to ( expr ){0, 1}
-    repetition = BaseGrammar(
+    repetition = Base(
         [EBNFAtom.PLUS],
         [EBNFAtom.STAR],
         [
             EBNFAtom.LREP,
-            GroupGrammar(
+            Group(
                 [
                     EBNFAtom.NUMBER
                 ],
@@ -79,10 +79,10 @@ class EBNF:
     )
 
     # `expr`: base_expr ( '|' base_expr )*
-    expr = BaseGrammar(
+    expr = Base(
         [
             Refer('base_expr'),
-            GroupGrammar(
+            Group(
                 [
                     EBNFAtom.ALT,
                     Refer('base_expr')
@@ -94,9 +94,9 @@ class EBNF:
     )
 
     # `base_expr`: ( atom_expr )+
-    base_expr = BaseGrammar(
+    base_expr = Base(
         [
-            GroupGrammar(
+            Group(
                 [Refer('atom_expr')],
                 repeat=(1, -1)
             )
@@ -105,16 +105,16 @@ class EBNF:
     )
 
     # `atom_expr`: atom ( '+' | '*' | {x, x} )*
-    atom_expr = BaseGrammar(
+    atom_expr = Base(
         [
             Refer('atom'),
-            GroupGrammar([Refer('repetition')])
+            Group([Refer('repetition')])
         ],
         name='atom_expr'
     )
 
     # `atom`: NAME | STRING | '(' expr ')' | EPSILON
-    atom = BaseGrammar(
+    atom = Base(
         [EBNFAtom.NAME],
         [EBNFAtom.STRING],
         [
@@ -170,9 +170,9 @@ class EBNF:
         # otherwise error is thrown during operation to the dictionary
         for key in list(tracker):
 
-            # `self` is a BaseGrammar or GroupGrammar instance
+            # `self` is a Base or Group instance
             self = tracker.grammars.get(key)
-            if isinstance(self, BaseGrammar):
+            if isinstance(self, Base):
                 if self.grammars[0][0].name == self.name:
 
                     # eliminate direct left recursion
@@ -189,12 +189,9 @@ class EBNF:
                     # expand the two expr list into *args
                     del tracker.grammars[self.name]
                     tracker.grammars[self.name] = \
-                        BaseGrammar(*expr1,
-                                    name=self.name)
+                        Base(*expr1, name=self.name)
                     tracker.grammars[f'_{self.name}'] = \
-                        BaseGrammar(*expr2,
-                                    [EBNFAtom.EPSILON],
-                                    name=f'_{self.name}')
+                        Base(*expr2, [EBNFAtom.EPSILON], name=f'_{self.name}')
 
     @staticmethod
     def build(tracker:BuildTracker, *grammars, debug=0):
@@ -215,11 +212,11 @@ class EBNF:
                 except:
                     raise GrammarNotExists(f'Unknown EBNF grammar \'{grammar}\'.')
                 else:
-                    if isinstance(_grammar, BaseGrammar):
+                    if isinstance(_grammar, Base):
                         _grammar.build(tracker)
         if debug:
             for grammar in tracker:
-                if isinstance(tracker[grammar], BaseGrammar):
+                if isinstance(tracker[grammar], Base):
                     print(tracker[grammar].print_productions())
 
     @staticmethod

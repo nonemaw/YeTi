@@ -6,7 +6,7 @@ from uni_parser.reserved_names import *
 import re
 
 
-class EpsilonGrammar:
+class Epsilon:
     def __init__(self):
         self.name = 'EPSILON'
         self.regex = '_e'
@@ -23,7 +23,7 @@ class EpsilonGrammar:
         return '_E'
 
 
-class LiteralGrammar:
+class Literal:
     def __init__(self, regex, name: str = None, escape: bool = False):
         self.escape = escape
         if name:
@@ -44,7 +44,7 @@ class LiteralGrammar:
 
     def match(self, lexer: Lexer, debug: int = 0):
         # the most fundamental match() function:
-        # match current_token's spelling with LiteralGrammar's regex text
+        # match current_token's spelling with Literal's regex text
         if lexer.current_token is None or lexer.current_token.spelling == '_EOF':
             return None
 
@@ -104,12 +104,12 @@ class LiteralGrammar:
         return None
 
 
-class BaseGrammar:
+class Base:
     """
     Base grammar:
 
     SAMPLE: G1 G2 | SAMPLE
-    SAMPLE = BaseGrammar(
+    SAMPLE = Base(
         [Refer(G1), Refer(G2)],  # grammar list 1 [G1, G2]
         [Refer(SAMPLE)],         # grammar list 2 [SAMPLE]
         name='SAMPLE')
@@ -131,7 +131,7 @@ class BaseGrammar:
                 in grammar_list)
 
     def __str__(self):
-        return f'BaseGrammar<{self.name}>'
+        return f'Base<{self.name}>'
 
     def __repr__(self):
         return str(self)
@@ -157,7 +157,7 @@ class BaseGrammar:
         for grammar_list in self.grammars:
             self.productions.append([])
             for grammar in grammar_list:
-                if isinstance(grammar, GroupGrammar):
+                if isinstance(grammar, Group):
                     if grammar.name not in tracker.grammars:
                         # if this group of grammars is not in tracker, put it in
                         tracker.grammars[grammar.name] = grammar
@@ -177,14 +177,14 @@ class BaseGrammar:
                 elif isinstance(grammar, Refer):
                     # get real grammar from tracker's grammar dict based on reference
                     grammar = tracker.grammars.get(grammar.name)
-                    if isinstance(grammar, BaseGrammar):
+                    if isinstance(grammar, Base):
                         grammar.build(tracker=tracker)
                     if grammar.recursion:
                         self.recursion = True
                     self.productions[-1].append(grammar)
 
-                elif isinstance(grammar, LiteralGrammar) or isinstance(grammar,
-                                                                       EpsilonGrammar):
+                elif isinstance(grammar, Literal) or isinstance(
+                        grammar, Epsilon):
                     # a simple EBNF literal grammar, no further operations
                     self.productions[-1].append(grammar)
 
@@ -285,8 +285,8 @@ class BaseGrammar:
                                     grammar='_e'))
                 return None
 
-            if isinstance(grammar, GroupGrammar):
-                # grammar is a GroupGrammar
+            if isinstance(grammar, Group):
+                # grammar is a Group
                 if not self.ignore_set:
                     tree.extend(nodes)
                 else:
@@ -306,14 +306,14 @@ class BaseGrammar:
         return True
 
 
-class GroupGrammar(BaseGrammar):
+class Group(Base):
     """
     Base grammar in group:
 
     SAMPLE:  [ G1 G2 | G3 ] G4 | SAMPLE
-    SAMPLE = BaseGrammar(
+    SAMPLE = Base(
         [
-            GroupGrammar(
+            Group(
                 [Ref]er(G1), Refer(G2)],
                 [Refer(G3)],
                 repeat=[0, 1]),
@@ -348,7 +348,7 @@ class GroupGrammar(BaseGrammar):
                     self.name = f'({self.name}){{{repeat[0]},{repeat[1]}}}'
 
     def __str__(self):
-        return f'GroupGrammar<{self.name}>'
+        return f'Group<{self.name}>'
 
     def __repr__(self):
         return str(self)
@@ -357,7 +357,7 @@ class GroupGrammar(BaseGrammar):
 
         if debug:
             print(' ' * (
-                debug - 1) + f'### GroupGrammar {self.name}.match(), calling super\'s match()')
+                debug - 1) + f'### Group {self.name}.match(), calling super\'s match()')
 
         tree = Ast(self.name, lexer.current_position(), grammars=[])
         if lexer.current_token is None or lexer.current_token.spelling == '_EOF':
@@ -395,7 +395,7 @@ class GroupGrammar(BaseGrammar):
 
             if debug:
                 print(' ' * (
-                    debug - 1) + f'--- GroupGrammar {self.name}.match() FAILED in minimal repetition)')
+                    debug - 1) + f'--- Group {self.name}.match() FAILED in minimal repetition)')
 
             lexer.backward()
 
@@ -407,7 +407,7 @@ class GroupGrammar(BaseGrammar):
 
         if debug:
             print(' ' * (
-                debug - 1) + f'+++ GroupGrammar {self.name}.match() SUCCESS')
+                debug - 1) + f'+++ Group {self.name}.match() SUCCESS')
         lexer.release_anchor()
         return tree
 

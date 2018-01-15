@@ -9,10 +9,10 @@ class EBNFGrammarReverseBuilder:
     escape_list = re.compile(
         '\'([\.\*\+\?\-\^\$\|\{\}\(\)\[\]]{1,}|(\*\*=)|(\*=)|(\+=)|())\'')
     literal_finder = re.compile(
-        '^ *\[LiteralGrammar\(""".+?""", """\{\}"""\)\] *$', re.DOTALL)
-    literal_finder2 = re.compile('LiteralGrammar')
+        '^ *\[Literal\(""".+?""", """\{\}"""\)\] *$', re.DOTALL)
+    literal_finder2 = re.compile('Literal')
     g_literal_name_finder = re.compile(
-        'LiteralGrammar\("""(.+?)""", """\{\}""".*?\)', re.DOTALL)
+        'Literal\("""(.+?)""", """\{\}""".*?\)', re.DOTALL)
 
     @staticmethod
     def build(ast: Ast) -> str:
@@ -38,7 +38,7 @@ class EBNFGrammarReverseBuilder:
                         g_literal_name_list = [repr(name) for name in
                                                EBNFGrammarReverseBuilder.g_literal_name_finder.findall(
                                                    definition)]
-                        definitions += f'{name} = BaseGrammar({definition.format(*g_literal_name_list)}, name=\'{name}\')\n'
+                        definitions += f'{name} = Base({definition.format(*g_literal_name_list)}, name=\'{name}\')\n'
         return definitions
 
     @staticmethod
@@ -84,13 +84,13 @@ class EBNFGrammarReverseBuilder:
         grammar = EBNFGrammarReverseBuilder.build_atom(ast[0])
         if len(ast.children) > 1:
             # case 1: atom_expr with repetition
-            return f'GroupGrammar([{grammar}]{EBNFGrammarReverseBuilder.build_repetition(ast[1])})'
+            return f'Group([{grammar}]{EBNFGrammarReverseBuilder.build_repetition(ast[1])})'
         else:
-            # case 2: without repetition, can be a GroupGrammar with default
-            # repetition (`*`) or an atom with LiteralGrammar
+            # case 2: without repetition, can be a Group with default
+            # repetition (`*`) or an atom with Literal
             if len(ast[0].children) > 1:
                 # the default repetition case
-                return f'GroupGrammar([{grammar}], repeat=(1, 1))'
+                return f'Group([{grammar}], repeat=(1, 1))'
             return grammar
 
     @staticmethod
@@ -129,9 +129,9 @@ class EBNFGrammarReverseBuilder:
             match_result = EBNFGrammarReverseBuilder.escape_list.match(
                 ast[0].child)
             if match_result and match_result.span()[1] == len(ast[0].child):
-                return f'LiteralGrammar("""{ast[0].child[1:-1]}""", """{{}}""", escape=True)'
+                return f'Literal("""{ast[0].child[1:-1]}""", """{{}}""", escape=True)'
 
-            return f'LiteralGrammar("""{ast[0].child[1:-1]}""", """{{}}""")'
+            return f'Literal("""{ast[0].child[1:-1]}""", """{{}}""")'
 
         elif ast[0].name == 'LGR':
             return EBNFGrammarReverseBuilder.build_expr(ast[1])[1:-1]
