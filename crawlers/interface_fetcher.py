@@ -389,7 +389,7 @@ if __name__ == '__main__':
     Meta.jison = Jison()
     Meta.company = 'fmd'
     Meta.company_username = 'DXu'
-    Meta.company_password = 'Summer2017'
+    Meta.company_password = ''
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
     Meta.interface_fetcher = InterfaceFetcher()

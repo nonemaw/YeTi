@@ -3,7 +3,7 @@ import re
 
 def indent(line: str, level: int) -> str:
     for i in range(level):
-        line = '    ' + line
+        line = f'    {line}'
     return line
 
 

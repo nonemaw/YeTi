@@ -12,7 +12,7 @@ from app.models import Group, SubGroup
 from fuzzier.jison import Jison
 
 
-class MenuFetcher:
+class FieldFetcher:
     def __init__(self):
         pass
 
@@ -280,9 +280,9 @@ if __name__ == '__main__':
 
     Meta.company = 'fmd'
     Meta.company_username = 'DXu'
-    Meta.company_password = ''
+    Meta.company_password = 'Summer2017'
     Meta.jison = Jison()
     Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
         client, Meta.company)
-    Meta.menu_fetcher = MenuFetcher()
+    Meta.menu_fetcher = FieldFetcher()
     Meta.menu_fetcher.fetch()

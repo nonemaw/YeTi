@@ -8,7 +8,7 @@ class Meta:
     """
     company = 'ytml'
     company_username = 'ytml1'
-    company_password = ''
+    company_password = None
 
     db_default = mongo_connect(client, 'ytml')
     db_company = None
@@ -17,7 +17,9 @@ class Meta:
     crypto = None
 
     # `jison` is an instance of Jison parser
+    # `parser` is an instance of ParserLoader
     jison = None
+    parser = None
 
     # `fetchers` are instances of Fetcher/Interface Fetcher
     menu_fetcher = None
