@@ -43,9 +43,13 @@ class Ast:
     def format(self, level=4):
         indent = ' ' * level
         end_indent = ' ' * (level - 4)
+
+        # child case (single grammar case, e.g. a matched literal grammar)
         if self.child:
             child = 'CR' if self.child == '\n' else self.child
             return f'{self.name} < {child} >\n'
+
+        # children case (a list of various grammars)
         else:
             next_indent = ' ' * level
             children = next_indent.join(

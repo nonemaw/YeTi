@@ -189,12 +189,20 @@ class SourceFile:
         self.eof = '_EOF'
         # In Python3.*, for using file pointer seek(), the file MUST be
         # opened as a binary file with mode `b`
-        self.source_file = open(source_file, 'rb') if source_file else None
+        try:
+            self.source_file = open(source_file, 'rb') if source_file else None
+        except:
+            raise Exception(f'No such grammar file "{source_file}", please create it manually')
         self.source_code = source_code if source_code else None
         self.index = 0 if source_code else None
 
         if not self.source_file and not self.source_code:
             raise Exception('No code has been provided')
+
+        if self.source_file:
+            self.type = 'file'
+        else:
+            self.type = 'code'
 
         # if both file and code is provided, later one will be ignored
         if self.source_file and self.source_code:

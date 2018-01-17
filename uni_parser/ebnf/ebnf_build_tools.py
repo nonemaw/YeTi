@@ -1,4 +1,4 @@
-from uni_parser.ebnf.ebnf_scanner import EBNFScanner, TokenType, Token
+from uni_parser.ebnf.ebnf_scanner import TokenType
 
 
 class BuildTracker:
@@ -14,6 +14,12 @@ class BuildTracker:
 
     def __getitem__(self, item):
         return self.grammars.__getitem__(item)
+
+    def __delitem__(self, item):
+        self.grammars.__delitem__(item)
+
+    def __setitem__(self, item, value):
+        self.grammars.__setitem__(item, value)
 
     def list_grammars(self):
         return ' '.join([self.grammars.get(name) for name in self.grammars])
@@ -75,8 +81,8 @@ class Lexer:
                 2] and self.current_token.position[1] > \
                        self.last_token.position[3]:
                 self.last_token = self.current_token
-            self.h_index = self.anchor_stack.pop()
-            self.current_token = self.history[self.h_index]
+        self.h_index = self.anchor_stack.pop()
+        self.current_token = self.history[self.h_index]
 
     def anchor(self):
         # set current recursion's anchor stack

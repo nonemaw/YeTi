@@ -158,14 +158,14 @@ class Base:
             self.productions.append([])
             for grammar in grammar_list:
                 if isinstance(grammar, Group):
-                    if grammar.name not in tracker.grammars:
+                    if grammar.name not in tracker:
                         # if this group of grammars is not in tracker, put it in
-                        tracker.grammars[grammar.name] = grammar
+                        tracker[grammar.name] = grammar
                     else:
                         # else, take the old group grammar, as there must be a same
                         # group grammar which has been built already, no need to
                         # keep the current un-built one
-                        grammar = tracker.grammars.get(grammar.name)
+                        grammar = tracker[grammar.name]
 
                     # build grammar, for an old group grammar the build() will be
                     # skipped as the `done` flag
@@ -176,7 +176,7 @@ class Base:
 
                 elif isinstance(grammar, Refer):
                     # get real grammar from tracker's grammar dict based on reference
-                    grammar = tracker.grammars.get(grammar.name)
+                    grammar = tracker[grammar.name]
                     if isinstance(grammar, Base):
                         grammar.build(tracker=tracker)
                     if grammar.recursion:
@@ -299,7 +299,6 @@ class Base:
                     tree.append(nodes)
 
         # all grammar in current production_list matched, operation SUCCESS
-
         if debug:
             print(' ' * (debug - 1) + f'+++ {self.name}.build_ast() SUCCESS')
 

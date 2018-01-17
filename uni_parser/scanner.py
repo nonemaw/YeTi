@@ -1,20 +1,23 @@
 import re
+from uni_parser.base_class import ScannerBase
 from uni_parser.token_source import *
 from uni_parser.ebnf.errors import TokenTypeError
 
 
-class Scanner:
+class Scanner(ScannerBase):
     escape_char = ['b', 'f', 'n', 'r', 't', "'", '"', '\\']
     id_string_begin = re.compile(r'[a-zA-Z_\u4e00-\u9fa5]{1}')
     id_string_rest = re.compile(r'[a-zA-Z0-9_\u4e00-\u9fa5]+')
     digit = re.compile(r'[0-9]+')
 
-    def __init__(self, source_file: SourceFile, comment_tag: str = '#',
+    def __init__(self,
+                 source_file: SourceFile,
+                 comment_tag: str = '#',
                  template_tag: str = None):
         """
-        :param template_tag: tag for template's code section, e.g.: template_tag='<::>'
+        template_tag: tag for template's code section, e.g.: template_tag='<::>'
         """
-        self.source_file = source_file
+        super().__init__(source_file, comment_tag)
         self.tracker = PositionTracker(1, 1, 1, 1)
         self.debug = False
 
@@ -33,7 +36,6 @@ class Scanner:
         # TODO: temporary solution
         self.tag_stack = []
 
-        self.comment_tag = comment_tag
         if template_tag:
             self.template_tag = template_tag[:int(len(template_tag) / 2)]
             self.template_close = template_tag[int(len(template_tag) / 2):]
@@ -595,3 +597,6 @@ if __name__ == '__main__':
     while scanner.current_char != scanner.source_file.eof:
         token = scanner.get_token()
         print(token)
+        print(scanner.current_char)
+
+    print(scanner.current_char)

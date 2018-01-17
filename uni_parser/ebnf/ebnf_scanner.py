@@ -1,4 +1,5 @@
 import re
+from uni_parser.base_class import ScannerBase
 from uni_parser.token_source import PositionTracker, SourceFile
 from uni_parser.ebnf.errors import TokenTypeError
 
@@ -84,14 +85,14 @@ class Token:
         return self.position
 
 
-class EBNFScanner:
+class EBNFScanner(ScannerBase):
     escape_char = ['b', 'f', 'n', 'r', 't', "'", '"', '\\']
     id_string_begin = re.compile(r'[a-zA-Z_\u4e00-\u9fa5]{1}')
     id_string_rest = re.compile(r'[a-zA-Z0-9_\u4e00-\u9fa5]+')
     digit = re.compile(r'[0-9]+')
 
     def __init__(self, source_file: SourceFile, comment_tag='#'):
-        self.source_file = source_file
+        super().__init__(source_file, comment_tag)
         self.tracker = PositionTracker(1, 1, 1, 1)
         self.option_lock = None
 
@@ -100,7 +101,6 @@ class EBNFScanner:
         self.current_spelling = ''
 
         self.text = ''
-        self.comment_tag = comment_tag
 
     def accept(self, count: int = None):
         """
@@ -318,16 +318,14 @@ class EBNFScanner:
             return token
 
 
-"""
-RUN THIS FOR DEBUG ONLY:
-PUT `grammar.txt` WITH THIS FILE UNDER SAME DIRECTORY FOR TEST
-"""
 if __name__ == '__main__':
     import os
 
     this_path = os.path.dirname(os.path.realpath(__file__))
-    scanner = EBNFScanner(SourceFile(os.path.join(this_path, 'grammars', 'xplan.ebnf')))
+    parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
+    scanner = EBNFScanner(SourceFile(os.path.join(parent_path, 'grammars', 'xplan.ebnf')))
 
     while scanner.current_char != scanner.source_file.eof:
         token = scanner.get_token()
         print(token)
+

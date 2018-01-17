@@ -15,7 +15,7 @@ class EBNFGrammarReverseBuilder:
         'Literal\("""(.+?)""", """\{\}""".*?\)', re.DOTALL)
 
     @staticmethod
-    def build(ast: Ast) -> str:
+    def build(ast: Ast, indent: int = 0) -> str:
         """
         name:     test
         children: [define, NEWLINE, define, NEWLINE, ... ]
@@ -24,7 +24,8 @@ class EBNFGrammarReverseBuilder:
                    name2 = definition2
                    ...`
         """
-        definitions = ''
+        indent = ' ' * indent
+        definitions = []
         if ast.children:
             for child in ast:
                 if child.name == 'define':
@@ -33,13 +34,13 @@ class EBNFGrammarReverseBuilder:
                     if len(EBNFGrammarReverseBuilder.literal_finder2.findall(
                             definition)) == 1 and EBNFGrammarReverseBuilder.literal_finder.findall(
                             definition):
-                        definitions += f'{name} = {definition[1:-1].format(name)}\n'
+                        definitions.append(f'{indent}{name} = {definition[1:-1].format(name)}\n')
                     else:
                         g_literal_name_list = [repr(name) for name in
                                                EBNFGrammarReverseBuilder.g_literal_name_finder.findall(
                                                    definition)]
-                        definitions += f'{name} = Base({definition.format(*g_literal_name_list)}, name=\'{name}\')\n'
-        return definitions
+                        definitions.append(f'{indent}{name} = Base({definition.format(*g_literal_name_list)}, name=\'{name}\')\n')
+        return ''.join(definitions)
 
     @staticmethod
     def build_define(ast: Ast) -> tuple:
@@ -70,8 +71,7 @@ class EBNFGrammarReverseBuilder:
 
         return:   `[G1, G2, G3 ...]`
         """
-        return '[' + ', '.join(EBNFGrammarReverseBuilder.build_atom_expr(child)
-                               for child in ast) + ']'
+        return f"[{', '.join(EBNFGrammarReverseBuilder.build_atom_expr(child)for child in ast)}]"
 
     @staticmethod
     def build_atom_expr(ast: Ast) -> str:

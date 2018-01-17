@@ -4,26 +4,28 @@ from uni_parser.ebnf.errors import GrammarNotExists, SyntaxError
 
 class EBNFAtom:
     # match the `name` of a grammar
-    NAME    = Literal(re.compile('[a-zA-Z_\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*'), 'NAME')
+    NAME = Literal(
+        re.compile('[a-zA-Z_\u4e00-\u9fa5][a-zA-Z0-9_\u4e00-\u9fa5]*'), 'NAME')
     # match the value of `number` of a grammar
-    NUMBER  = Literal(re.compile('-?[0-9]{0,10}'), 'NUMBER')
+    NUMBER = Literal(re.compile('-?[0-9]{0,10}'), 'NUMBER')
     # match the value of `string` of a grammar, with format in `' ... '`
-    STRING  = Literal(re.compile('\'[\w\W]*?\''), 'STRING')  # which already includes some atoms like 'True', ',', '.', etc.
+    STRING = Literal(re.compile('\'[\w\W]*?\''),
+                     'STRING')  # which already includes some atoms like 'True', ',', '.', etc.
 
     NEWLINE = Literal(r'\n', 'NEWLINE')
-    STAR    = Literal('*', 'STAR', escape=True)
-    PLUS    = Literal('+', 'PLUS', escape=True)
-    ALT     = Literal('|', 'ALT', escape=True)
-    EXCEP   = Literal('-', 'EXCEP', escape=True)
-    LREP    = Literal('{', 'LREP', escape=True)
-    RREP    = Literal('}', 'RREP', escape=True)
-    LGR     = Literal('(', 'LGR', escape=True)
-    RGR     = Literal(')', 'RGR', escape=True)
-    LOP     = Literal('[', 'LOP', escape=True)
-    ROP     = Literal(']', 'ROP', escape=True)
-    DEF     = Literal('::=', 'DEF', escape=True)  # DEF should be assigned manually
+    STAR = Literal('*', 'STAR', escape=True)
+    PLUS = Literal('+', 'PLUS', escape=True)
+    ALT = Literal('|', 'ALT', escape=True)
+    EXCEP = Literal('-', 'EXCEP', escape=True)
+    LREP = Literal('{', 'LREP', escape=True)
+    RREP = Literal('}', 'RREP', escape=True)
+    LGR = Literal('(', 'LGR', escape=True)
+    RGR = Literal(')', 'RGR', escape=True)
+    LOP = Literal('[', 'LOP', escape=True)
+    ROP = Literal(']', 'ROP', escape=True)
+    DEF = Literal('::=', 'DEF', escape=True)  # DEF should be assigned manually
     EPSILON_EXPR = Literal('_e', 'EPSILON_EXPR', escape=True)
-    EPSILON      = Epsilon()
+    EPSILON = Epsilon()
 
 
 class EBNF:
@@ -137,7 +139,7 @@ class EBNF:
     })
 
     @staticmethod
-    def eliminate_i_lr(tracker:BuildTracker):
+    def eliminate_i_lr(tracker: BuildTracker):
         """
         accept a tracker instance, format indirect left recursion to direct left recursion
 
@@ -153,7 +155,7 @@ class EBNF:
         pass
 
     @staticmethod
-    def eliminate_lr(tracker:BuildTracker):
+    def eliminate_lr(tracker: BuildTracker):
         """
         accept a tracker instance, for eliminating direct left recursion
 
@@ -171,7 +173,7 @@ class EBNF:
         for key in list(tracker):
 
             # `self` is a Base or Group instance
-            self = tracker.grammars.get(key)
+            self = tracker[key]
             if isinstance(self, Base):
                 if self.grammars[0][0].name == self.name:
 
@@ -187,14 +189,14 @@ class EBNF:
                             expr2.append(temp_list)
 
                     # expand the two expr list into *args
-                    del tracker.grammars[self.name]
-                    tracker.grammars[self.name] = \
+                    del tracker[self.name]
+                    tracker[self.name] = \
                         Base(*expr1, name=self.name)
-                    tracker.grammars[f'_{self.name}'] = \
+                    tracker[f'_{self.name}'] = \
                         Base(*expr2, [EBNFAtom.EPSILON], name=f'_{self.name}')
 
     @staticmethod
-    def build(tracker:BuildTracker, *grammars, debug=0):
+    def build(tracker: BuildTracker, *grammars, debug=0):
         """
         build entry point
 
@@ -210,7 +212,8 @@ class EBNF:
                 try:
                     _grammar = tracker[grammar]
                 except:
-                    raise GrammarNotExists(f'Unknown EBNF grammar \'{grammar}\'.')
+                    raise GrammarNotExists(
+                        f'Unknown EBNF grammar \'{grammar}\'.')
                 else:
                     if isinstance(_grammar, Base):
                         _grammar.build(tracker)
@@ -220,23 +223,21 @@ class EBNF:
                     print(tracker[grammar].print_productions())
 
     @staticmethod
-    def match(tracker:BuildTracker, lexer:Lexer, grammar:str=None, debug=0) -> Ast:
+    def match(tracker: BuildTracker, lexer: Lexer, grammar: str = None,
+              return_ast: bool = False, debug=0):
         """
         match entry point
 
         set `debug` to `1` to enable debug message with recursion indent
         """
         if not grammar:
-            result = tracker.grammars.get('test').match(lexer, debug)
+            result = tracker['test'].match(lexer, debug)
         else:
-            result = tracker.grammars.get(grammar).match(lexer, debug)
-        if not (lexer.scanner.look_ahead(1) == '_EOF'or lexer.current_token == '_EOF') or not result:
-            if not result:
-                raise SyntaxError(
-f"""\n    Syntax Error while parsing, around line {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >""")
-            else:
-                raise SyntaxError(
-f"""\n    Syntax Error while parsing, around line {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >
-    {result.format()}""")
+            result = tracker[grammar].match(lexer, debug)
 
-        return result
+        if lexer.current_token is not None or not result:
+            error_message = f"""\n    Syntax Error while parsing, around chunk {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >"""
+            return error_message
+
+        if return_ast:
+            return result
