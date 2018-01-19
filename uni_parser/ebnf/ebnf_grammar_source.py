@@ -224,7 +224,7 @@ class EBNF:
 
     @staticmethod
     def match(tracker: BuildTracker, lexer: Lexer, grammar: str = None,
-              return_ast: bool = False, debug=0):
+              return_ast: bool = False, message_only: bool = False, debug=0):
         """
         match entry point
 
@@ -235,9 +235,19 @@ class EBNF:
         else:
             result = tracker[grammar].match(lexer, debug)
 
-        if lexer.current_token is not None or not result:
-            error_message = f"""\n    Syntax Error while parsing, around chunk {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >"""
-            return error_message
-
-        if return_ast:
+        if return_ast and not message_only:
             return result
+
+        if lexer.current_token is not None or not result:
+            if message_only:
+                returned_message = {
+                    'error_start': [lexer.current_token.position[0], lexer.current_token.position[1]],
+                    'error_end': [lexer.last_token.position[2], lexer.last_token.position[3]],
+                    'spelling': lexer.current_token.spelling,
+                    'passed': False
+                }
+                return returned_message
+            else:
+                raise SyntaxError(f"""\n    Syntax Error while parsing, around chunk {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >""")
+        elif message_only:
+            return {'passed': True}

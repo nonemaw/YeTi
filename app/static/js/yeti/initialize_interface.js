@@ -109,18 +109,18 @@ var current_subugroup = undefined;
 //                     alert(data.result.error);
 //                     $('#interface-tree').jstree("create_node", id, { id: 'error', text: 'Error' }, "last");
 //
-//                     inote.text('Failed in loading node information').css('display', '');
-//                     itype.css('display', 'none');
-//                     ititle.css('display', 'none');
-//                     ientity.css('display', 'none');
-//                     iindividual.css('display', 'none');
-//                     itrust.css('display', 'none');
-//                     isuperfund.css('display', 'none');
-//                     icompany.css('display', 'none');
-//                     ipartnership.css('display', 'none');
-//                     $('#interface-xplan-table1-head').css('display', 'none');
-//                     $('#interface-xplan-table2-head').css('display', 'none');
-//                     $('#interface-group-table-head').css('display', 'none');
+//                     inote.text('Failed in loading node information').show();
+//                     itype.hide();
+//                     ititle.hide();
+//                     ientity.hide();
+//                     iindividual.hide();
+//                     itrust.hide();
+//                     isuperfund.hide();
+//                     icompany.hide();
+//                     ipartnership.hide();
+//                     $('#interface-xplan-table1-head').hide();
+//                     $('#interface-xplan-table2-head').hide();
+//                     $('#interface-group-table-head').hide();
 //                 }
 //                 // leaf node
 //                 else if (data.result.leaf_basic) {
@@ -137,12 +137,12 @@ var current_subugroup = undefined;
 //                         // Group - Subgroup
 //                         if (group_subgroup_array.length === 2) {
 //                             $('#interface-table-row').css('height', '0');
-//                             $('#interface-xplan-table1-head').css('display', 'none');
-//                             $('#interface-xplan-table2-head').css('display', 'none');
-//                             $('#interface-group-table-head').css('display', 'none');
+//                             $('#interface-xplan-table1-head').hide();
+//                             $('#interface-xplan-table2-head').hide();
+//                             $('#interface-group-table-head').hide();
 //                             itype.text('Variable');
 //                             ititle.text('[' + group_subgroup_array[0] + '] ' +  group_subgroup_array[1]);
-//                             ititle.css('display', '');
+//                             ititle.show();
 //                         }
 //
 //                         // XPLAN collection
@@ -150,8 +150,8 @@ var current_subugroup = undefined;
 //                             // XPLAN collection got some variables
 //                             if (data.result.leaf_xplan) {
 //                                 $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
-//                                 $('#interface-title').css('display', 'none');
-//                                 $('#interface-group-table-head').css('display', 'none');
+//                                 $('#interface-title').hide();
+//                                 $('#interface-group-table-head').hide();
 //                                 var interface_xplan_table1 = $('#interface-xplan-table1');
 //                                 var interface_xplan_table2 = $('#interface-xplan-table2');
 //                                 interface_xplan_table1.empty();
@@ -170,7 +170,7 @@ var current_subugroup = undefined;
 //                                             interface_xplan_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + xplan_info[table][variable] + '</td></tr>');
 //                                             local_interface_table1_cache[_id1] = xplan_info[table][variable];
 //                                         }
-//                                         $('#interface-xplan-table1-head').css('display', '');
+//                                         $('#interface-xplan-table1-head').show();
 //                                     }
 //                                     else if (table === 'table2') {
 //                                         var _id2 = 0;
@@ -180,7 +180,7 @@ var current_subugroup = undefined;
 //                                             interface_xplan_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + xplan_info[table][variable] + '</td></tr>');
 //                                             local_interface_table2_cache[_id2] = xplan_info[table][variable];
 //                                         }
-//                                         $('#interface-xplan-table2-head').css('display', '');
+//                                         $('#interface-xplan-table2-head').show();
 //                                     }
 //                                 }
 //                                 // if XPLAN collection/group has a known subgroup
@@ -193,10 +193,10 @@ var current_subugroup = undefined;
 //                             }
 //                             // a Group got some variables
 //                             else if (data.result.leaf_group) {
-//                                 $('#interface-xplan-table1-head').css('display', 'none');
-//                                 $('#interface-xplan-table2-head').css('display', 'none');
+//                                 $('#interface-xplan-table1-head').hide();
+//                                 $('#interface-xplan-table2-head').hide();
 //                                 $('#interface-type').text('Group Collection: ' + group_subgroup_array[0]);
-//                                 $('#interface-title').css('display', 'none');
+//                                 $('#interface-title').hide();
 //                                 $('#interface-group-table-title').css('display', '').text('Group View');
 //                                 $('#interface-table-row').css('height', '200px');
 //                                 var interface_group_table = $('#interface-group-table');
@@ -212,20 +212,20 @@ var current_subugroup = undefined;
 //                                         local_interface_group_table_cache[_id3] = group_info[group][variable];
 //                                     }
 //                                 }
-//                                 $('#interface-group-table-head').css('display', '');
+//                                 $('#interface-group-table-head').show();
 //                             }
 //                             // an empty XPLAN colelction
 //                             else {
 //                                 $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
 //                                 $('#interface-xplan-table1').empty().append('<tr><td>/</td></tr>');
-//                                 $('#interface-xplan-table2-head').css('display', 'none');
-//                                 $('#interface-group-table-head').css('display', 'none');
+//                                 $('#interface-xplan-table2-head').hide();
+//                                 $('#interface-group-table-head').hide();
 //                                 $('#interface-table-row').css('height', '30px');
 //                                 $('#interface-xplan-table1-title').text('(Collection is Empty)');
-//                                 $('#interface-xplan-table1-head').css('display', '');
-//                                 $('#interface-group-table-title').css('display', 'none');
+//                                 $('#interface-xplan-table1-head').show();
+//                                 $('#interface-group-table-title').hide();
 //                             }
-//                             ititle.css('display', 'none');
+//                             ititle.hide();
 //                         }
 //
 //                         var entities = basic_info[item];
@@ -245,14 +245,14 @@ var current_subugroup = undefined;
 //                             ipartnership.find('label, input').attr('checked', 'checked');
 //                         }
 //                     }
-//                     inote.css('display', 'none');
-//                     itype.css('display', '');
-//                     ientity.css('display', '');
-//                     iindividual.css('display', '');
-//                     itrust.css('display', '');
-//                     isuperfund.css('display', '');
-//                     icompany.css('display', '');
-//                     ipartnership.css('display', '');
+//                     inote.hide();
+//                     itype.show();
+//                     ientity.show();
+//                     iindividual.show();
+//                     itrust.show();
+//                     isuperfund.show();
+//                     icompany.show();
+//                     ipartnership.show();
 //                 }
 //                 // not a leaf, update node
 //                 else {
@@ -261,18 +261,18 @@ var current_subugroup = undefined;
 //                         var node = { id: menu_list[item].id, text: menu_list[item].text };
 //                         $('#interface-tree').jstree("create_node", id, node, "last");
 //                     }
-//                     inote.text('Waiting for selection').css('display', '');
-//                     itype.css('display', 'none');
-//                     ititle.css('display', 'none');
-//                     ientity.css('display', 'none');
-//                     iindividual.css('display', 'none');
-//                     itrust.css('display', 'none');
-//                     isuperfund.css('display', 'none');
-//                     icompany.css('display', 'none');
-//                     ipartnership.css('display', 'none');
-//                     $('#interface-xplan-table1-head').css('display', 'none');
-//                     $('#interface-xplan-table2-head').css('display', 'none');
-//                     $('#interface-group-table-head').css('display', 'none');
+//                     inote.text('Waiting for selection').show();
+//                     itype.hide();
+//                     ititle.hide();
+//                     ientity.hide();
+//                     iindividual.hide();
+//                     itrust.hide();
+//                     isuperfund.hide();
+//                     icompany.hide();
+//                     ipartnership.hide();
+//                     $('#interface-xplan-table1-head').hide();
+//                     $('#interface-xplan-table2-head').hide();
+//                     $('#interface-group-table-head').hide();
 //                 }
 //             }
 //             else {
@@ -354,9 +354,9 @@ function initialize_interface(id){
                 // Group - Subgroup
                 if (group_subgroup_array.length === 2 || leaf_content.leaf_type === 'variable') {
                     $('#interface-table-row').css('height', '0');
-                    $('#interface-xplan-table1-head').css('display', 'none');
-                    $('#interface-xplan-table2-head').css('display', 'none');
-                    $('#interface-group-table-head').css('display', 'none');
+                    $('#interface-xplan-table1-head').hide();
+                    $('#interface-xplan-table2-head').hide();
+                    $('#interface-group-table-head').hide();
                     itype.text('Variable');
                     if (group_subgroup_array.length === 2) {
                         ititle.text('[' + group_subgroup_array[0] + '] ' + group_subgroup_array[1]);
@@ -364,7 +364,7 @@ function initialize_interface(id){
                     else if (group_subgroup_array.length === 1) {
                         ititle.text('[ / ] ' + group_subgroup_array[0]);
                     }
-                    ititle.css('display', '');
+                    ititle.show();
                 }
 
                 // XPLAN collection
@@ -372,8 +372,8 @@ function initialize_interface(id){
                     // XPLAN collection got some variables
                     if (leaf_content.page.leaf_xplan) {
                         itype.text('XPLAN Item Collection: ' + group_subgroup_array[0]);
-                        ititle.css('display', 'none');
-                        $('#interface-group-table-head').css('display', 'none');
+                        ititle.hide();
+                        $('#interface-group-table-head').hide();
                         var interface_xplan_table1 = $('#interface-xplan-table1');
                         var interface_xplan_table2 = $('#interface-xplan-table2');
                         interface_xplan_table1.empty();
@@ -392,7 +392,7 @@ function initialize_interface(id){
                                     interface_xplan_table1.append('<tr class="t1" id="tableone_' + String(_id1) + '"><td>' + xplan_info[table][variable] + '</td></tr>');
                                     local_interface_table1_cache[_id1] = xplan_info[table][variable];
                                 }
-                                $('#interface-xplan-table1-head').css('display', '');
+                                $('#interface-xplan-table1-head').show();
                             }
                             else if (table === 'table2') {
                                 var _id2 = 0;
@@ -402,7 +402,7 @@ function initialize_interface(id){
                                     interface_xplan_table2.append('<tr class="t2" id="tabletwo_' + String(_id2) + '"><td>' + xplan_info[table][variable] + '</td></tr>');
                                     local_interface_table2_cache[_id2] = xplan_info[table][variable];
                                 }
-                                $('#interface-xplan-table2-head').css('display', '');
+                                $('#interface-xplan-table2-head').show();
                             }
                         }
                         // if XPLAN collection/group has a known subgroup
@@ -415,10 +415,10 @@ function initialize_interface(id){
                     }
                     // a Group got some variables
                     else if (leaf_content.page.leaf_group) {
-                        $('#interface-xplan-table1-head').css('display', 'none');
-                        $('#interface-xplan-table2-head').css('display', 'none');
+                        $('#interface-xplan-table1-head').hide();
+                        $('#interface-xplan-table2-head').hide();
                         $('#interface-type').text('Group Collection: ' + group_subgroup_array[0]);
-                        $('#interface-title').css('display', 'none');
+                        $('#interface-title').hide();
                         $('#interface-group-table-title').css('display', '').text('Group View');
                         $('#interface-table-row').css('height', '30vh');
                         var interface_group_table = $('#interface-group-table');
@@ -434,20 +434,20 @@ function initialize_interface(id){
                                 local_interface_group_table_cache[_id3] = group_info[group][variable];
                             }
                         }
-                        $('#interface-group-table-head').css('display', '');
+                        $('#interface-group-table-head').show();
                     }
                     // an empty XPLAN colelction
                     else {
                         $('#interface-type').text('XPLAN Item Collection: ' + group_subgroup_array[0]);
                         $('#interface-xplan-table1').empty().append('<tr><td>/</td></tr>');
-                        $('#interface-xplan-table2-head').css('display', 'none');
-                        $('#interface-group-table-head').css('display', 'none');
+                        $('#interface-xplan-table2-head').hide();
+                        $('#interface-group-table-head').hide();
                         $('#interface-table-row').css('height', '30px');
                         $('#interface-xplan-table1-title').text('(Collection is Empty)');
-                        $('#interface-xplan-table1-head').css('display', '');
-                        $('#interface-group-table-title').css('display', 'none');
+                        $('#interface-xplan-table1-head').show();
+                        $('#interface-group-table-title').hide();
                     }
-                    ititle.css('display', 'none');
+                    ititle.hide();
                 }
 
                 var entities = basic_info.entities;
@@ -467,14 +467,14 @@ function initialize_interface(id){
                     ipartnership.find('label, input').attr('checked', 'checked');
                 }
 
-                inote.css('display', 'none');
-                itype.css('display', '');
-                ientity.css('display', '');
-                iindividual.css('display', '');
-                itrust.css('display', '');
-                isuperfund.css('display', '');
-                icompany.css('display', '');
-                ipartnership.css('display', '');
+                inote.hide();
+                itype.show();
+                ientity.show();
+                iindividual.show();
+                itrust.show();
+                isuperfund.show();
+                icompany.show();
+                ipartnership.show();
             },
             error: function () {
                 alert('Unexpected error during update leaf page');

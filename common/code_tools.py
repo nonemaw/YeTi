@@ -2,8 +2,8 @@ import re
 
 
 def indent(line: str, level: int) -> str:
-    for i in range(level):
-        line = f'    {line}'
+    indent = ' ' * (level * 4)
+    line = f'{indent}{line}'
     return line
 
 
@@ -11,9 +11,9 @@ def cleanup_mess(code: list) -> list:
     clean_code = []
     for line in code:
         # if a line is not started with 'for/if/else/end' but contains 'for/if/else/end'
-        if not re.search(r'(^\s*<:for|^\s*<:if|^\s*<:else|^\s*<:end)', line):
-            if '<:for' in line or '<:if' in line or '<:else' in line or \
-                            '<:end' in line:
+        if not re.search(r'(^\s*<:for|^\s*<:if|^\s*<:else|^\s*<:end)', line.lower()):
+            if '<:for' in line.lower() or '<:if' in line.lower() or '<:else' in line.lower() or \
+                            '<:end' in line.lower():
                 for segment in line.split('<:'):
                     if ':>' in segment:
                         clean_code.append(f'<:{segment}')
@@ -24,6 +24,7 @@ def cleanup_mess(code: list) -> list:
         else:
             clean_code.append(line)
 
+    code.clear()
     return clean_code
 
 
@@ -44,13 +45,17 @@ def format(code: list, message: str = None, entity: str = None) -> list:
             level = 0
             for index, line in enumerate(code):
                 line = re.sub(r'^ +', '', line)
+                # check any line starts with template tag
                 if line.startswith('<:'):
-                    if re.search(r'^<: *for', line) or re.search(r'^<: *if',
-                                                                 line):
-                        if re.search(r'<: *end *:>', line):
-                            if len(re.findall(r'<:if', line) + re.findall(
-                                    r'<: *for', line)) == len(
-                                re.findall(r'<: *end *:>', line)):
+                    # this line starts with `for` or `if`
+                    if re.search(r'^<: *for', line.lower()) or re.search(r'^<: *if',
+                                                                 line.lower()):
+                        # this line includes `end`
+                        if re.search(r'<: *end *:>', line.lower()):
+                            # this line's `for` or `if` is completed
+                            if len(re.findall(r'<: *if', line.lower()) + re.findall(
+                                    r'<: *for', line.lower())) == len(
+                                re.findall(r'<: *end *:>', line.lower())):
                                 code[index] = indent(line, level)
                             else:
                                 code[index] = indent(line, level)
@@ -58,9 +63,11 @@ def format(code: list, message: str = None, entity: str = None) -> list:
                         else:
                             code[index] = indent(line, level)
                             level += 1
-                    elif re.search(r'^<: *else', line):
+                    # this line starts with `else`
+                    elif re.search(r'^<: *else', line.lower()):
                         code[index] = indent(line, level - 1)
-                    elif re.search(r'^<: *end', line):
+                    # this line starts with `end`
+                    elif re.search(r'^<: *end', line.lower()):
                         level -= 1
                         code[index] = indent(line, level)
                     else:
@@ -342,11 +349,37 @@ def change_entity(code: list, entity: str) -> list:
 
 
 if __name__ == '__main__':
-    code = \
-        [
-'<:if len($trust):>',
-'<:end:>',
-]
+    code = """<:IF SHOWC:>
+AAA
+<:END:>
+<:IF $PARTNER:>
+    <:IF SHOWP:>
+BBB
+    <:END:>
+    <:IF SHOWJ:>
+CCC
+    <:END:>
+<:END:>
+<:IF COMPANY:>
+DDD
+    <:IF SUPERFUND:>
+        <:FOR SUPERFUND IN $SUPERFUND:>
+EEE
+        <:END:>
+    <:END:>
+    <:IF TRUST:>
+        <:FOR TRUST IN $TRUST:>
+DDD
+        <:END:>
+    <:END:>
+    <:IF COMPANY:>
+        <:FOR COMPANY IN $COMPANY:>
+EEE
+        <:END:>
+    <:END:>
+<:END:>"""
+
+    code = code.split('\n')
 
     from pprint import pprint
-    pprint(change_entity(code, 'partnership'))
+    pprint(format(code, 'indent'))

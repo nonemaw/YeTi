@@ -17,8 +17,9 @@ import fuzzier.fuzzier as fuzzier
 def code_formatting():
     received_json = request.json
     if received_json:
-        code = cleanup_mess(
-            received_json.get('code').replace('\r\n', '\n').split('\n'))
+        if received_json.get('message') != 'judge':
+            code = cleanup_mess(
+                received_json.get('code').replace('\r\n', '\n').split('\n'))
 
         if received_json.get('message') == 'indent':
             code = '\n'.join(format(code, message='indent'))
@@ -39,6 +40,10 @@ def code_formatting():
                                               'partnership']:
             code = '\n'.join(format(code, entity=received_json.get('message')))
             return json.dumps({'code': code}), 200
+
+        elif received_json.get('message') == 'judge':
+            judge_message = Meta.parser.parse(source_code=received_json.get('code'), message_only=True)
+            return json.dumps({'judge_result': judge_message}), 200
 
         else:
             return json.dumps({'code': code}), 200

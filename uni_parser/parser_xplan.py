@@ -1,11 +1,9 @@
-import os
-from datetime import datetime
 from uni_parser.ebnf.ebnf_grammar_source import *
 from uni_parser.scanner import Scanner
 from uni_parser.token_source import SourceFile
 
 
-def parse(debug: int = 0):
+def parse(source_file: str = None, source_code: str = None, message_only: bool = False, debug: int = 0):
     single_input = Base([Refer("""NEWLINE""")], [Refer("""simple_stmt""")], [Refer("""compound_stmt"""), Refer("""NEWLINE""")], name='single_input')
     file_input = Base([Group([Refer("""NEWLINE""")], [Refer("""stmt""")]), Group([Refer("""NEWLINE""")])], name='file_input')
     eval_input = Base([Refer("""testlist"""), Group([Refer("""NEWLINE""")]), Refer("""NEWLINE""")], name='eval_input')
@@ -190,8 +188,8 @@ def parse(debug: int = 0):
         'TEXT': TEXT,
     })
 
-    ReservedNames.add_name(*['end', 'let'])
-    this_path = os.path.dirname(os.path.realpath(__file__))
-    code_lexer = Lexer(Scanner(SourceFile(source_file=os.path.join(this_path, 'sources', 'sample.txt')), template_tag='<::>'))
+    ReservedNames.add_name(*['let', 'end'])
+    code_lexer = Lexer(Scanner(SourceFile(source_file=source_file, source_code=source_code), template_tag='<::>', var_define='let', end_tag=['end']))
     EBNF.build(tracker, *['single_input', 'file_input', 'eval_input', 'xplan', 'decorator', 'decorators', 'decorated', 'import_name', 'import_from', 'import_as_name', 'dotted_as_name', 'import_as_names', 'dotted_as_names', 'async_funcdef', 'funcdef', 'classdef', 'tfpdef', 'vfpdef', 'lambdef', 'lambdef_nocond', 'stmt', 'simple_stmt', 'small_stmt', 'expr_stmt', 'del_stmt', 'pass_stmt', 'flow_stmt', 'break_stmt', 'continue_stmt', 'return_stmt', 'raise_stmt', 'import_stmt', 'global_stmt', 'nonlocal_stmt', 'assert_stmt', 'compound_stmt', 'if_stmt', 'while_stmt', 'for_stmt', 'try_stmt', 'except_clause', 'with_stmt', 'with_item', 'async_stmt', 'annassign', 'testlist_star_expr', 'augassign', 'suite', 'test', 'test_nocond', 'or_test', 'and_test', 'not_test', 'comparison', 'comp_op', 'expr', 'xor_expr', 'and_expr', 'shift_expr', 'arith_expr', 'term', 'factor', 'power', 'atom_expr', 'atom', 'testlist_comp', 'trailer', 'subscriptlist', 'subscript', 'sliceop', 'exprlist', 'testlist', 'dictorsetmaker', 'star_expr', 'comp_iter', 'sync_comp_for', 'comp_for', 'comp_if', 'parameters', 'typedargslist', 'varargslist', 'arglist', 'argument', 'NAME', 'NUMBER', 'STRING', 'NEWLINE', 'DEDENT', 'INDENT', 'TEXT'], debug=debug)
-    EBNF.match(tracker, code_lexer, grammar='xplan', debug=debug)
+    result = EBNF.match(tracker, code_lexer, grammar='xplan', message_only=message_only, debug=debug)
+    return result

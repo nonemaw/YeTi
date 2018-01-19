@@ -370,7 +370,7 @@ class InterfaceFetcher:
             if specific and specific[0].lower() in node.get('text').lower():
                 specific.pop(0)
                 node['children'] = self.r_dump_interface(_id, sleep, specific)
-                #InterfaceNode(node).new(force=True, depth=len(specific))
+                # InterfaceNode(node).new(force=True, depth=len(specific))
 
                 from pprint import pprint
                 pprint(node)
@@ -381,7 +381,7 @@ class InterfaceFetcher:
                 continue
 
             node['children'] = self.r_dump_interface(_id, sleep)
-            #InterfaceNode(node).new(force=True)
+            # InterfaceNode(node).new(force=True)
             from pprint import pprint
             pprint(node)
             InterfaceFetcher.quit_driver()
@@ -397,21 +397,28 @@ class InterfaceFetcher:
             try:
                 if isinstance(menu, list):
                     menu.append({
-                        'id': Meta.browser.find_element_by_xpath(f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute('id'),
-                        'text': Meta.browser.find_element_by_xpath(f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text,
+                        'id': Meta.browser.find_element_by_xpath(
+                            f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute(
+                            'id'),
+                        'text': Meta.browser.find_element_by_xpath(
+                            f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text,
                         'type': 'root',
                     })
                 else:
                     menu.get('data').append({
-                        'id': Meta.browser.find_element_by_xpath(f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute('id'),
+                        'id': Meta.browser.find_element_by_xpath(
+                            f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]').get_attribute(
+                            'id'),
                         'parent': '#',
-                        'text': Meta.browser.find_element_by_xpath(f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text
+                        'text': Meta.browser.find_element_by_xpath(
+                            f'//*[@id="edit_interface_page"]/div[2]/div[1]/div/div[2]/div/ul/li[{_id}]/a/span[1]').text
                     })
                 return True
             except:
                 return False
 
-    def r_dump_interface(self, _id: str, sleep: int = 1, specific: list = None) -> list:
+    def r_dump_interface(self, _id: str, sleep: int = 1,
+                         specific: list = None) -> list:
         # id_list (nodes in current menu) returned as child_list of upper recursion
         id_list = []
 
@@ -435,21 +442,26 @@ class InterfaceFetcher:
                         element = Meta.browser.find_element_by_xpath(
                             f'//*[@id="{_id}"]/ul/li[{child}]')
 
-                        if not re.search('(_gap|_title)', element.get_attribute('rel')):
-                            text = Meta.browser.find_element_by_xpath(f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
+                        if not re.search('(_gap|_title)',
+                                         element.get_attribute('rel')):
+                            text = Meta.browser.find_element_by_xpath(
+                                f'//*[@id="{_id}"]/ul/li[{child}]/a/span[1]').text
                             child_id = element.get_attribute('id')
 
                             # something is wrong with page `Retirement Funds`,
                             # skipped other wise page crashed
                             if text != 'Retirement Funds':
                                 specific_flag = False
-                                if specific and specific[0].lower() in text.lower():
+                                if specific and specific[
+                                    0].lower() in text.lower():
                                     specific.pop(0)
                                     specific_flag = True
                                 elif specific:
                                     continue
 
-                                child_list = self.r_dump_interface(child_id, sleep, specific)
+                                child_list = self.r_dump_interface(child_id,
+                                                                   sleep,
+                                                                   specific)
                                 # if current node's child is empty, process leaf page
                                 if not child_list:
                                     leaf_type = self.dump_page(child_id, text)
@@ -613,7 +625,7 @@ class InterfaceFetcher:
             page['leaf_xplan'] = content
             leaf_type = 'xplan'
 
-        #InterfaceLeafPage(_id, text, page).new()
+        # InterfaceLeafPage(_id, text, page).new()
         print(f'leaf page {_id}, {text}')
         return leaf_type
 
@@ -627,7 +639,6 @@ class InterfaceFetcher:
 
             # refresh child list
             if node_dict.get('type') == 'root':
-
 
                 # refresh child list, and if nodes in child list are leaves,
                 # refresh all leaves' page content

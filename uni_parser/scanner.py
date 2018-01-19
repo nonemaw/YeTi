@@ -13,7 +13,9 @@ class Scanner(ScannerBase):
     def __init__(self,
                  source_file: SourceFile,
                  comment_tag: str = '#',
-                 template_tag: str = None):
+                 template_tag: str = None,
+                 var_define: str = None,
+                 end_tag: list = None):
         """
         template_tag: tag for template's code section, e.g.: template_tag='<::>'
         """
@@ -36,6 +38,8 @@ class Scanner(ScannerBase):
         # TODO: temporary solution
         self.tag_stack = []
 
+        self.var_define = var_define
+        self.end_tag = end_tag
         if template_tag:
             self.template_tag = template_tag[:int(len(template_tag) / 2)]
             self.template_close = template_tag[int(len(template_tag) / 2):]
@@ -44,7 +48,7 @@ class Scanner(ScannerBase):
             self.template_close = None
             self.code_flag = True
 
-    def accept(self, count: int = None, word: str = None):
+    def accept(self, count: int = None, word: str = None, l_cap: bool = False):
         """
         consume current character and add it to token spelling
 
@@ -56,14 +60,14 @@ class Scanner(ScannerBase):
         elif word and not count:
             times = len(word)
         else:
-            self.current_spelling += self.current_char
+            self.current_spelling += self.current_char.lower() if l_cap else self.current_char
             self.prev_char = self.current_char
             self.current_char = self.source_file.next_char()
             self.tracker.char_finish += 1
 
         if times:
             while times > 0:
-                self.current_spelling += self.current_char
+                self.current_spelling += self.current_char.lower() if l_cap else self.current_char
                 self.prev_char = self.current_char
                 self.current_char = self.source_file.next_char()
                 self.tracker.char_finish += 1
@@ -238,7 +242,7 @@ class Scanner(ScannerBase):
                 self.accept(word='trust')
                 return TokenType.NAME
             elif self.current_char.lower() == 'c' and self.look_ahead(
-                    1) == 'o' and \
+                    1).lower() == 'o' and \
                             self.look_ahead(2).lower() == 'm' and \
                             self.look_ahead(3).lower() == 'p' and \
                             self.look_ahead(4).lower() == 'a' and \
@@ -247,7 +251,7 @@ class Scanner(ScannerBase):
                 self.accept(word='company')
                 return TokenType.NAME
             elif self.current_char.lower() == 'p' and self.look_ahead(
-                    1) == 'a' and \
+                    1).lower() == 'a' and \
                             self.look_ahead(2).lower() == 'r' and \
                             self.look_ahead(3).lower() == 't' and \
                             self.look_ahead(4).lower() == 'n' and \
@@ -259,47 +263,94 @@ class Scanner(ScannerBase):
                             self.look_ahead(10).lower() == 'p':
                 self.accept(word='partnership')
                 return TokenType.NAME
+            elif self.current_char.lower() == 'd' and self.look_ahead(
+                    1).lower() == 'o' and \
+                            self.look_ahead(2).lower() == 'c' and \
+                            self.look_ahead(3).lower() == 'n' and \
+                            self.look_ahead(4).lower() == 'o' and \
+                            self.look_ahead(5).lower() == 't' and \
+                            self.look_ahead(6).lower() == 'e':
+                self.accept(word='docnote')
+                return TokenType.NAME
+            elif self.current_char.lower() == 'u' and self.look_ahead(
+                    1).lower() == 'd' and \
+                            self.look_ahead(2).lower() == 'a':
+                self.accept(word='uda')
+                return TokenType.NAME
             else:
                 raise TokenTypeError(
                     f"""\n    Syntax Error while scanning, around line {str(self.tracker)}, near spelling < {repr(self.current_char)} >""")
 
-        elif self.current_char == 'a':
-            if self.look_ahead(1) == 'n' and self.look_ahead(2) == 'd' and not \
+        elif self.current_char.lower() == 'a':
+            if self.look_ahead(1).lower() == 'n' and self.look_ahead(2).lower() == 'd' and not \
                     self.id_string_rest.findall(self.look_ahead(3)):
-                self.accept(3)
+                self.accept(3, l_cap=True)
                 return TokenType.AND
-        elif self.current_char == 'o':
-            if self.look_ahead(1) == 'r' and not self.id_string_rest.findall(
+        elif self.current_char.lower() == 'o':
+            if self.look_ahead(1).lower() == 'r' and not self.id_string_rest.findall(
                     self.look_ahead(2)):
-                self.accept(2)
+                self.accept(2, l_cap=True)
                 return TokenType.OR
-        elif self.current_char == 'n':
-            if self.look_ahead(1) == 'o' and self.look_ahead(2) == 't' and not \
+        elif self.current_char.lower() == 'n':
+            if self.look_ahead(1).lower() == 'o' and self.look_ahead(2) == 't' and not \
                     self.id_string_rest.findall(self.look_ahead(3)):
-                self.accept(3)
+                self.accept(3, l_cap=True)
                 return TokenType.NOT
-        elif self.current_char == 'i':
-            if self.look_ahead(1) == 'n' and not self.id_string_rest.findall(
+        elif self.current_char.lower() == 'i':
+            if self.look_ahead(1).lower() == 'n' and not self.id_string_rest.findall(
                     self.look_ahead(2)):
-                self.accept(2)
+                self.accept(2, l_cap=True)
                 return TokenType.IN
-        elif self.current_char == 'e':
-            if self.look_ahead(1) == 'n' and self.look_ahead(2) == 'd' and not \
-                    self.id_string_rest.findall(self.look_ahead(3)):
-                self.accept(3)
-                return TokenType.END
 
-        # special `let` case, if template language use `let` to define variables,
-        # skipped it and move the file pointer to variable name directly:
-        # e.g. <:let a = 1:>, and I only got token 'a', '=' and '1'
-        # TODO: just a temporary solution, I may do a better one in the future
-        elif self.current_char == 'l':
-            if self.look_ahead(1) == 'e' and self.look_ahead(2) == 't' and not \
-                    self.id_string_rest.findall(self.look_ahead(3)):
-                self.move_ahead(3)
-                self.tracker.char_finish += 3
-                self.tracker.char_start += 4
-                self.skip_space_comments()
+        # special end if/loop tag, usually come with template, for example:
+        #
+        # <:if xxx:><:end:> or {{if xxx}}{{endif}}
+        elif self.current_char.lower() == 'e':
+            if self.end_tag and self.look_ahead(1).lower() == 'n' and \
+                self.look_ahead(2).lower() == 'd':
+                for end_tag in self.end_tag:
+                    length = len(end_tag)
+                    # 'end' case
+                    if not end_tag[3:] and not self.id_string_rest.findall(self.look_ahead(length)):
+                        self.accept(3, l_cap=True)
+                        return TokenType.END
+                    # 'endif' or else case
+                    elif end_tag[3:]:
+                        for i in range(3, length):
+                            if self.look_ahead(i).lower() != end_tag[i]:
+                                break
+                        else:
+                            if not self.id_string_rest.findall(self.look_ahead(length)):
+                                self.accept(length, l_cap=True)
+                                if end_tag[3:].lower() == 'if':
+                                    return TokenType.ENDIF
+                                elif end_tag[3:].lower() == 'for':
+                                    return TokenType.ENDFOR
+                                elif end_tag[3:].lower() == 'while':
+                                    return TokenType.ENDWHILE
+
+        # elif self.current_char == 'e':
+        #     if self.look_ahead(1) == 'n' and self.look_ahead(2) == 'd' and not \
+        #             self.id_string_rest.findall(self.look_ahead(3)):
+        #         self.accept(3)
+        #         return TokenType.END
+
+        # special `def` case, for example:
+        # if template language use `var` to define variables, skipped it and
+        # move the file pointer to variable name directly:
+        #
+        # e.g. {{var a = 1}}, and I will only got token 'a', '=' and '1'
+        elif self.var_define and self.current_char.lower() == self.var_define[0]:
+            length = len(self.var_define)
+            for i in range(1, length):
+                if self.look_ahead(i).lower() != self.var_define[i]:
+                    break
+            else:
+                if not self.id_string_rest.findall(self.look_ahead(length)):
+                    self.move_ahead(length)
+                    self.tracker.char_finish += length
+                    self.tracker.char_start += length + 1
+                    self.skip_space_comments()
 
         elif self.digit.findall(self.current_char):
             self.accept()
@@ -514,7 +565,8 @@ class Scanner(ScannerBase):
                     if token:
                         return token
                 else:
-                    self.text += self.current_char
+                    if self.current_char:
+                        self.text += self.current_char
                     if self.current_char == '\n':
                         # if a new line, increase line number, reset finish position
                         self.tracker.line_finish += 1
@@ -544,25 +596,30 @@ class Scanner(ScannerBase):
         build and return a token based on token type and a possible text
         """
         if token_type is not None:
+            # `offset=1`: as char_finish is right behind current token's end location hence a minus is needed
             if offset == -1:
                 token = Token(token_type, text,
                               self.tracker.snapshot(offset=-1))
+            # normal tokens
             elif not text:
-                # normal tokens
-                # `offset=1`: as char_finish is right behind current token's end location hence a minus is needed
+                # a newline token
                 if token_type == TokenType.NEWLINE:
                     token = Token(token_type, '\n', self.tracker.snapshot())
+                # not a newline token but spelling is a newline text
                 elif self.current_spelling == '\'\n\'' or self.current_spelling == '\"\n\"':
                     token = Token(token_type, r"'\n'",
                                   self.tracker.snapshot(offset=1))
+                # a print token
                 elif token_type == TokenType.PRINT:
                     token = Token(token_type, 'print',
                                   self.tracker.snapshot(offset=-1))
+                # all other cases
                 else:
                     token = Token(token_type, self.current_spelling,
                                   self.tracker.snapshot(offset=1))
+
+            # text token for template or eof token
             else:
-                # text token for template or eof token
                 token = Token(token_type, text, self.tracker.snapshot())
 
             if self.template_tag and (
@@ -578,6 +635,7 @@ class Scanner(ScannerBase):
 
             # record previous token's type
             self.prev_token_type = token.type
+
             return token
 
     def get_eof_token(self):
@@ -591,12 +649,13 @@ if __name__ == '__main__':
     import os
 
     this_path = os.path.dirname(os.path.realpath(__file__))
-    scanner = Scanner(SourceFile(os.path.join(this_path, 'sources', 'sample.txt')),
-                      template_tag='<::>')
+    scanner = Scanner(SourceFile(source_file='', source_code="""
+<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(lambda A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+ """),
+                      template_tag='<::>', var_define='let', end_tag=['end'])
 
     while scanner.current_char != scanner.source_file.eof:
         token = scanner.get_token()
         print(token)
-        print(scanner.current_char)
 
     print(scanner.current_char)

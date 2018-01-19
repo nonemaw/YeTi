@@ -1,4 +1,6 @@
+import os
 from uni_parser.annoying_char import annoying_guys_cleaner
+from uni_parser.reserved_names import ReservedNames
 
 
 class TokenType:
@@ -62,6 +64,9 @@ class TokenType:
     BOOLEAN = 51
     INDENT = 52
     MOD = 53
+    ENDIF = 54
+    ENDFOR = 55
+    ENDWHILE = 56
 
     keywords = [
         '<newline>',
@@ -118,6 +123,9 @@ class TokenType:
         'boolean',
         '<indent>',
         '%',
+        'endif',
+        'endfor',
+        'endwhile',
     ]
 
 
@@ -127,7 +135,6 @@ class PositionTracker:
 
     a snap shot will be created and stored when creating token
     """
-
     def __init__(self, line_start: int, line_finish: int, char_start: int,
                  char_finish: int):
         self.line_start = line_start
@@ -152,10 +159,14 @@ class Token:
     last_reversed = TokenType.WHILE
 
     def __init__(self, type: int, spelling: str, position: tuple):
+        if spelling.lower() in ReservedNames.names:
+            spelling = spelling.lower()
+
         if type == TokenType.NAME:
             current_type = self.first_reserved
             while True:
                 if TokenType.keywords[current_type] == spelling:
+                    spelling = spelling
                     self.type = current_type
                     break
                 elif current_type == self.last_reversed:
@@ -190,7 +201,8 @@ class SourceFile:
         # In Python3.*, for using file pointer seek(), the file MUST be
         # opened as a binary file with mode `b`
         try:
-            self.source_file = open(source_file, 'rb') if source_file else None
+            this_path = os.path.dirname(os.path.realpath(__file__))
+            self.source_file = open(os.path.join(this_path, 'sources', source_file), 'rb') if source_file else None
         except:
             raise Exception(f'No such grammar file "{source_file}", please create it manually')
         self.source_code = source_code if source_code else None

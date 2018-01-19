@@ -328,4 +328,3 @@ if __name__ == '__main__':
     while scanner.current_char != scanner.source_file.eof:
         token = scanner.get_token()
         print(token)
-
