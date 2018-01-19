@@ -13,18 +13,21 @@ var PythonHighlightRules = function() {
     );
 
     var builtinConstants = (
-        "True|False|None|NotImplemented|Ellipsis|__debug__|if|else|for|end|elif|is|in|lambda|not|or|and|with|let|while"
+        "True|False|None|NotImplemented|Ellipsis|__debug__|if|else|for|end|elif|is|in|lambda|not|or|and|with|let|while|" +
+        "TRUE|FALSE|NONE|IF|ELSE|FOR|END|ELIF|IS|IN|LAMBDA|NOT|OR|AND|WITH|LET|WHILE"
     );
 
     var builtinFunctions = (
-        "abs|divmod|input|open|staticmethod|all|enumerate|int|ord|str|any|" +
+        "abs|divmod|input|open|staticmethod|all|enumerate|int|INT|ord|ORD|str|STR|any|" +
         "eval|isinstance|pow|sum|basestring|execfile|issubclass|print|super|" +
         "binfile|iter|property|tuple|bool|filter|len|range|type|bytearray|" +
         "float|list|raw_input|unichr|callable|format|locals|reduce|unicode|" +
         "chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|" +
         "cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|" +
         "__import__|complex|hash|min|set|apply|delattr|help|next|setattr|" +
-        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern|$client|$partner|$company|$trust|$partnership|$superfund"
+        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern|" +
+        "$client|$partner|$company|$trust|$partnership|$superfund|$uda|$docnote|" +
+        "$CLIENT|$PARTNER|$COMPANY|$TRUST|$PARTNERSHIP|$SUPERFUND|$UDA|$DOCNOTE"
     );
     var keywordMapper = this.createKeywordMapper({
         "invalid.deprecated": "debugger",
