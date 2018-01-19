@@ -11,6 +11,9 @@
 {% endblock %}
 
 {% block wide_content %}
+    <div id="overlay" style="display: none;">
+        <div class="loader"></div>
+    </div>
     <div class="row" style="height: 94vh">
     <div id="progress"></div>
         <!-- left panel column -->
@@ -431,7 +434,7 @@
 
         $(document).ready(function() {
 
-            function send_for_formatting(sent_info){
+            function send_for_formatting(sent_info) {
                 $.ajax({
                     contentType: "application/json",
                     data: JSON.stringify(sent_info),
@@ -439,7 +442,44 @@
                     url: '/code/code_formatting',
                     dataType: 'json',
                     success: function(data, status, request) {
-                        code_section.setValue(data.code);
+                        if (data.code) {
+                            code_section.setValue(data.code);
+                        }
+                        else if (data.judge_result) {
+                            $('#overlay').fadeOut();
+                            judge_result = data.judge_result;
+                            if (!judge_result.passed) {
+                                /* judge not passed */
+                                error_start = judge_result.error_start;
+                                error_end = judge_result.error_end;
+                                spelling = judge_result.spelling;
+                                $.notify({
+                                        title: "Judge Failed:",
+                                        message: "Error between line [" + error_start[0] + "] - line [" + error_end[0] + "], near spelling \"" + spelling + "\""
+                                    },
+                                    {
+                                        placement:{align: 'left'},
+                                        timer: 0,
+                                        type: 'danger',
+                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'}
+                                    }
+                                );
+                            }
+                            else {
+                                /* judge passed */
+                                $.notify({
+                                        title: "Judge Success",
+                                        message: "The code should have no syntax error."
+                                    },
+                                    {
+                                        placement:{align: 'left'},
+                                        timer: 3,
+                                        type: 'success',
+                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'}
+                                    }
+                                );
+                            }
+                        }
                     },
                     error: function() {
                         alert('Unexpected error in sending code content');
@@ -447,111 +487,84 @@
                 });
             }
 
+            function click_and_send(message) {
+                code = code_section.getValue();
+                if (code) {
+                    var sent_info = {
+                        message: message,
+                        code: code
+                    };
+                    send_for_formatting(sent_info);
+                    if (message === 'judge') {
+                        $('#overlay').fadeIn();
+                    }
+                }
+            }
+
             // right panel
             // judge button
             $('#judge').on('click', function(){
-                var sent_info = {
-                    message: 'judge',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('judge');
             });
             // indent button
             $('#indent').on('click', function(){
-                var sent_info = {
-                    message: 'indent',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('indent')
             });
             // dedent button
             $('#dedent').on('click', function(){
-                var sent_info = {
-                    message: 'dedent',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('dedent')
             });
             // format button
             $('#format').on('click', function(){
-                var sent_info = {
-                    message: 'format',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('format')
             });
 
             // client button
             $('#client').on('click', function(){
-                var sent_info = {
-                    message: 'client',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('client')
             });
             // partner button
             $('#partner').on('click', function(){
-                var sent_info = {
-                    message: 'partner',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('partner')
             });
             // joint button
             $('#joint').on('click', function(){
-                var sent_info = {
-                    message: 'joint',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('joint')
             });
             // trust button
             $('#trust').on('click', function(){
-                var sent_info = {
-                    message: 'trust',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('trust')
             });
             // superfund button
             $('#superfund').on('click', function(){
-                var sent_info = {
-                    message: 'superfund',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('superfund')
             });
             // company button
             $('#company').on('click', function(){
-                var sent_info = {
-                    message: 'company',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('company')
             });
             // partnership button
             $('#partnership').on('click', function(){
-                var sent_info = {
-                    message: 'partnership',
-                    code: code_section.getValue()
-                };
-                send_for_formatting(sent_info);
+                click_and_send('partnership')
             });
 
             // syntax dropdown
             $('#syntax').on('change', function(){
-                code_section.session.setMode("ace/mode/" + $('#syntax').val());
-                snippet_section.session.setMode("ace/mode/" + $('#syntax').val());
+                var value = $('#syntax').val();
+                code_section.session.setMode("ace/mode/" + value);
+                snippet_section.session.setMode("ace/mode/" + value);
             });
             // theme dropdown
             $('#theme').on('change', function(){
-                code_section.setTheme("ace/theme/" + $('#theme').val());
-                snippet_section.setTheme("ace/theme/" + $('#theme').val());
+                var value = $('#theme').val();
+                code_section.setTheme("ace/theme/" + value);
+                snippet_section.setTheme("ace/theme/" + value);
             });
             // font dropdown
             $('#font-family').on('change', function(){
-                code_section.setOption("fontFamily", $('#font-family').val());
-                snippet_section.setOption("fontFamily", $('#font-family').val());
+                var value = $('#font-family').val();
+                code_section.setOption("fontFamily", value);
+                snippet_section.setOption("fontFamily", value);
             });
             // font size dropdown
             $('#font-size').on('change', function(){
@@ -626,15 +639,16 @@
             });
             // snippet group is selected
             $('#snippet-group-selector').on('change', function() {
+                var selector = $('#snippet-scenario-selector');
                 var group_id = $('#snippet-group-selector option:selected').val();
-                if (group_id != '/') {
+                if (group_id !== '/') {
                     $('#snippet-scenario-selector').prop('disabled', false);
                     snippet_scenario_initialization(group_id);
                 }
                 else {
-                    $('#snippet-scenario-selector').empty();
-                    $('#snippet-scenario-selector').selectpicker('refresh');
-                    $('#snippet-scenario-selector').prop('disabled', true);
+                    selector.empty();
+                    selector.selectpicker('refresh');
+                    selector.prop('disabled', true);
                     snippet_section.setValue('');
                 }
             });
@@ -646,7 +660,7 @@
             $('#edit-snippet').on('click', function() {
                 var group_val =$('#snippet-group-selector').val();
                 var scenario_val = $('#snippet-scenario-selector').val();
-                if (group_val != '/' && group_val != null) {
+                if (group_val !== '/' && group_val !== null) {
                     location.replace('edit_snippet/' + group_val + '/' + scenario_val);
                 }
             });
