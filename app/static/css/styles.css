@@ -149,6 +149,51 @@ div.crawler-button {
     margin: 36vh auto;
 }
 
+[data-notify="progressbar"] {
+	top: 50px;
+    left: 9px;
+}
+
+.alert-failed {
+	background-color: #aa0055;
+	border-color: rgba(149, 149, 149, 0.3);
+	border-radius: 3px;
+	color: #F5F5F5;
+	padding: 10px;
+}
+.alert-failed > [data-notify="icon"] {
+	display: inline-block;
+}
+.alert-failed > [data-notify="title"] {
+	color: #F5F5F5;
+	font-weight: bold;
+    font-size: 17px;
+}
+.alert-failed > [data-notify="message"] {
+    display: block;
+	font-size: 16px;
+}
+.alert-passed {
+	background-color: #008b7d;
+	border-color: rgba(149, 149, 149, 0.3);
+	border-radius: 3px;
+	color: #F5F5F5;
+	padding: 10px;
+}
+.alert-passed > [data-notify="icon"] {
+	display: inline-block;
+}
+.alert-passed > [data-notify="title"] {
+	color: #F5F5F5;
+	font-weight: bold;
+    font-size: 17px;
+}
+.alert-passed > [data-notify="message"] {
+    display: block;
+	font-size: 16px;
+}
+
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

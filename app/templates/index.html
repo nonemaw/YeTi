@@ -453,29 +453,47 @@
                                 error_start = judge_result.error_start;
                                 error_end = judge_result.error_end;
                                 spelling = judge_result.spelling;
+                                spelling_last = judge_result.spelling_last;
+                                message = "Error between &lt;line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[0] + "</span>] position <span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[1] + "</span>&gt;" +
+                                          " and &lt;line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" +  error_end[0] + "</span>] position <span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_end[1] + "</span>&gt;. " +
+                                          "\nCurrent spelling &lt;<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + spelling + "</span>&gt;, last processed spelling &lt;<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + spelling_last + "</span>&gt;. ";
+                                if (judge_result.analysis) {
+                                    analysis_message = "The condition/loop on line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + judge_result.analysis + "</span>] might not be closed properly.";
+                                    message += analysis_message;
+                                }
+
                                 $.notify({
-                                        title: "Judge Failed:",
-                                        message: "Error between line [" + error_start[0] + "] - line [" + error_end[0] + "], near spelling \"" + spelling + "\""
+                                        icon: 'glyphicon glyphicon-remove-sign',
+                                        title: "Judge Failed: ",
+                                        message: message
                                     },
                                     {
                                         placement:{align: 'left'},
                                         timer: 0,
-                                        type: 'danger',
-                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'}
+                                        type: 'failed',
+                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'},
+                                        offset: {
+                                            x: 8,
+                                            y: 51
+                                        }
                                     }
                                 );
                             }
                             else {
                                 /* judge passed */
                                 $.notify({
-                                        title: "Judge Success",
+                                        icon: 'glyphicon glyphicon-ok-sign',
+                                        title: "Judge Passed: ",
                                         message: "The code should have no syntax error."
                                     },
                                     {
                                         placement:{align: 'left'},
-                                        timer: 3,
-                                        type: 'success',
-                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'}
+                                        type: 'passed',
+                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'},
+                                        offset: {
+                                            x: 8,
+                                            y: 51
+                                        }
                                     }
                                 );
                             }
