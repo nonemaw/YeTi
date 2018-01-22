@@ -135,6 +135,7 @@ class PositionTracker:
 
     a snap shot will be created and stored when creating token
     """
+
     def __init__(self, line_start: int, line_finish: int, char_start: int,
                  char_finish: int):
         self.line_start = line_start
@@ -202,9 +203,12 @@ class SourceFile:
         # opened as a binary file with mode `b`
         try:
             this_path = os.path.dirname(os.path.realpath(__file__))
-            self.source_file = open(os.path.join(this_path, 'sources', source_file), 'rb') if source_file else None
+            self.source_file = open(
+                os.path.join(this_path, 'sources', source_file),
+                'rb') if source_file else None
         except:
-            raise Exception(f'No such grammar file "{source_file}", please create it manually')
+            raise Exception(
+                f'No such grammar file "{source_file}", please create it manually')
         self.source_code = source_code if source_code else None
         self.index = 0 if source_code else None
 
@@ -252,9 +256,11 @@ class SourceFile:
             seek_offset = -nth
             while nth > 0:
                 char = self.source_file.read(1)
-                nth -= 1
+                # if look_head() is reaching the end of file
                 if not char:
+                    self.source_file.seek(-nth, 1)
                     return self.eof
+                nth -= 1
             # rollback the file pointer to the original location
             self.source_file.seek(seek_offset, 1)
 

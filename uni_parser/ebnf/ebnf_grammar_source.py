@@ -244,8 +244,12 @@ class EBNF:
                     'error_start': [lexer.current_token.position[0], lexer.current_token.position[1]],
                     'error_end': [lexer.last_token.position[2], lexer.last_token.position[3]],
                     'spelling': lexer.current_token.spelling,
+                    'spelling_last': lexer.last_token.spelling,
                     'passed': False
                 }
+                if lexer.last_token.position[2] > lexer.current_token.position[0]:
+                    returned_message['analysis'] = lexer.current_token.position[0]
+
                 return returned_message
             else:
                 raise SyntaxError(f"""\n    Syntax Error while parsing, around chunk {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >""")
