@@ -45,15 +45,19 @@ class Literal:
     def match(self, lexer: Lexer, debug: int = 0):
         # the most fundamental match() function:
         # match current_token's spelling with Literal's regex text
-        if lexer.current_token is None or lexer.current_token.spelling == '_EOF':
+        if lexer.current_token is None\
+            or lexer.current_token.spelling == '_EOF':
             return None
 
         # reserve epsilon expression match to real 'EPSILON_EXPR' instance
-        if self.name != 'EPSILON_EXPR' and lexer.current_token.spelling == '_e':
+        if self.name != 'EPSILON_EXPR'\
+                and lexer.current_token.spelling == '_e':
             return None
 
-        # if a TEXT grammar meets a text-literal token, return an ast node directly
-        if self.name == 'TEXT' and lexer.current_token.type == TokenType.TEXTLITERAL:
+        # if a TEXT grammar meets a text-literal token, return an ast node
+        # directly
+        if self.name == 'TEXT'\
+                and lexer.current_token.type == TokenType.TEXTLITERAL:
             node = Ast(self.name, lexer.current_token.position,
                        grammar=lexer.current_token.spelling)
             if debug:
@@ -65,9 +69,10 @@ class Literal:
                     f'>>> lexer forwarded, current token: {lexer.current_token}')
             return node
 
-        # if a NAME grammar meets a token with reserved word, return None directly
-        # a reserved word can be only matched by a STRING grammar
-        if self.name == 'NAME' and lexer.current_token.spelling in ReservedNames.names:
+        # if a NAME grammar meets a token with reserved word, return None
+        # directly a reserved word can be only matched by a STRING grammar
+        if self.name == 'NAME'\
+                and lexer.current_token.spelling in ReservedNames.names:
             return None
 
         # a text-literal token cannot match any other grammars
@@ -85,7 +90,8 @@ class Literal:
 
             if match_result and match_result.span()[1] == len(
                     lexer.current_token.spelling):
-                # matched, build AST node for this token's spelling, move lexer to next token
+                # matched, build AST node for this token's spelling, move
+                # lexer to next token
                 node = Ast(self.name, lexer.current_token.position,
                            grammar=lexer.current_token.spelling)
                 if debug:
@@ -142,7 +148,8 @@ class Base:
 
     def build(self, tracker: BuildTracker):
         """
-        one-time recursive runner, build all possible productions of a given grammar
+        one-time recursive runner, build all possible productions of a given
+        grammar
         """
         if self.done:
             return
@@ -150,7 +157,8 @@ class Base:
         if self.name not in tracker.on_track:
             tracker.on_track.append(self.name)
         else:
-            # if another `me` already on track, set recursion flag and skip operation
+            # if another `me` already on track, set recursion flag and skip
+            # operation
             self.recursion = True
             return
 
@@ -159,23 +167,25 @@ class Base:
             for grammar in grammar_list:
                 if isinstance(grammar, Group):
                     if grammar.name not in tracker:
-                        # if this group of grammars is not in tracker, put it in
+                        # if this group of grammars is not in tracker, put it
+                        # in
                         tracker[grammar.name] = grammar
                     else:
-                        # else, take the old group grammar, as there must be a same
-                        # group grammar which has been built already, no need to
-                        # keep the current un-built one
+                        # else, take the old group grammar, as there must be a
+                        # same group grammar which has been built already, no
+                        # need to keep the current un-built one
                         grammar = tracker[grammar.name]
 
-                    # build grammar, for an old group grammar the build() will be
-                    # skipped as the `done` flag
+                    # build grammar, for an old group grammar the build() will
+                    # be skipped as the `done` flag
                     grammar.build(tracker=tracker)
                     if grammar.recursion:
                         self.recursion = True
                     self.productions[-1].append(grammar)
 
                 elif isinstance(grammar, Refer):
-                    # get real grammar from tracker's grammar dict based on reference
+                    # get real grammar from tracker's grammar dict based on
+                    # reference
                     grammar = tracker[grammar.name]
                     if isinstance(grammar, Base):
                         grammar.build(tracker=tracker)
@@ -198,9 +208,11 @@ class Base:
 
     def match(self, lexer: Lexer, debug: int = 0, partial=True):
         """
-        try to match lexer's current token with a production list in productions
+        try to match lexer's current token with a production list in
+        productions
 
-        return AST instance: match SUCCESS with a production list in productions
+        return AST instance: match SUCCESS with a production list in
+        productions
         return None: match FAILED with whole productions
         """
         tree = Ast(self.name, lexer.current_position(), grammars=[])
@@ -294,7 +306,8 @@ class Base:
                         if node.name not in self.ignore_set:
                             tree.append(node)
             else:
-                # grammar is a Token, only one production hence nodes is actually a `node`
+                # grammar is a Token, only one production hence nodes is
+                # actually a `node`
                 if not self.ignore_set or nodes.name not in self.ignore_set:
                     tree.append(nodes)
 
@@ -359,7 +372,8 @@ class Group(Base):
                 debug - 1) + f'### Group {self.name}.match(), calling super\'s match()')
 
         tree = Ast(self.name, lexer.current_position(), grammars=[])
-        if lexer.current_token is None or lexer.current_token.spelling == '_EOF':
+        if lexer.current_token is None\
+            or lexer.current_token.spelling == '_EOF':
             if self.repeat[0] == 0:
                 return tree
             return None

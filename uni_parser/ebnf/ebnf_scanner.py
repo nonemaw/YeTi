@@ -106,7 +106,8 @@ class EBNFScanner(ScannerBase):
         """
         consume current character and add it to token spelling
 
-        remember previous character, and move file pointer to next char & update position
+        remember previous character, and move file pointer to next char &
+        update position
         """
         if count:
             while count > 0:
@@ -207,8 +208,8 @@ class EBNFScanner(ScannerBase):
         # number
         elif self.digit.findall(self.current_char):
             self.accept()
-            while self.digit.findall(
-                    self.current_char) and self.current_char != self.source_file.eof:
+            while self.digit.findall(self.current_char)\
+                    and self.current_char != self.source_file.eof:
                 self.accept()
             return TokenType.NUMBER
 
@@ -217,7 +218,8 @@ class EBNFScanner(ScannerBase):
             quotation = self.current_char
             self.accept()  # eat '"'
             while self.current_char != quotation:
-                if self.current_char == '\n' or self.current_char == '\r' or self.current_char == self.source_file.eof:
+                if self.current_char == '\n' or self.current_char == '\r'\
+                        or self.current_char == self.source_file.eof:
                     # ERROR: unterminated string
                     return TokenType.STRING
                 elif self.current_char == '\\':
@@ -230,11 +232,11 @@ class EBNFScanner(ScannerBase):
             return TokenType.STRING
 
         # NAME
-        elif self.current_char != self.source_file.eof and self.id_string_begin.findall(
-                self.current_char):
+        elif self.current_char != self.source_file.eof \
+                and self.id_string_begin.findall(self.current_char):
             self.accept()
-            while self.current_char != self.source_file.eof and self.id_string_rest.findall(
-                    self.current_char):
+            while self.current_char != self.source_file.eof \
+                    and self.id_string_rest.findall(self.current_char):
                 self.accept()
             return TokenType.NAME
 
@@ -268,7 +270,8 @@ class EBNFScanner(ScannerBase):
         """
         jump over spaces, comma and comment
         """
-        while self.current_char == ' ' or self.current_char == '	' or self.current_char == ',':
+        while self.current_char == ' ' or self.current_char == '	'\
+                or self.current_char == ',':
             if self.current_char == '	':
                 self.tracker.char_finish += 3
             else:
@@ -280,12 +283,14 @@ class EBNFScanner(ScannerBase):
             while True:
                 self.move_ahead(1)
                 self.tracker.char_finish += 1
-                if self.current_char == '\n' or self.current_char == '\r' or self.current_char == self.source_file.eof:
+                if self.current_char == '\n' or self.current_char == '\r'\
+                        or self.current_char == self.source_file.eof:
                     break
 
     def get_token(self) -> Token:
         """
-        return a token instance on each time it being called (token = scanner_instance.get_token())
+        return a token instance on each time it being called
+        (token = scanner_instance.get_token())
         until it reaches to EOF of input file
         """
         while self.current_char != self.source_file.eof:
@@ -303,10 +308,12 @@ class EBNFScanner(ScannerBase):
         if token_type is not None:
             if not text:
                 # normal tokens
-                # `offset=1`: as char_finish is right behind current token's end location hence a minus is needed
+                # `offset=1`: as char_finish is right behind current token's
+                # end location hence a minus is needed
                 if token_type == TokenType.NEWLINE:
                     token = Token(token_type, '\n', self.tracker.snapshot())
-                elif self.current_spelling == '\'\n\'' or self.current_spelling == '\"\n\"':
+                elif self.current_spelling == '\'\n\''\
+                        or self.current_spelling == '\"\n\"':
                     token = Token(token_type, r"'\n'",
                                   self.tracker.snapshot(offset=1))
                 else:
@@ -316,15 +323,3 @@ class EBNFScanner(ScannerBase):
                 # eof token, reserved
                 token = Token(token_type, text, self.tracker.snapshot())
             return token
-
-
-if __name__ == '__main__':
-    import os
-
-    this_path = os.path.dirname(os.path.realpath(__file__))
-    parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
-    scanner = EBNFScanner(SourceFile(os.path.join(parent_path, 'grammars', 'xplan.ebnf')))
-
-    while scanner.current_char != scanner.source_file.eof:
-        token = scanner.get_token()
-        print(token)

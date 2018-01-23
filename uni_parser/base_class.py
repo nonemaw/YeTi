@@ -1,4 +1,3 @@
-
 class ScannerBase:
     def __init__(self, source_file, comment_tag):
         self.source_file = source_file

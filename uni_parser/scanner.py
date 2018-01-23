@@ -214,7 +214,8 @@ class Scanner(ScannerBase):
                     and self.look_ahead(2).lower() == 'i' \
                     and self.look_ahead(3).lower() == 'e' \
                     and self.look_ahead(4).lower() == 'n' \
-                    and self.look_ahead(5).lower() == 't':
+                    and self.look_ahead(5).lower() == 't' \
+                    and not self.id_string_rest.findall(self.look_ahead(6)):
                 self.accept(word='client')
                 return TokenType.NAME
             elif self.current_char.lower() == 'p' \
@@ -223,7 +224,8 @@ class Scanner(ScannerBase):
                     and self.look_ahead(3).lower() == 't' \
                     and self.look_ahead(4).lower() == 'n' \
                     and self.look_ahead(5).lower() == 'e' \
-                    and self.look_ahead(6).lower() == 'r':
+                    and self.look_ahead(6).lower() == 'r' \
+                    and not self.id_string_rest.findall(self.look_ahead(7)):
                 self.accept(word='partner')
                 return TokenType.NAME
             elif self.current_char.lower() == 's' \
@@ -234,14 +236,16 @@ class Scanner(ScannerBase):
                     and self.look_ahead(5).lower() == 'f' \
                     and self.look_ahead(6).lower() == 'u' \
                     and self.look_ahead(7).lower() == 'n' \
-                    and self.look_ahead(8).lower() == 'd':
+                    and self.look_ahead(8).lower() == 'd' \
+                    and not self.id_string_rest.findall(self.look_ahead(9)):
                 self.accept(word='superfund')
                 return TokenType.NAME
             elif self.current_char.lower().lower() == 't' \
                     and self.look_ahead(1).lower() == 'r' \
                     and self.look_ahead(2).lower() == 'u' \
                     and self.look_ahead(3).lower() == 's' \
-                    and self.look_ahead(4).lower() == 't':
+                    and self.look_ahead(4).lower() == 't' \
+                    and not self.id_string_rest.findall(self.look_ahead(5)):
                 self.accept(word='trust')
                 return TokenType.NAME
             elif self.current_char.lower() == 'c' \
@@ -250,7 +254,8 @@ class Scanner(ScannerBase):
                     and self.look_ahead(3).lower() == 'p' \
                     and self.look_ahead(4).lower() == 'a' \
                     and self.look_ahead(5).lower() == 'n' \
-                    and self.look_ahead(6).lower() == 'y':
+                    and self.look_ahead(6).lower() == 'y' \
+                    and not self.id_string_rest.findall(self.look_ahead(7)):
                 self.accept(word='company')
                 return TokenType.NAME
             elif self.current_char.lower() == 'p' \
@@ -263,7 +268,8 @@ class Scanner(ScannerBase):
                     and self.look_ahead(7).lower() == 's' \
                     and self.look_ahead(8).lower() == 'h' \
                     and self.look_ahead(9).lower() == 'i' \
-                    and self.look_ahead(10).lower() == 'p':
+                    and self.look_ahead(10).lower() == 'p' \
+                    and not self.id_string_rest.findall(self.look_ahead(11)):
                 self.accept(word='partnership')
                 return TokenType.NAME
             elif self.current_char.lower() == 'd' \
@@ -272,12 +278,14 @@ class Scanner(ScannerBase):
                     and self.look_ahead(3).lower() == 'n' \
                     and self.look_ahead(4).lower() == 'o' \
                     and self.look_ahead(5).lower() == 't' \
-                    and self.look_ahead(6).lower() == 'e':
+                    and self.look_ahead(6).lower() == 'e' \
+                    and not self.id_string_rest.findall(self.look_ahead(7)):
                 self.accept(word='docnote')
                 return TokenType.NAME
             elif self.current_char.lower() == 'u' \
                     and self.look_ahead(1).lower() == 'd' \
-                    and self.look_ahead(2).lower() == 'a':
+                    and self.look_ahead(2).lower() == 'a' \
+                    and not self.id_string_rest.findall(self.look_ahead(3)):
                 self.accept(word='uda')
                 return TokenType.NAME
             else:
@@ -664,9 +672,8 @@ class Scanner(ScannerBase):
 
 if __name__ == '__main__':
     import os
-    # TODO: FATAL BUG, fix <xx:> and <:xx> issue
     this_path = os.path.dirname(os.path.realpath(__file__))
-    scanner = Scanner(SourceFile(source_file='', source_code="""<:end>"""),
+    scanner = Scanner(SourceFile(source_file='', source_code="""<:for partnership in $partnership:>"""),
                       template_tag='<::>', var_define='def', end_tag=['end'])
 
     while scanner.current_char != scanner.source_file.eof:

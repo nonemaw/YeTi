@@ -79,6 +79,7 @@ class ParserLoader:
 
 if __name__ == '__main__':
     # TODO: FATAL BUG: two `stmt` syntax on same line can pass the judge
+    # TODO: FATAL BUG: `stmt` ends with `.` can pass the judge, e.g. `let a = b.`
     p = ParserLoader('xplan')
     p.generator(template_tag='<::>',
                     var_define='let',

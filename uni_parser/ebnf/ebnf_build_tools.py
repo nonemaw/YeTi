@@ -41,7 +41,7 @@ class Lexer:
         self.h_index = 0
         self.anchor_stack = []
 
-        # for raise exception only, indicate error range: current token <-> last token
+        # for error message / raise exception only, indicate error range
         self.last_token = self.current_token
 
         # for detect left recursion: ((current token's position), grammar name)

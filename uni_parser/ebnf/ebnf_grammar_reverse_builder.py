@@ -32,14 +32,17 @@ class EBNFGrammarReverseBuilder:
                     name, definition = EBNFGrammarReverseBuilder.build_define(
                         child)
                     if len(EBNFGrammarReverseBuilder.literal_finder2.findall(
-                            definition)) == 1 and EBNFGrammarReverseBuilder.literal_finder.findall(
-                            definition):
-                        definitions.append(f'{indent}{name} = {definition[1:-1].format(name)}\n')
+                            definition)) == 1\
+                            and EBNFGrammarReverseBuilder.literal_finder.findall(
+                        definition):
+                        definitions.append(
+                            f'{indent}{name} = {definition[1:-1].format(name)}\n')
                     else:
                         g_literal_name_list = [repr(name) for name in
                                                EBNFGrammarReverseBuilder.g_literal_name_finder.findall(
                                                    definition)]
-                        definitions.append(f'{indent}{name} = Base({definition.format(*g_literal_name_list)}, name=\'{name}\')\n')
+                        definitions.append(
+                            f'{indent}{name} = Base({definition.format(*g_literal_name_list)}, name=\'{name}\')\n')
         return ''.join(definitions)
 
     @staticmethod

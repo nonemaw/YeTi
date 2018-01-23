@@ -9,8 +9,9 @@ class EBNFAtom:
     # match the value of `number` of a grammar
     NUMBER = Literal(re.compile('-?[0-9]{0,10}'), 'NUMBER')
     # match the value of `string` of a grammar, with format in `' ... '`
+    # which already includes some atoms like 'True', ',', '.', etc.
     STRING = Literal(re.compile('\'[\w\W]*?\''),
-                     'STRING')  # which already includes some atoms like 'True', ',', '.', etc.
+                     'STRING')
 
     NEWLINE = Literal(r'\n', 'NEWLINE')
     STAR = Literal('*', 'STAR', escape=True)
@@ -141,7 +142,8 @@ class EBNF:
     @staticmethod
     def eliminate_i_lr(tracker: BuildTracker):
         """
-        accept a tracker instance, format indirect left recursion to direct left recursion
+        accept a tracker instance, format indirect left recursion to direct
+        left recursion
 
         A ::= C X
         B ::= C Y
@@ -240,18 +242,37 @@ class EBNF:
 
         if lexer.current_token is not None or not result:
             if message_only:
+                current_spelling = lexer.current_token.spelling
+                last_spelling = lexer.last_token.spelling
+
+                if len(lexer.current_token.spelling) > 30:
+                    current_spelling = f'{lexer.current_token.spelling[0:18]}...{lexer.current_token.spelling[len(lexer.current_token.spelling) - 10:]}'
+                if len(lexer.last_token.spelling) > 30:
+                    last_spelling = f'{lexer.last_token.spelling[0:18]}...{lexer.last_token.spelling[len(lexer.last_token.spelling) - 10:]}'
+
+                current_spelling = re.sub('<|>', '', current_spelling)
+                last_spelling = re.sub('<|>', '', last_spelling)
                 returned_message = {
-                    'error_start': [lexer.current_token.position[0], lexer.current_token.position[1]],
-                    'error_end': [lexer.last_token.position[2], lexer.last_token.position[3]],
-                    'spelling': lexer.current_token.spelling,
-                    'spelling_last': lexer.last_token.spelling,
+                    'error_start': [lexer.current_token.position[0],
+                                    lexer.current_token.position[1]],
+                    'error_end': [lexer.last_token.position[2],
+                                  lexer.last_token.position[3]],
+                    'spelling': current_spelling,
+                    'spelling_last': last_spelling,
                     'passed': False
                 }
-                if lexer.last_token.position[2] > lexer.current_token.position[0]:
-                    returned_message['analysis'] = lexer.current_token.position[0]
+                if lexer.last_token.position[2] > lexer.current_token.position[
+                    0] \
+                        and lexer.current_token.spelling in ['if', 'for',
+                                                             'while', 'elif',
+                                                             'else']:
+                    returned_message['analysis'] = 'condition'
+                elif lexer.current_token.spelling == 'end':
+                    returned_message['analysis'] = 'end'
 
                 return returned_message
             else:
-                raise SyntaxError(f"""\n    Syntax Error while parsing, around chunk {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >""")
+                raise SyntaxError(
+                    f"""\n    Syntax Error while parsing, around chunk {lexer.current_token.position[0]}[{lexer.current_token.position[1]}] ... line {lexer.last_token.position[2]}[{lexer.last_token.position[3]}], near spelling < {repr(lexer.current_token.spelling)} >""")
         elif message_only:
             return {'passed': True}
