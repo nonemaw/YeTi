@@ -40,7 +40,10 @@ class LoginForm(FlaskForm):
             requests.session().get(
                 f'https://{field.data.lower()}.xplan.iress.com.au',
                 headers=dict(
-                    referer=f'https://{field.data.lower()}.xplan.iress.com.au'))
+                    referer=f'https://{field.data.lower()}.xplan.iress.com.au'
+                )
+            )
+            import pickle
             Meta.company = field.data.lower()
             Meta.db_company = Meta.db_default if Meta.company == 'ytml' else \
                 mongo_connect(client, Meta.company)

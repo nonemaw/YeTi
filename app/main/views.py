@@ -104,7 +104,7 @@ def create_snippet():
 
         if group_id and scenario_id:
             flash('New code snippet has been created successfully.',
-                  category='info')
+                  category='success')
             return redirect(url_for('main.edit_snippet', group=snippet_group,
                                     scenario=snippet_scenario))
         else:
@@ -297,6 +297,7 @@ def acquire_snippet_scenario(_id):
         return json.dumps({'scenario': []}), 500
 
 
+# TODO: RESERVED, for celery
 # @login_required
 # @main.route('/initialize_interface')
 # def _initialize_interface():
