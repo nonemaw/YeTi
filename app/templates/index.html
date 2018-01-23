@@ -31,7 +31,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="row">
-                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 60%">Interface</button>
+                        <button class="btn btn-default" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 60%">Interface</button>
                     </div>
                 </div>
             </div>
@@ -167,15 +167,15 @@
                         <tbody id="variable-selector-table" style="overflow-y: auto;">
                             <tr>
                                 <td class="col-md-2" style="color: #009688"><b><i>Variable</i></b></td>
-                                <td id="var-variable" class="col-md-10" style="font-family:Consolas">/</td>
+                                <td class="col-md-10" style="font-family:Consolas"><button id="var-variable" style="border:none">/</button></td>
                             </tr>
                             <tr>
                                 <td class="col-md-2" style="color: #009688"><b><i>Usage</i></b></td>
-                                <td id="var-usage" class="col-md-10" style="font-family:Consolas">/</td>
+                                <td class="col-md-10" style="font-family:Consolas"><button id="var-usage" style="border:none">/</button></td>
                             </tr>
                             <tr>
                                 <td class="col-md-2" style="color: #009688"><b><i>Type</i></b></td>
-                                <td id="var-type" class="col-md-10" style="font-family:Consolas">/</td>
+                                <td class="col-md-10" style="font-family:Consolas"><button id="var-type" style="border:none">/</button></td>
                             </tr>
                             <tr>
                                 <td id="choice-type" class="col-md-2" style="color: #009688"><b><i>Choice(s)</i></b></td>
@@ -263,35 +263,21 @@
                 </div>
                 <div class="col-md-1">
                     <div class="row">
-                        <button class="btn btn-warning" id="judge" style="width: 85%">Judge</button>
+                        <button class="btn btn-danger" id="judge" style="width: 85%">Judge</button>
                         <br>
                         <br>
                     </div>
                     <div class="row">
                         <label for="format-group">Format Code</label>
-                        <button id="format" type="button" class="btn btn-success" style="width: 85%">Format</button>
+                        <button id="format" type="button" class="btn btn-info" style="width: 85%">Format</button>
                         <div class="btn-group-vertical" id="format-group" style="width: 85%">
                             <button id="indent" type="button" class="btn btn-success">Indent</button>
                             <button id="dedent" type="button" class="btn btn-success">Dedent</button>
                         </div>
                     </div>
                     <div class="row">
-                        <label for="entity-group">Entity</label>
-                        <div class="btn-group-vertical" id="entity-group" style="width: 85%">
-                            <button id="client" type="button" class="btn btn-default">Client</button>
-                            <button id="partner" type="button" class="btn btn-default">Partner</button>
-                            <button id="joint" type="button" class="btn btn-default">Joint</button>
-                        </div>
-                        <div class="btn-group-vertical" id="entity-group" style="width: 85%">
-                            <button id="trust" type="button" class="btn btn-default">Trust</button>
-                            <button id="superfund" type="button" class="btn btn-default">Superfund</button>
-                            <button id="company" type="button" class="btn btn-default">Company</button>
-                            <button id="partnership" type="button" class="btn btn-default">Partnership</button>
-                        </div>
-                    </div>
-                    <div class="row">
                         <br>
-                        <button class="btn btn-danger" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="width: 85%">Settings</button>
+                        <button class="btn btn-default" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="width: 85%">Settings</button>
                     </div>
 
                     <!-- setting panel -->
@@ -312,7 +298,7 @@
                                             </div>
                                             <div class="row">
                                                 <select class="selectpicker" id="syntax" data-width="75%">
-                                                    <option value="python" selected="selected">Python</option>
+                                                    <option value="python" selected="selected">XPLAN</option>
                                                     <option value="html">HTML</option>
                                                 </select>
                                             </div>
@@ -419,6 +405,7 @@
         code_section.setOption("fontSize", parseInt(initial_font_size));
         code_section.getSession().setUseWrapMode(wrap_text);
         code_section.setShowPrintMargin(false);
+        code_section.setBehavioursEnabled(true);
         snippet_section.setTheme("ace/theme/" + initial_theme);
         snippet_section.session.setMode("ace/mode/" + initial_syntax);
         snippet_section.setOption("showInvisibles", show_invisibles);
@@ -426,6 +413,7 @@
         snippet_section.setOption("fontSize", 16);
         snippet_section.getSession().setUseWrapMode(true);
         snippet_section.setShowPrintMargin(false);
+        snippet_section.setBehavioursEnabled(true);
         // get selected code: code_section.getSelectedText()
 
         $('#subgroup-selector').prop('disabled', true);
@@ -458,7 +446,14 @@
                                           " and &lt;line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" +  error_end[0] + "</span>] position <span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_end[1] + "</span>&gt;. " +
                                           "\nCurrent spelling &lt;<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + spelling + "</span>&gt;, last processed spelling &lt;<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + spelling_last + "</span>&gt;. ";
                                 if (judge_result.analysis) {
-                                    analysis_message = "The condition/loop on line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + judge_result.analysis + "</span>] might not be closed properly.";
+                                    analysis_message = "";
+                                    if (judge_result.analysis === "end") {
+                                        analysis_message = "The [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">end</span>] tag on line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[0] + "</span>] does not match any condition / loop.";
+                                    }
+                                    else if (judge_result.analysis === 'condition') {
+                                        analysis_message = "The condition / loop on line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[0] + "</span>] might not be closed with an [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">end</span>] tag properly.";
+
+                                    }
                                     message += analysis_message;
                                 }
 
@@ -471,7 +466,7 @@
                                         placement:{align: 'left'},
                                         timer: 0,
                                         type: 'failed',
-                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'},
+                                        animate: {enter: 'animated fadeInLeft', exit: 'animated fadeOutLeft'},
                                         offset: {
                                             x: 8,
                                             y: 51
@@ -489,7 +484,7 @@
                                     {
                                         placement:{align: 'left'},
                                         type: 'passed',
-                                        animate: {enter: 'animated fadeInDown', exit: 'animated fadeOutUp'},
+                                        animate: {enter: 'animated fadeInLeft', exit: 'animated fadeOutLeft'},
                                         offset: {
                                             x: 8,
                                             y: 51
@@ -517,6 +512,57 @@
                         $('#overlay').fadeIn();
                     }
                 }
+            }
+
+            // https://stackoverflow.com/questions/22581345/click-button-copy-to-clipboard-using-jquery
+            function copy_to_clipboard(elem) {
+                // create hidden text element, if it doesn't already exist
+                var targetId = "_hiddenCopyText_";
+                var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
+                var origSelectionStart, origSelectionEnd;
+                if (isInput) {
+                    // can just use the original source element for the selection and copy
+                    target = elem;
+                    origSelectionStart = elem.selectionStart;
+                    origSelectionEnd = elem.selectionEnd;
+                } else {
+                    // must use a temporary form element for the selection and copy
+                    target = document.getElementById(targetId);
+                    if (!target) {
+                        var target = document.createElement("textarea");
+                        target.style.position = "absolute";
+                        target.style.left = "-9999px";
+                        target.style.top = "0";
+                        target.id = targetId;
+                        document.body.appendChild(target);
+                    }
+                    target.textContent = elem.textContent;
+                }
+                // select the content
+                var currentFocus = document.activeElement;
+                target.focus();
+                target.setSelectionRange(0, target.value.length);
+
+                // copy the selection
+                var succeed;
+                try {
+                      succeed = document.execCommand("copy");
+                } catch(e) {
+                    succeed = false;
+                }
+                // restore original focus
+                if (currentFocus && typeof currentFocus.focus === "function") {
+                    currentFocus.focus();
+                }
+
+                if (isInput) {
+                    // restore prior selection
+                    elem.setSelectionRange(origSelectionStart, origSelectionEnd);
+                } else {
+                    // clear temporary content
+                    target.textContent = "";
+                }
+                return succeed;
             }
 
             // right panel
@@ -655,6 +701,18 @@
                     multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
                 }
             });
+
+            // copy content to browser clipboard when clicked on var-name, var-type, var-usage
+            $('#var-usage').click(function() {
+                copy_to_clipboard(document.getElementById("var-usage"));
+            });
+            $('#var-variable').click(function() {
+                copy_to_clipboard(document.getElementById("var-variable"));
+            });
+            $('#var-type').click(function() {
+                copy_to_clipboard(document.getElementById("var-type"));
+            });
+
             // snippet group is selected
             $('#snippet-group-selector').on('change', function() {
                 var selector = $('#snippet-scenario-selector');

@@ -8,11 +8,9 @@
 {% endblock %}
 
 {% block narrow_content %}
-    <div class="row">
-        <div class="col-md-10">
-            <div class="row" style="height: 92vh">
-<div id="snippet-section" style="height: 100%">{{ snippet_code }}</div>
-            </div>
+    <div class="row" style="height: 94vh">
+        <div class="col-md-10" style="height: 99%">
+            <div id="snippet-section" style="height: 100%">{{ snippet_code }}</div>
         </div>
         <div class="col-md-2">
             {% if current_user.is_authenticated %}
@@ -27,7 +25,7 @@
             <br>
             <label for="syntax">Syntax</label>
             <select class="selectpicker" id="syntax" data-width="75%">
-                <option value="python" selected="selected">Python</option>
+                <option value="python" selected="selected">XPLAN</option>
                 <option value="html">HTML</option>
             </select>
 
@@ -96,6 +94,7 @@
         code_section.setOption("fontSize", parseInt(initial_font_size));
         code_section.getSession().setUseWrapMode(wrap_text);
         code_section.setShowPrintMargin(false);
+        code_section.setBehavioursEnabled(true);
 
         // syntax dropdown
         $('#syntax').on('change', function(){
@@ -150,9 +149,10 @@
                     return false;
                 }
                 else {
-                    $('#snippet-form').attr('action', '/create_snippet');
+                    snippet_form = $('#snippet-form');
+                    snippet_form.attr('action', '/create_snippet');
                     $('<input type="hidden" name="code"/>').val(code_section.getValue()).appendTo('#snippet-form');
-                    $("#snippet-form").submit();
+                    snippet_form.submit();
                 }
             });
         });
