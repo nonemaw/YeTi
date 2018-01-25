@@ -371,6 +371,14 @@ class User:
     def search(locate: dict) -> dict:
         return Meta.db.User.find_one(locate)
 
+    @staticmethod
+    def save_config(locate: dict, config: dict):
+        Meta.db.User.update_one(locate, {'$set': {'config': config}})
+
+    @staticmethod
+    def load_config(locate: dict) -> dict:
+        return Meta.db.User.find_one(locate).get('config')
+
 
 class UserUtl(UserMixin):
     """
@@ -383,9 +391,7 @@ class UserUtl(UserMixin):
         self.username = user.get('username')
         self.password = user.get('password')  # store hash result
         self.is_confirmed = user.get('is_confirmed')
-        self.role = Role(
-            Meta.db.Role.find_one({'type': user.get('role')})
-        )
+        self.role = Role(Meta.db.Role.find_one({'type': user.get('role')}))
         self.name = user.get('name')
         self.location = user.get('location')
         self.about_me = user.get('about_me')
@@ -460,15 +466,13 @@ class Snippet():
     def new(self) -> tuple:
         # check duplication, OK if only group name or scenario name is same
         duplicated = False
-        group_dict = Meta.db.SnippetGroup.find_one(
-            {'name': self.group})
+        group_dict = Meta.db.SnippetGroup.find_one({'name': self.group})
         if group_dict:
             # group existing, check scenario name
             old_scenario_id_list = group_dict.get('scenarios')
             for id in old_scenario_id_list:
                 if Meta.db.SnippetScenario.find_one(
-                        {'_id': ObjectId(id)}).get(
-                        'name') == self.scenario:
+                        {'_id': ObjectId(id)}).get('name') == self.scenario:
                     # both group and scenario are duplicated, you are in big
                     # trouble, skipped
                     duplicated = True
@@ -582,6 +586,5 @@ def load_user(user_id):
     This callback is used to reload the user object from the user ID stored
     in the session (as current_user)
     """
-    user_dict = Meta.db.User.find_one({'_id': ObjectId(user_id)})
-    return UserUtl(user_dict)
+    return UserUtl(Meta.db.User.find_one({'_id': ObjectId(user_id)}))
 

@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 from bson import ObjectId
 
 from . import code
-from app.models import Group, SubGroup, InterfaceLeafPage
+from app.models import Group, SubGroup, InterfaceLeafPage, User
 from common.meta import Meta
 from common.code_tools import cleanup_mess, format
 import fuzzier.fuzzier as fuzzier
@@ -49,6 +49,42 @@ def code_formatting():
             return json.dumps({'code': code}), 200
 
     return json.dumps({'code': ''}), 500
+
+
+@login_required
+@code.route('/load_config', methods=['GET'])
+def load_config():
+
+    print('loaded')
+
+    try:
+        config = User.load_config({'_id': ObjectId(current_user.id)})
+        return json.dumps(config), 200
+    except:
+        return json.dumps({}), 500
+
+
+@login_required
+@code.route('/save_config', methods=['POST'])
+def save_config():
+
+    print('saved')
+
+    received_json = request.json
+
+    if received_json:
+        config = {
+            'code': received_json.get('code'),
+            'theme': received_json.get('theme'),
+            'font': received_json.get('font'),
+            'font_size': received_json.get('font_size'),
+            'show_i': received_json.get('show_i'),
+            'wrap_t': received_json.get('wrap_t')
+        }
+        User.save_config({'_id': ObjectId(current_user.id)}, config)
+        return json.dumps({'good': True}), 200
+
+    return json.dumps({'good': False}), 500
 
 
 @login_required

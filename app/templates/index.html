@@ -12,7 +12,7 @@
 
 {% block navbar_items %}
     {% if current_user.is_authenticated and current_user.is_confirmed%}
-        <ul class="nav navbar-nav navbar-left">
+        <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-family: Centaur;font-size: 20px;">Toolbox<b class="caret"></b></a>
                 <ul class="dropdown-menu">
@@ -24,7 +24,7 @@
             </li>
         </ul>
         <ul class="nav navbar-nav">
-            <li><a href="#" id="judge" style="font-family: Centaur;font-size: 20px;">Judge</a></li>
+            <li><a href="#" id="judge" style="font-family: Centaur;font-size: 20px;color:#ff6398;">Judge</a></li>
             <li><a href="{{ url_for('main.create_snippet') }}" style="font-family: Centaur;font-size: 20px;">Create Snippet</a></li>
         </ul>
     {% endif %}
@@ -36,7 +36,7 @@
     </div>
 
     <!-- setting panel -->
-    <div class="modal fade bs-setting-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div id="modal-small" class="modal fade bs-setting-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-sm" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -110,9 +110,6 @@
                                 <div class="checkbox">
                                     <label><input id="wrap-text" type="checkbox" value="" checked="checked">&nbsp&nbspWrap Text</label>
                                 </div>
-                                <div class="checkbox">
-                                    <label><input id="save-session" type="checkbox" value="">&nbsp&nbspSave Session & Setting</label>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -126,7 +123,7 @@
     <!-- end of setting panel -->
 
     <!-- interface modal view, display when click `Interface` button -->
-    <div class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div id="modal-large" class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -390,7 +387,6 @@
     <script src="{{ url_for('static', filename='js/yeti/initialize_interface.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/yeti/update_interface.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
-        var save_session = true;
         var show_invisibles = true;
         var wrap_text = true;
         var initial_syntax = $('#syntax option:selected').val();
@@ -501,6 +497,84 @@
                 });
             }
 
+            function save_config() {
+                sent_info = {
+                    code: code_section.getValue(),
+                    theme: $('#theme').val(),
+                    font: $('#font-family').val(),
+                    font_size: parseInt($('#font-size').val()),
+                    show_i: $('#show-invisibles').prop('checked'),
+                    wrap_t: $('#wrap-text').prop('checked')
+                };
+
+                $.ajax({
+                    contentType: "application/json",
+                    data: JSON.stringify(sent_info),
+                    type: 'POST',
+                    url: '/code/save_config',
+                    dataType: 'json',
+                    success: function (data, status, request) {},
+                    error: function() {
+                        alert('Unexpected error in saving configuration');
+                    }
+                });
+            }
+
+            function load_config() {
+                $.ajax({
+                    type: 'GET',
+                    url: '/code/load_config',
+                    dataType: 'json',
+                    success: function (data, status, request) {
+                        // set code
+                        if (data.code !== undefined) {
+                            code_section.setValue(data.code);
+                        }
+                        // set theme
+                        if (data.theme !== undefined) {
+                            code_section.setTheme("ace/theme/" + data.theme);
+                            snippet_section.setTheme("ace/theme/" + data.theme);
+                            $('#theme').selectpicker('val', data.theme);
+                        }
+                        //set font
+                        if (data.font !== undefined) {
+                            code_section.setOption("fontFamily", data.font);
+                            snippet_section.setOption("fontFamily", data.font);
+                            $('#font-family').selectpicker('val', data.font);
+                        }
+                        //set font-size
+                        if (data.font_size !== undefined) {
+                            code_section.setOption("fontSize", data.font_size);
+                            $('#font-size').selectpicker('val', data.font_size);
+                        }
+                        //set show invisible
+                        if (data.show_i !== undefined) {
+                            code_section.setOption("showInvisibles", data.show_i);
+                            snippet_section.setOption("showInvisibles", data.show_i);
+                            if (data.show_i === true) {
+                                $('#show-invisibles').attr('checked', 'checked');
+                            }
+                            else {
+                                $('#show-invisibles').removeAttr('checked');
+                            }
+                        }
+                        //set wrap text
+                        if (data.wrap_t !== undefined) {
+                            code_section.getSession().setUseWrapMode(data.wrap_t);
+                            if (data.wrap_t === true) {
+                                $('#wrap-text').attr('checked', 'checked');
+                            }
+                            else {
+                                $('#wrap-text').removeAttr('checked');
+                            }
+                        }
+                    },
+                    error: function() {
+                        alert('Unexpected error in loading configuration');
+                    }
+                });
+            }
+
             function click_and_send(message) {
                 code = code_section.getValue();
                 if (code) {
@@ -566,6 +640,7 @@
                 return succeed;
             }
 
+            load_config();
             // right panel
             // judge button
             $('#judge').on('click', function(){
@@ -650,22 +725,7 @@
             // wrap text tick
             $('#wrap-text').click(function() {
                 wrap_text = this.checked;
-                if(wrap_text) {
-                    code_section.getSession().setUseWrapMode(wrap_text);
-                }
-                else {
-                    code_section.getSession().setUseWrapMode(wrap_text);
-                }
-            });
-            // save session tick
-            $('#save-session').click(function() {
-                save_session = this.checked;
-                if(save_session) {
-                    alert('session saved (test)')
-                }
-                else {
-                    alert('save session unticked (test)')
-                }
+                code_section.getSession().setUseWrapMode(wrap_text);
             });
 
             // display subgroup when select a group
@@ -757,6 +817,13 @@
                 var text = data.node.text;
                 initialize_interface(id, text);
             });
+
+            // save current user env before a refresh
+            window.onbeforeunload = function(event)
+            {
+                save_config();
+            };
+
         });
     </script>
 {% endblock %}
