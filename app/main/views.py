@@ -1,6 +1,5 @@
 import json
-from flask import render_template, redirect, url_for, request, abort, flash, \
-    jsonify
+from flask import render_template, redirect, url_for, request, abort, flash
 from flask_login import current_user, login_required
 from bson import ObjectId
 
@@ -10,19 +9,21 @@ from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from app.models import User
 from common.pagination import PaginationSnippet
-from common.meta import Meta
-# from common.interface_fetcher import initialize_interface, update_interface
 
 
 @main.route('/test')
 def test():
+    """
+    test page, feature test only
+    """
     return render_template('test.html')
 
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
     if current_user.is_authenticated:
-        return render_template('index.html', company=Meta.company.upper())
+        return render_template('index.html',
+                               company=current_user.company.upper())
     else:
         return redirect(url_for('auth.login'))
 
@@ -48,9 +49,12 @@ def user(id):
 def edit_profile():
     form = EditProfileForm()
     if form.validate_on_submit():
-        User.update_doc({'email': current_user.email}, {'name': form.name.data,
-                                                        'location': form.location.data,
-                                                        'about_me': form.about_me.data})
+        User.update_doc({'email': current_user.email},
+                        {
+                            'name': form.name.data,
+                            'location': form.location.data,
+                            'about_me': form.about_me.data
+                         })
         flash('Your profile has been updated successfully.', category='info')
         return redirect(url_for('main.user', id=current_user.id))
     form.name.data = current_user.name
@@ -130,10 +134,10 @@ def edit_snippet(group, scenario):
     old_scenario_dict = {}
     old_scenario_id = ''
     old_scenario = scenario
-    for id in old_scenario_id_list:
-        old_scenario_dict = Snippet.search_scenario({'_id': ObjectId(id)})
+    for _id in old_scenario_id_list:
+        old_scenario_dict = Snippet.search_scenario({'_id': ObjectId(_id)})
         if old_scenario_dict.get('name') == scenario:
-            old_scenario_id = id
+            old_scenario_id = _id
             break
 
     if not old_scenario_dict or not old_scenario_id:
@@ -156,11 +160,13 @@ def edit_snippet(group, scenario):
 
         if old_group_dict.get('name') != new_group:
             # case 1: group changed
-            # remove old scenario id from old group, if scenario list after the operation is empty, delete the group
+            # remove old scenario id from old group, if scenario list after
+            # the operation is empty, delete the group
             old_scenario_id_list.remove(old_scenario_id)
 
             if not len(old_scenario_id_list):
-                # if group has no scenario anymore after the removal, delete the group directly
+                # if group has no scenario anymore after the removal, delete
+                # the group directly
                 Snippet.delete_doc_group({'_id': ObjectId(group_id)})
             else:
                 # otherwise update group's scenario list
@@ -170,15 +176,17 @@ def edit_snippet(group, scenario):
             new_group_dict = Snippet.search_group({'name': new_group})
             if new_group_dict:
                 # if new target group already exists
-                # before group change, check whether old/new scenario name is already in target group, if conflict exists then do a rename
+                # before group change, check whether old/new scenario name is
+                # already in target group, if conflict exists then do a rename
                 new_scenario_id_list = Snippet.search_group(
                     {'_id': ObjectId(new_group_dict.get('_id'))}).get(
                     'scenarios')
 
                 if old_scenario != new_scenario:
-                    # if scenario name changed, check new scenario name conflict
-                    for id in new_scenario_id_list:
-                        if Snippet.search_scenario({'_id': ObjectId(id)}).get(
+                    # if scenario name changed, check new scenario name
+                    # conflict
+                    for _id in new_scenario_id_list:
+                        if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                                 'name') == new_scenario:
                             new_scenario += '_COPY'
                             flash(
@@ -186,9 +194,10 @@ def edit_snippet(group, scenario):
                                 category='danger')
                             break
                 else:
-                    # if scenario name unchanged, check old scenario name conflict
-                    for id in new_scenario_id_list:
-                        if Snippet.search_scenario({'_id': ObjectId(id)}).get(
+                    # if scenario name unchanged, check old scenario name
+                    # conflict
+                    for _id in new_scenario_id_list:
+                        if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                                 'name') == old_scenario:
                             new_scenario = f'{old_scenario}_COPY'
                             flash(
@@ -196,7 +205,8 @@ def edit_snippet(group, scenario):
                                 category='danger')
                             break
 
-                # move old scenario id to new group, update group_id, update scenario's group name
+                # move old scenario id to new group, update group_id, update
+                # scenario's group name
                 Snippet.update_doc_group({'name': new_group},
                                          {'scenarios': old_scenario_id})
 
@@ -207,18 +217,19 @@ def edit_snippet(group, scenario):
                     'name': new_group,
                     'scenarios': [old_scenario_id]
                 }
-                Meta.db_default.SnippetGroup.insert_one(document)
+                Snippet.new_group(document)
             Snippet.update_doc_scenario({'_id': ObjectId(old_scenario_id)},
                                         {'name': new_scenario,
                                          'group': new_group})
 
         elif old_scenario != new_scenario:
             # case 2: group not changed but scenario changed
-            # if group not changed but scenario changed, check new scenario naming conflict under current group
+            # if group not changed but scenario changed, check new scenario
+            # naming conflict under current group
             scenario_id_list = Snippet.search_group(
                 {'_id': ObjectId(group_id)}).get('scenarios')
-            for id in scenario_id_list:
-                if Snippet.search_scenario({'_id': ObjectId(id)}).get(
+            for _id in scenario_id_list:
+                if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                         'name') == new_scenario:
                     new_scenario += '_COPY'
                     flash(
@@ -250,14 +261,14 @@ def delete_snippet():
 
     scenario_id_list = Snippet.search_group({'name': snippet_group}).get(
         'scenarios')
-    for id in scenario_id_list:
-        if Snippet.search_scenario({'_id': ObjectId(id)}).get(
+    for _id in scenario_id_list:
+        if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                 'name') == snippet_scenario:
-            Snippet.delete_doc_scenario({'_id': ObjectId(id)})
+            Snippet.delete_doc_scenario({'_id': ObjectId(_id)})
             if len(scenario_id_list) == 1:
                 Snippet.delete_doc_group({'name': snippet_group})
             else:
-                scenario_id_list.remove(id)
+                scenario_id_list.remove(_id)
                 Snippet.update_doc_group({'name': snippet_group},
                                          {'scenarios': scenario_id_list})
             break
@@ -271,7 +282,7 @@ def delete_snippet():
 def acquire_snippet_group():
     result = []
     try:
-        groups = Meta.db_default.SnippetGroup.find({}).sort([('name', 1)])
+        groups = Snippet.get_group_cursor({}, [('name', 1)])
         for group_dict in groups:
             result.append({str(group_dict.get('_id')): group_dict.get('name')})
         return json.dumps({'group': result}), 200
@@ -287,11 +298,14 @@ def acquire_snippet_scenario(_id):
             'scenarios')
         result = []
         if scenario_ids:
-            for id in scenario_ids:
-                snippet = Snippet.search_scenario({'_id': ObjectId(id)})
-                result.append({id: [snippet.get('name'), snippet.get('code')]})
+            for __id in scenario_ids:
+                snippet = Snippet.search_scenario({'_id': ObjectId(__id)})
+                result.append(
+                    {__id: [snippet.get('name'), snippet.get('code')]}
+                )
         result = sorted(result,
-                        key=lambda item: next(iter(item.values()))[0].lower())
+                        key=lambda item: next(iter(item.values()))[0].lower()
+                 )
         return json.dumps({'scenario': result}), 200
     except:
         return json.dumps({'scenario': []}), 500

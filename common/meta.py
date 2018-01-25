@@ -1,38 +1,23 @@
 from app.db import mongo_connect, client
+from common.crypto import AESCipher
+from uni_parser.loader import ParserLoader
 
 
 class Meta:
-    """
-    `company_xxx` variable will be modified when user logged in, and reset
-    when logged out, is accessible to all other modules across the application
-    """
-    company = 'ytml'
-    company_username = 'ytml1'
-    company_password = None
-
-    db_default = mongo_connect(client, 'ytml')
-    db_company = None
+    db = mongo_connect(client, 'ytml')
 
     # `crypto` variable is an instance for AESCipher
     crypto = None
 
-    # `jison` is an instance of Jison parser
     # `parser` is an instance of ParserLoader
-    jison = None
     parser = None
 
     # `fetchers` are instances of Fetcher/Interface Fetcher
     menu_fetcher = None
     interface_fetcher = None
 
-    # browser is used for fetch interface menu
-    browser = None
-    session_id = None
-    executor_url = None
-    current_url = None
-
     @staticmethod
-    def empty(attribute=None):
+    def demolish(attribute=None):
         """
         empty Meta's all attributes or one/some specific attributes
         """
@@ -54,3 +39,8 @@ class Meta:
                     setattr(Meta, attr, None)
                 except:
                     pass
+
+    @staticmethod
+    def initialize():
+        Meta.crypto = AESCipher()
+        Meta.parser = ParserLoader(grammar='xplan')

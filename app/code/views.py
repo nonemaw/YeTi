@@ -2,7 +2,7 @@ import json
 import re
 
 from flask import request
-from flask_login import login_required
+from flask_login import login_required, current_user
 from bson import ObjectId
 
 from . import code
@@ -56,7 +56,7 @@ def code_formatting():
 def group():
     result = []
     try:
-        groups = Meta.db_company.Group.find({}).sort([('name', 1)])
+        groups = current_user.db.Group.find({}).sort([('name', 1)])
         for group_dict in groups:
             result.append({group_dict.get('var'): group_dict.get('name')})
         return json.dumps({'group': result}), 200
@@ -111,7 +111,8 @@ def do_search():
     """
     received_json = request.json
     if received_json:
-        result_list = sorted(fuzzier.search(received_json.get('pattern'),
+        result_list = sorted(fuzzier.search(current_user.jison,
+                                            received_json.get('pattern'),
                                             int(received_json.get('count'))),
                              key=lambda item: item[0],
                              reverse=True)
@@ -127,7 +128,7 @@ def do_search():
 
                 subgroup_id_list = Group.search({'var': group_var}).get(
                     'sub_groups')
-                subgroups_with_same_name = Meta.db_company.SubGroup.find(
+                subgroups_with_same_name = current_user.db.SubGroup.find(
                     {'name': subgroup})
                 for subgroup_dict in subgroups_with_same_name:
                     if str(subgroup_dict.get('_id')) in subgroup_id_list:
@@ -149,7 +150,7 @@ def do_search():
 @code.route('/acquire_search_result', methods=['POST'])
 def acquire_search_result():
     """
-    return detailed variable information when client click on of the search result
+    return detailed variable information when client click one of the result
     """
     received_json = request.json
 
@@ -172,7 +173,7 @@ def acquire_search_result():
 def acquire_interface():
     result = []
     try:
-        root_nodes = Meta.db_company.InterfaceNode.find({}).sort([('id', 1)])
+        root_nodes = current_user.db.InterfaceNode.find({}).sort([('id', 1)])
         for node_dict in root_nodes:
             # remove database _id serial number
             del node_dict['_id']

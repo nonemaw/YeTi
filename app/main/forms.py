@@ -5,7 +5,6 @@ from wtforms.validators import Length, DataRequired, Email, Regexp, \
     ValidationError
 
 from app.models import User
-from common.meta import Meta
 from app.auth.forms import cities
 
 roles = [('ACCESS', ' Normal User'), ('ADMIN', ' Administrator')]

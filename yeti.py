@@ -8,6 +8,7 @@ from gevent.pywsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
 from app import create_app
 from app.models import Role
+from common.meta import Meta
 
 
 yeti = create_app(os.getenv('FLASK_CONFIG') or 'default')
@@ -24,33 +25,19 @@ if __name__ == '__main__':
                         help='Test')
     args = parser.parse_args()
 
+    Meta.initialize()
     Role.insert_roles()
     yeti.debug = True
+
+    # run on debug server
     if args.debug:
         yeti.run(debug=True)
 
     # feature test
     elif args.test:
-        company, username, password = input(
-            'Please input company, username and password: ').split(' ')
-        groups = input('Please input groups (optional): ')
-        if not groups:
-            groups = None
+        pass
 
-        from crawlers.menu_fetcher import MenuFetcher
-        from common.meta import Meta
-        from fuzzier.jison import Jison
-        from app.db import mongo_connect, client
-
-        Meta.company = company
-        Meta.company_username = username
-        Meta.company_password = password
-        Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
-            client, Meta.company)
-        Meta.jison = Jison(file_name=Meta.company)
-        Meta.menu_fetcher = MenuFetcher()
-        Meta.menu_fetcher.fetch(groups)
-
+    # run on gevent server
     else:
         http_server = WSGIServer((args.host, args.port), yeti, log=None,
                                  handler_class=WebSocketHandler)

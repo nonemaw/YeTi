@@ -7,24 +7,30 @@ import os
 import logging
 
 from bson import ObjectId
-from common.meta import Meta
 from app.models import Group, SubGroup
 from fuzzier.jison import Jison
 
 
 class FieldFetcher:
-    def __init__(self):
-        pass
+    def __init__(self, company: str, jison: Jison):
+        self.jison = jison
+        self.company = company
+        self.BASE = f'https://{company}.xplan.iress.com.au'
+        self.URL_LOGIN = f'https://{company}.xplan.iress.com.au/home'
+        self.URL_LIST = f'https://{company}.xplan.iress.com.au/ufield/list'
+        self.URL_WALKER = ''.join([f'https://{company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
+        self.URL_LOGOUT = f'https://{company}.xplan.iress.com.au/home/logoff?'
 
-    # TODO: along with Jison, support a list of group update, generate a list of 'to_json' result based on the list of groups
-    def fetch(self, group_only: str = None):
+    def change_company(self, company: str):
+        self.company = company
+        self.BASE = f'https://{company}.xplan.iress.com.au'
+        self.URL_LOGIN = f'https://{company}.xplan.iress.com.au/home'
+        self.URL_LIST = f'https://{company}.xplan.iress.com.au/ufield/list'
+        self.URL_WALKER = ''.join([f'https://{company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
+        self.URL_LOGOUT = f'https://{company}.xplan.iress.com.au/home/logoff?'
+
+    def fetch(self, username: str, password: str, group_only: str = None):
         # TODO: code is ugly, will refactored in the future
-
-        BASE = f'https://{Meta.company}.xplan.iress.com.au'
-        URL_LOGIN = f'https://{Meta.company}.xplan.iress.com.au/home'
-        URL_LIST = f'https://{Meta.company}.xplan.iress.com.au/ufield/list'
-        URL_WALKER = ''.join([f'https://{Meta.company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
-        URL_LOGOUT = f'https://{Meta.company}.xplan.iress.com.au/home/logoff?'
 
         this_path = os.path.dirname(os.path.realpath(__file__))
         parent_path = os.path.abspath(os.path.join(this_path, os.pardir))
@@ -49,17 +55,17 @@ class FieldFetcher:
             try:
                 # login payload
                 payload = {
-                    "userid": Meta.company_username,
-                    "passwd": Meta.company_password,
+                    "userid": username,
+                    "passwd": password,
                     "rolename": "User",
                     "redirecturl": ''
                 }
                 # send POST to login page
-                session.post(URL_LOGIN, data=payload,
-                             headers=dict(referer=URL_LOGIN))
+                session.post(self.URL_LOGIN, data=payload,
+                             headers=dict(referer=self.URL_LOGIN))
                 # try to get main list page content
-                fields = session.get(URL_LIST,
-                                     headers=dict(referer=URL_LIST))
+                fields = session.get(self.URL_LIST,
+                                     headers=dict(referer=self.URL_LIST))
 
                 if re.search(r'permission_error', fields.text):
                     # login failed
@@ -122,9 +128,9 @@ class FieldFetcher:
                                 f'Processing {group_var} - {group_name}')
                             all_subgroup_variable = re.sub(
                                 r'<td align.+<\/td>\n', '',
-                                session.get(URL_WALKER.format(group_var),
+                                session.get(self.URL_WALKER.format(group_var),
                                             headers=dict(
-                                                referer=URL_WALKER.format(
+                                                referer=self.URL_WALKER.format(
                                                     group_var))).text)
 
                             former_sub_group = ''
@@ -169,7 +175,7 @@ class FieldFetcher:
                                         sub_group_list.append(
                                             former_sub_group_id)
 
-                                    logger.info(f'Fetching {BASE}{href}')
+                                    logger.info(f'Fetching {self.BASE}{href}')
                                     if '/ufield/edit/entity_' in href:
                                         usage = f'$client.{href.split("/ufield/edit/entity_")[1].replace("/", ".")}'
                                     elif '/ufield/edit/entity' in href:
@@ -181,13 +187,13 @@ class FieldFetcher:
                                     # var / var_name / sub_group / var_type / usage
                                     if var_type == 'Multi' or var_type == 'Choice':
                                         multi = {}
-                                        session.get(BASE + href,
+                                        session.get(self.BASE + href,
                                                     headers=dict(
-                                                        referer=BASE + href))
+                                                        referer=self.BASE + href))
                                         multi_content = session.get(
-                                            f'{BASE}/ufield/list_options',
+                                            f'{self.BASE}/ufield/list_options',
                                             headers=dict(
-                                                referer=BASE + href))
+                                                referer=self.BASE + href))
                                         multi_content = re.sub(
                                             r'(?:&#xA0;|<img)', '\n',
                                             multi_content.text)
@@ -246,43 +252,23 @@ class FieldFetcher:
                     # endfor
 
                 # endif, logout
-                session.get(URL_LOGOUT)
+                session.get(self.URL_LOGOUT)
             except KeyboardInterrupt:
                 logger.info('Received keyboard interruption, logging out ...')
-                session.get(URL_LOGOUT)
+                session.get(self.URL_LOGOUT)
 
         import json
         if not group_only:
-            Meta.jison.write(json.dumps(to_json), file_name=Meta.company)
+            self.jison.write(json.dumps(to_json), file_name=self.company)
         else:
-            Meta.jison.replace_object(group_only, json.dumps(to_json))
+            self.jison.replace_object(group_only, json.dumps(to_json))
         to_json.clear()
 
     def update_group(self, name: list or str):
-        if isinstance(name, str):
-            self.fetch(name)
+        pass
 
     def delete_group(self, name: str):
         pass
 
     def delete_subgroup(self, name: str):
         pass
-
-
-if __name__ == '__main__':
-    from app.db import mongo_connect, client
-
-    specific = input('specific nodes (optional): ')
-    if not specific:
-        specific = []
-    else:
-        specific = [x.strip() for x in specific.split(',') if x]
-
-    Meta.company = 'fmd'
-    Meta.company_username = 'DXu'
-    Meta.company_password = 'Summer2017'
-    Meta.jison = Jison()
-    Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
-        client, Meta.company)
-    Meta.menu_fetcher = FieldFetcher()
-    Meta.menu_fetcher.fetch()

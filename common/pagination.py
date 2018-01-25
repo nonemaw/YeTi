@@ -1,6 +1,5 @@
 from math import ceil
-from common.meta import Meta
-
+from app.models import Snippet
 
 
 # http://flask.pocoo.org/snippets/44/
@@ -35,7 +34,8 @@ class Pagination:
         for num in range(1, self.pages + 1):
             if num <= left_edge or \
                     (num > self.current_page - left_current - 1 and
-                             num < self.current_page + right_current) or num > self.pages - right_edge:
+                         num < self.current_page + right_current) \
+                    or num > self.pages - right_edge:
                 if last + 1 != num:
                     yield None
                 yield num
@@ -65,10 +65,11 @@ class Pagination:
 class PaginationSnippet(Pagination):
     def __init__(self, current_page: int, per_page: int = 15):
         super().__init__(current_page, per_page=per_page)
-        self.snippets = Meta.db_default.SnippetScenario.find({}).sort([('name', 1)])
+        self.snippets = Snippet.get_scenario_cursor({}, [('name', 1)])
         self.total_count = self.snippets.count()
         self.current_num = self.total_count - (
-        self.per_page * (self.current_page - 1))
+            self.per_page * (self.current_page - 1)
+        )
         if self.current_num > self.per_page:
             self.current_num = self.per_page
         self.items = [self.snippets[self.prev_num * self.per_page + i] for i in

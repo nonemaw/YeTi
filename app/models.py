@@ -2,11 +2,14 @@ import hashlib
 from datetime import datetime
 from werkzeug.security import generate_password_hash
 from flask import current_app, request
-from flask_login import UserMixin, AnonymousUserMixin
+from flask_login import UserMixin, AnonymousUserMixin, current_user
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from bson import ObjectId
+
 from app import login_manager
+from app.db import mongo_connect, client
 from common.meta import Meta
+from fuzzier.jison import Jison
 
 
 # Note: all DB model class are using legacy PyMongo method `insert()` to create
@@ -31,21 +34,21 @@ class Group:
             'name': self.name,
             'sub_groups': []
         }
-        legacy = Meta.db_company.Group.find_one({'var': self.var})
+        legacy = current_user.db.Group.find_one({'var': self.var})
         if not legacy:
-            return str(Meta.db_company.Group.insert(document))
+            return str(current_user.db.Group.insert(document))
         else:
             return str(legacy.get('_id'))
 
     @staticmethod
     def update_doc(locate: dict, update: dict):
-        Meta.db_company.Group.update_one(locate, {'$set': update})
+        current_user.db.Group.update_one(locate, {'$set': update})
 
     @staticmethod
     def delete_doc(locate: dict):
-        to_be_deleted = Meta.db_company.Group.find_one(locate)
+        to_be_deleted = current_user.db.Group.find_one(locate)
         sub_groups = to_be_deleted.get('sub_groups')
-        Meta.db_company.Group.delete_one(locate)
+        current_user.db.Group.delete_one(locate)
 
         for sub_group_id in sub_groups:
             try:
@@ -55,7 +58,7 @@ class Group:
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_company.Group.find_one(locate)
+        return current_user.db.Group.find_one(locate)
 
 
 class SubGroup:
@@ -73,23 +76,23 @@ class SubGroup:
             'name': self.name,
             'variables': []
         }
-        legacy = Meta.db_company.Variables.find_one({'name': self.name})
+        legacy = current_user.db.Variables.find_one({'name': self.name})
         if not legacy:
-            return str(Meta.db_company.SubGroup.insert(document))
+            return str(current_user.db.SubGroup.insert(document))
         else:
             return str(legacy.get('_id'))
 
     @staticmethod
     def update_doc(locate: dict, update: dict):
-        Meta.db_company.SubGroup.update_one(locate, {'$set': update})
+        current_user.db.SubGroup.update_one(locate, {'$set': update})
 
     @staticmethod
     def delete_doc(locate: dict):
-        Meta.db_company.SubGroup.delete_one(locate)
+        current_user.db.SubGroup.delete_one(locate)
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_company.SubGroup.find_one(locate)
+        return current_user.db.SubGroup.find_one(locate)
 
 
 class InterfaceNode:
@@ -150,10 +153,12 @@ class InterfaceNode:
         then I ONLY update/insert the content of the leaf node on depth = 3
         (when depth = 0 is the normal case)
         """
-        legacy = Meta.db_company.InterfaceNode.find_one(
+
+        # TODO: FIX
+        legacy = current_user.db.InterfaceNode.find_one(
             {'id': self.node.get('id')})
         if not legacy:
-            return str(Meta.db_company.InterfaceNode.insert(self.node))
+            return str(current_user.db.InterfaceNode.insert(self.node))
 
         elif force and not depth:
             pushed_list = [x for x in self.node.get('children')
@@ -163,7 +168,7 @@ class InterfaceNode:
             # `pushed_list` is a list of {child} which are not in legacy children
             # is `pushed_list` then append each {child} to legacy's children list
             if pushed_list:
-                Meta.db_company.InterfaceNode.update_one(
+                current_user.db.InterfaceNode.update_one(
                     {'id': self.node.get('id')},
                     {
                         '$set': {
@@ -175,7 +180,7 @@ class InterfaceNode:
             # if `pushed_list` is empty, just make current children to overwrite
             # legacy's children
             else:
-                Meta.db_company.InterfaceNode.update_one(
+                current_user.db.InterfaceNode.update_one(
                     {'id': self.node.get('id')},
                     {'$set': {
                         'text': self.node.get('text'),
@@ -189,7 +194,7 @@ class InterfaceNode:
 
             # child node is a root node
             if re.search('^client_[0-9]+', child_node_id):
-                Meta.db_company.InterfaceNode.update_one(
+                current_user.db.InterfaceNode.update_one(
                     {
                         'id': self.node.get('id'),
                         query: child_node_id
@@ -208,11 +213,11 @@ class InterfaceNode:
 
     @staticmethod
     def update_doc(locate: dict, update: dict):
-        Meta.db_company.InterfaceNode.update_one(locate, {'$set': update})
+        current_user.db.InterfaceNode.update_one(locate, {'$set': update})
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_company.InterfaceNode.find_one(locate)
+        return current_user.db.InterfaceNode.find_one(locate)
 
 
 class InterfaceLeafPage:
@@ -237,11 +242,11 @@ class InterfaceLeafPage:
             'menu_path': self.menu_path,
             'page': self.page
         }
-        legacy = Meta.db_company.InterfaceLeafPage.find_one({'id': self.id})
+        legacy = current_user.db.InterfaceLeafPage.find_one({'id': self.id})
         if not legacy:
-            return str(Meta.db_company.InterfaceLeafPage.insert(document))
+            return str(current_user.db.InterfaceLeafPage.insert(document))
         elif force:
-            Meta.db_company.InterfaceLeafPage.update_one(
+            current_user.db.InterfaceLeafPage.update_one(
                 {'id': self.id},
                 {'$set': {
                     'text': self.text,
@@ -255,11 +260,11 @@ class InterfaceLeafPage:
 
     @staticmethod
     def update_doc(locate: dict, update: dict):
-        Meta.db_company.InterfaceLeafPage.update_one(locate, {'$set': update})
+        current_user.db.InterfaceLeafPage.update_one(locate, {'$set': update})
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_company.InterfaceLeafPage.find_one(locate)
+        return current_user.db.InterfaceLeafPage.find_one(locate)
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -297,7 +302,7 @@ class Role:
             'permission': self.permission,
             'default': self.default
         }
-        Meta.db_default.Role.insert(document)
+        Meta.db.Role.insert(document)
 
     @staticmethod
     def insert_roles():
@@ -309,8 +314,8 @@ class Role:
              'permission': 0xff,
              'default': False}]
         for role in roles:
-            if not Meta.db_default.Role.find_one({'type': role.get('type')}):
-                Meta.db_default.Role.insert(role)
+            if not Meta.db.Role.find_one({'type': role.get('type')}):
+                Meta.db.Role.insert(role)
 
 
 class User:
@@ -325,10 +330,10 @@ class User:
         self.location = location
         self.avatar_hash = None
         if self.email == current_app.config['SITE_ADMIN']:
-            self.role = Meta.db_default.Role.find_one(
+            self.role = Meta.db.Role.find_one(
                 {'permission': 0xff}).get('type')
         else:
-            self.role = Meta.db_default.Role.find_one(
+            self.role = Meta.db.Role.find_one(
                 {'default': True}).get('type')
         if self.email is not None and self.avatar_hash is None:
             self.avatar_hash = hashlib.md5(
@@ -354,41 +359,43 @@ class User:
             'avatar_hash': self.avatar_hash,
             'member_since': datetime.utcnow(),
             'last_login': datetime.utcnow(),
+            'company': ''
         }
-        return str(Meta.db_default.User.insert(document))
+        return str(Meta.db.User.insert(document))
 
     @staticmethod
     def update_doc(locate: dict, update: dict):
-        Meta.db_default.User.update_one(locate, {'$set': update})
+        Meta.db.User.update_one(locate, {'$set': update})
 
     @staticmethod
     def search(locate: dict) -> dict:
-        return Meta.db_default.User.find_one(locate)
+        return Meta.db.User.find_one(locate)
 
 
 class UserUtl(UserMixin):
     """
     a utility class based from UserMixin for Flask 'current_user', operating
-    current user utilities on a global level
+    current logged user utilities on a global level
     """
     def __init__(self, user: dict):
-        """
-        role: set role from string value role type to Role object, for further
-        operations
-        """
         self.id = str(user.get('_id'))
         self.email = user.get('email')
         self.username = user.get('username')
         self.password = user.get('password')  # store hash result
         self.is_confirmed = user.get('is_confirmed')
         self.role = Role(
-            Meta.db_default.Role.find_one({'type': user.get('role')}))
+            Meta.db.Role.find_one({'type': user.get('role')})
+        )
         self.name = user.get('name')
         self.location = user.get('location')
         self.about_me = user.get('about_me')
         self.avatar_hash = user.get('avatar_hash')
         self.last_login = user.get('last_login')
         self.member_since = user.get('member_since')
+        self.company = user.get('company')
+        self.db = Meta.db if self.company == 'ytml' else\
+            mongo_connect(client, self.company)
+        self.jison = Jison(file_name=user.get('company'))
 
     def __repr__(self):
         return str(self)
@@ -423,7 +430,7 @@ class UserUtl(UserMixin):
         return self.can(Permission.ADMIN)
 
     def ping(self):
-        Meta.db_default.User.update_one({'email': self.email},
+        Meta.db.User.update_one({'email': self.email},
                                         {'$set': {
                                             'last_login': datetime.utcnow()}})
 
@@ -451,18 +458,19 @@ class Snippet():
         return f'<Snippet Scenario {self.scenario}>'
 
     def new(self) -> tuple:
-        # check duplication, it's ok if only group name or scenario name is same
+        # check duplication, OK if only group name or scenario name is same
         duplicated = False
-        group_dict = Meta.db_default.SnippetGroup.find_one(
+        group_dict = Meta.db.SnippetGroup.find_one(
             {'name': self.group})
         if group_dict:
             # group existing, check scenario name
             old_scenario_id_list = group_dict.get('scenarios')
             for id in old_scenario_id_list:
-                if Meta.db_default.SnippetScenario.find_one(
+                if Meta.db.SnippetScenario.find_one(
                         {'_id': ObjectId(id)}).get(
                         'name') == self.scenario:
-                    # both group and scenario are duplicated, you are in big trouble, skipped
+                    # both group and scenario are duplicated, you are in big
+                    # trouble, skipped
                     duplicated = True
                     break
 
@@ -473,12 +481,12 @@ class Snippet():
                 'group': self.group,
                 'code': self.code
             }
-            scenario_id = str(Meta.db_default.SnippetScenario.insert(document))
+            scenario_id = str(Meta.db.SnippetScenario.insert(document))
 
             if group_dict:
                 # update new scenario id into existing group
                 group_id = str(group_dict.get('_id'))
-                Meta.db_default.SnippetGroup.update_one({'name': self.group},
+                Meta.db.SnippetGroup.update_one({'name': self.group},
                                         {'$push': {'scenarios': scenario_id}})
             else:
                 # insert new group for the new scenario
@@ -486,34 +494,50 @@ class Snippet():
                     'name': self.group,
                     'scenarios': [scenario_id]
                 }
-                group_id = str(Meta.db_default.SnippetGroup.insert(document))
+                group_id = str(Meta.db.SnippetGroup.insert(document))
             return group_id, scenario_id
         else:
             return None, None
 
     @staticmethod
+    def new_group(doc: dict) -> str:
+        return str(Meta.db.SnippetGroup.insert(doc))
+
+    @staticmethod
+    def get_group_cursor(locate: dict, s_condition: list = None):
+        if s_condition and isinstance(s_condition, list):
+            return Meta.db.SnippetGroup.find(locate).sort(s_condition)
+        return Meta.db.SnippetGroup.find(locate)
+
+    @staticmethod
+    def get_scenario_cursor(locate: dict, s_condition: list = None):
+        if s_condition and isinstance(s_condition, list):
+            return Meta.db.SnippetScenario.find(locate).sort(s_condition)
+        return Meta.db.SnippetScenario.find(locate)
+
+    @staticmethod
     def update_doc_group(locate: dict, update: dict):
-        Meta.db_default.SnippetGroup.update_one(locate, {'$set': update})
+        Meta.db.SnippetGroup.update_one(locate, {'$set': update})
 
     @staticmethod
     def update_doc_scenario(locate: dict, update: dict):
-        Meta.db_default.SnippetScenario.update_one(locate, {'$set': update})
+        Meta.db.SnippetScenario.update_one(locate, {'$set': update})
 
     @staticmethod
     def delete_doc_group(locate: dict):
-        Meta.db_default.SnippetGroup.delete_one(locate)
+        Meta.db.SnippetGroup.delete_one(locate)
 
     @staticmethod
     def delete_doc_scenario(locate: dict):
-        Meta.db_default.SnippetScenario.delete_one(locate)
+        Meta.db.SnippetScenario.delete_one(locate)
 
     @staticmethod
     def search_group(locate: dict) -> dict:
-        return Meta.db_default.SnippetGroup.find_one(locate)
+        return Meta.db.SnippetGroup.find_one(locate)
 
     @staticmethod
     def search_scenario(locate: dict) -> dict:
-        return Meta.db_default.SnippetScenario.find_one(locate)
+        return Meta.db.SnippetScenario.find_one(locate)
 
 
 class Ticket():
@@ -535,7 +559,7 @@ class Ticket():
             'solved_timestamp': None,
             'solved': False
         }
-        return str(Meta.db_default.Ticket.insert(document))
+        return str(Meta.db.Ticket.insert(document))
 
 
 login_manager.anonymous_user = AnonymousUser
@@ -555,8 +579,9 @@ This can be tested by just commenting this line and check the Error message
 @login_manager.user_loader
 def load_user(user_id):
     """
-    This callback is used to reload the user object from the user ID stored in the
-    session (as current_user?)
+    This callback is used to reload the user object from the user ID stored
+    in the session (as current_user)
     """
-    user = Meta.db_default.User.find_one({'_id': ObjectId(user_id)})
-    return UserUtl(user)  # this is current_user
+    user_dict = Meta.db.User.find_one({'_id': ObjectId(user_id)})
+    return UserUtl(user_dict)
+

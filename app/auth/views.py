@@ -12,11 +12,8 @@ from bson import ObjectId
 from . import auth
 from .forms import LoginForm, RegForm, ChangeEmailForm, ChangePasswordForm
 from app.models import User, UserUtl
-from common.general import send_email, verify_password
 from app.decorators import admin_required
-
-from common.meta import Meta
-from common.crypto import AESCipher
+from common.general import send_email, verify_password
 
 
 @auth.before_app_request
@@ -40,16 +37,16 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user_dict = User.search({'email': form.email.data})
-        Meta.company = form.company.data
-        # meta.crypto = AESCipher()
-        # meta.company_username = form.company_username.data
-        # meta.company_password = meta.crypto.encrypt(form.company_password.data)
-        # print(meta.company_password)
-        if user_dict is not None and verify_password(user_dict.get('password'),
-                                                     form.password.data):
+        if user_dict is not None\
+            and verify_password(user_dict.get('password'),form.password.data):
+
             # convert 'user_dict' to UserLogin(UserMixin) as 'current_user'
-            user = UserUtl(user_dict)
-            login_user(user, form.remember_me.data)
+            company = form.company.data
+            User.update_doc({'email': form.email.data}, {'company': company})
+            user_dict['company'] = company
+
+            current_user = UserUtl(user_dict)
+            login_user(current_user, form.remember_me.data)
 
             return redirect(request.args.get('next') or url_for('main.index'))
         flash('Invalid username or password.', category='danger')
@@ -60,15 +57,6 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
-    # empty meta
-    try:
-        Meta.browser.get(
-            f'https://{Meta.company}.xplan.iress.com.au/home/logoff?')
-        Meta.browser.quit()
-    except:
-        pass
-
-    Meta.empty()
     logout_user()
     flash('You have been logged out.', category='success')
     return redirect(url_for('main.index'))

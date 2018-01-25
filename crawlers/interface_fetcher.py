@@ -1,12 +1,10 @@
 import requests
 import re
 import threading
-import multiprocessing as mp
 from multiprocessing.managers import BaseManager
 import queue
 from fuzzier.jison import Jison
 from bs4 import BeautifulSoup
-from common.meta import Meta
 from app.models import InterfaceNode, InterfaceLeafPage
 
 
@@ -34,15 +32,22 @@ class InterfaceFetcher:
         'medical insurance': 'Medical Insurance',
     }
 
-
-    def __init__(self):
+    def __init__(self, company: str, jison: Jison):
         self.interface_header = {
             'Content-Type': 'application/json',
-            'referer': f'https://{Meta.company}.xplan.iress.com.au/factfind/edit_interface',
+            'referer': f'https://{company}.xplan.iress.com.au/factfind/edit_interface',
         }
-        self.URL_SOURCE = f'https://{Meta.company}.xplan.iress.com.au/RPC2/'
+        self.URL_SOURCE = f'https://{company}.xplan.iress.com.au/RPC2/'
+        self.company = company
+        self.jison = jison
 
-        MetaManager.register('Meta', Meta)
+    def change_company(self, company: str):
+        self.interface_header = {
+            'Content-Type': 'application/json',
+            'referer': f'https://{company}.xplan.iress.com.au/factfind/edit_interface',
+        }
+        self.URL_SOURCE = f'https://{company}.xplan.iress.com.au/RPC2/'
+        self.company = company
 
     def update_name_ref(self, name_chunk: dict):
         if isinstance(name_chunk, dict):
@@ -56,11 +61,12 @@ class InterfaceFetcher:
                 except:
                     pass
 
-    def fetch(self, specific: list = None, thread: bool = True):
+    def fetch(self, username: str, password: str, specific: list = None,
+              thread: bool = True):
         with requests.session() as session:
             payload = {
-                "userid": Meta.company_username,
-                "passwd": Meta.company_password,
+                "userid": username,
+                "passwd": password,
                 "rolename": "User",
                 "redirecturl": ''
             }
@@ -74,17 +80,22 @@ class InterfaceFetcher:
             }
 
             # send POST to login page, check login status
-            session.post(f'https://{Meta.company}.xplan.iress.com.au/home', data=payload)
-            r = session.get(f'https://{Meta.company}.xplan.iress.com.au/dashboard/mainhtml')
+            session.post(f'https://{self.company}.xplan.iress.com.au/home',
+                         data=payload)
+            r = session.get(
+                f'https://{self.company}.xplan.iress.com.au/dashboard/mainhtml')
 
             if re.search(r'permission_error|Login for User', r.text):
-                raise Exception('Currently there is another user using this XPLAN account.')
+                raise Exception(
+                    'Currently there is another user using this XPLAN account.')
 
-            Meta.jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
-            menu_nodes = Meta.jison.get_object('children')
+            self.jison.load_json(session.post(self.URL_SOURCE,
+                                              json=menu_post,
+                                              headers=self.interface_header).json())
+            menu_nodes = self.jison.get_object('children', value_only=True)
 
             menu = []
-            for node in menu_nodes.get('children'):
+            for node in menu_nodes:
                 if node.get('hidden'):
                     continue
 
@@ -105,16 +116,23 @@ class InterfaceFetcher:
                 menu_path = re.search('client_([0-9_\-]+)', node.get('id'))
                 if menu_path:
                     menu_path = menu_path.group(1).replace('-', '/')
-                    if specific and specific[0].lower() in node.get('text').lower():
+                    if specific and specific[0].lower() in node.get(
+                            'text').lower():
                         specific.pop(0)
-                        node['children'] = self.r_dump_interface(menu_path, session, specific=specific)
-                        InterfaceNode(node).new(force=True, depth=len(specific))
+                        node['children'] = self.r_dump_interface(menu_path,
+                                                                 session,
+                                                                 specific=specific)
+                        InterfaceNode(node).new(force=True,
+                                                depth=len(specific))
                         break
                     elif specific:
                         continue
 
                     if thread:
-                        threads.append(threading.Thread(target=self.r_dump_interface, args=(menu_path, session, node.get('id'), _q)))
+                        threads.append(
+                            threading.Thread(target=self.r_dump_interface,
+                                             args=(menu_path, session,
+                                                   node.get('id'), _q)))
                     else:
                         children = self.r_dump_interface(menu_path, session)
                         if children:
@@ -141,9 +159,13 @@ class InterfaceFetcher:
                         node['type'] = 'other'
                     InterfaceNode(node).new(force=True)
 
-            session.get(f'https://{Meta.company}.xplan.iress.com.au/home/logoff?')
+            session.get(
+                f'https://{self.company}.xplan.iress.com.au/home/logoff?')
 
-    def r_dump_interface(self, menu_path: str, session: requests.sessions.Session, node_id: str = None, _q: queue.Queue = None, specific: list = None) -> list:
+    def r_dump_interface(self, menu_path: str,
+                         session: requests.sessions.Session,
+                         node_id: str = None, _q: queue.Queue = None,
+                         specific: list = None) -> list:
         """
         get `children` under current `menu_path`
 
@@ -163,15 +185,18 @@ class InterfaceFetcher:
         if _q is not None:
             jison = Jison()
             cookies = session.cookies.get_dict()
-            jison.load_json(requests.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header, cookies=cookies).json())
+            jison.load_json(requests.post(self.URL_SOURCE, json=menu_post,
+                                          headers=self.interface_header,
+                                          cookies=cookies).json())
         else:
-            jison = Meta.jison
-            jison.load_json(session.post(self.URL_SOURCE, json=menu_post, headers=self.interface_header).json())
-        local_children = jison.get_object('children')
+            jison = self.jison
+            jison.load_json(session.post(self.URL_SOURCE, json=menu_post,
+                                         headers=self.interface_header).json())
+        local_children = jison.get_object('children', value_only=True)
 
         children = []
         # loop in `children`, acquire `sub_children` for each child
-        for child in local_children.get('children'):
+        for child in local_children:
             if child.get('hidden'):
                 continue
 
@@ -190,11 +215,13 @@ class InterfaceFetcher:
             # normal node case (id starts with `client_xxx`)
             if child_path:
                 child_path = child_path.group(1).replace('-', '/')
-                sub_children = self.r_dump_interface(child_path, session, _q=_q, specific=specific)
+                sub_children = self.r_dump_interface(child_path, session,
+                                                     _q=_q, specific=specific)
 
-            # if current child has no children and with a valid leaf id (a leaf)
+            # if current child has no child and with a valid leaf id (a leaf)
             if not sub_children and re.search('(.+)_([\d]+_[\d]+)', child_id):
-                leaf_type = self.dump_leaf_page(child_id, menu_path, text, session, _q=_q)
+                leaf_type = self.dump_leaf_page(child_id, menu_path, text,
+                                                session, _q=_q)
                 if leaf_type in ['gap', 'title', 'text']:
                     continue
 
@@ -227,8 +254,11 @@ class InterfaceFetcher:
         else:
             return children
 
-    def dump_leaf_page(self, node_id: str, menu_path: str, text: str, session: requests.sessions.Session, _q: queue.Queue = None) -> str:
-        custom_page_name, index = re.search('(.+)_([\d]+_[\d]+)', node_id).groups()
+    def dump_leaf_page(self, node_id: str, menu_path: str, text: str,
+                       session: requests.sessions.Session,
+                       _q: queue.Queue = None) -> str:
+        custom_page_name, index = re.search('(.+)_([\d]+_[\d]+)',
+                                            node_id).groups()
         subpage_index, field_index = [int(i) for i in index.split('_')]
         leaf_post = {
             "method": "ajax.PageElementSettingAjax_rpc_html_kYjvPyv3_",
@@ -247,10 +277,15 @@ class InterfaceFetcher:
 
         if _q is not None:
             jison = Jison()
-            jison.load_json(requests.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header, cookies=session.cookies.get_dict()).json())
+            jison.load_json(requests.post(self.URL_SOURCE,
+                                          json=leaf_post,
+                                          headers=self.interface_header,
+                                          cookies=session.cookies.get_dict()).json())
         else:
-            jison = Meta.jison
-            jison.load_json(session.post(self.URL_SOURCE, json=leaf_post, headers=self.interface_header).json())
+            jison = self.jison
+            jison.load_json(session.post(self.URL_SOURCE,
+                                         json=leaf_post,
+                                         headers=self.interface_header).json())
         leaf_type = jison.get_object('title', value_only=True).lower()
 
         if leaf_type in ['gap', 'title', 'text']:
@@ -298,7 +333,7 @@ class InterfaceFetcher:
             table1_method = "ajax.XplanElementListSettingAjax_rpc_html_WEaBDM8__"
             table2_method = "ajax.XplanElementEditSettingAjax_rpc_html_HBm947gH_"
             leaf_post_xtable = {
-                "method": "",
+                "method": None,
                 "params": [
                     {
                         "has_partner": False,
@@ -318,7 +353,8 @@ class InterfaceFetcher:
                         "is_partner": False,
                         "entityid": 0,
                         "list_name": "",
-                        "element_name": jison.get_object('element_name').get('element_name'),
+                        "element_name": jison.get_object('element_name',
+                                                         value_only=True),
                         "render_method": "factfind"
                     }
                 ],
@@ -327,9 +363,14 @@ class InterfaceFetcher:
 
             leaf_post_xtable['method'] = table1_method
             if _q is not None:
-                jison.load_json(requests.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header, cookies=session.cookies.get_dict()).json())
+                jison.load_json(
+                    requests.post(self.URL_SOURCE, json=leaf_post_xtable,
+                                  headers=self.interface_header,
+                                  cookies=session.cookies.get_dict()).json())
             else:
-                jison.load_json(session.post(self.URL_SOURCE, json=leaf_post_xtable, headers=self.interface_header).json())
+                jison.load_json(
+                    session.post(self.URL_SOURCE, json=leaf_post_xtable,
+                                 headers=self.interface_header).json())
 
             # if this `xplan` page has list with tabs
             # process table content
@@ -339,21 +380,27 @@ class InterfaceFetcher:
                 full_view_html = table_html.get('_hidden-items')
 
                 soup = BeautifulSoup(list_view_html, 'html5lib')
-                for td in soup.find_all('td', {'style': 'white-space: nowrap'}):
+                for td in soup.find_all('td',
+                                        {'style': 'white-space: nowrap'}):
                     content.get('table1').append(td.findNext('td').getText())
 
                 soup = BeautifulSoup(full_view_html, 'html5lib')
-                for td in soup.find_all('td', {'style': 'white-space: nowrap'}):
+                for td in soup.find_all('td',
+                                        {'style': 'white-space: nowrap'}):
                     content.get('table2').append(td.findNext('td').getText())
 
             # if this `xplan` page has list with checkbox or empty page
             # process `page_html`
             else:
-                for input in soup.find_all('input', {'checked': 'checked', 'name': 'xstore_listfields'}):
-                    content.get('table1').append(input.findNext('label').getText())
+                for input in soup.find_all('input', {'checked': 'checked',
+                                                     'name': 'xstore_listfields'}):
+                    content.get('table1').append(
+                        input.findNext('label').getText())
 
-                for input in soup.find_all('input', {'checked': 'checked', 'name': 'xstore_capturefields'}):
-                    content.get('table2').append(input.findNext('label').getText())
+                for input in soup.find_all('input', {'checked': 'checked',
+                                                     'name': 'xstore_capturefields'}):
+                    content.get('table2').append(
+                        input.findNext('label').getText())
 
             if content.get('table1') or content.get('table2'):
                 page['leaf_xplan'] = content
@@ -363,7 +410,9 @@ class InterfaceFetcher:
             if leaf_type == 'group':
                 content = {'group': []}
 
-                for option in soup.find('select', {'id': 'select_fields_0'}).find_all('option'):
+                for option in soup.find('select',
+                                        {'id': 'select_fields_0'}).find_all(
+                        'option'):
                     content.get('group').append(option.getText())
 
                 page['leaf_group'] = content
@@ -374,23 +423,3 @@ class InterfaceFetcher:
         InterfaceLeafPage(node_id, name, leaf_type, menu_path, page).new()
 
         return leaf_type
-
-
-if __name__ == '__main__':
-    from app.db import mongo_connect, client
-
-    specific = []
-    #specific = input('specific nodes (optional): ')
-    if not specific:
-        specific = []
-    else:
-        specific = [x.strip() for x in specific if x]
-
-    Meta.jison = Jison()
-    Meta.company = 'fmd'
-    Meta.company_username = 'DXu'
-    Meta.company_password = ''
-    Meta.db_company = Meta.db_default if Meta.company == 'ytml' else mongo_connect(
-        client, Meta.company)
-    Meta.interface_fetcher = InterfaceFetcher()
-    Meta.interface_fetcher.fetch(thread=True)

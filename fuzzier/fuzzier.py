@@ -1,5 +1,5 @@
 import re
-from common.meta import Meta
+from fuzzier.jison import Jison
 
 
 def ratio(target: str, pattern: str):
@@ -57,7 +57,6 @@ def ratio(target: str, pattern: str):
     return (1 - distance / width) * weight
 
 
-def search(pattern: str, count: int = 8) -> list:
-    result = Meta.jison.search(pattern=pattern, ratio_method=ratio,
-                               count=count)
+def search(jison: Jison, pattern: str, count: int = 8) -> list:
+    result = jison.search(pattern=pattern, ratio_method=ratio, count=count)
     return result

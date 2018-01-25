@@ -3,13 +3,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
     ValidationError, SelectField
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
-from common.meta import Meta
-from common.crypto import AESCipher
-from crawlers.field_fetcher import FieldFetcher
-from common.interface_fetcher import InterfaceFetcher
-from fuzzier.jison import Jison
-from uni_parser.loader import ParserLoader
-from app.db import client, mongo_connect
 from app.models import User
 
 cities = [('New South Wales', ' New South Wales'),
@@ -27,8 +20,6 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     company = StringField('Company for Access (Case Insensitive)',
                           default='ytml', validators=[DataRequired()])
-    # company_username = StringField('Company\'s XPLAN Username', validators=[DataRequired()])
-    # company_password = PasswordField('Company\'s XPLAN Password', validators=[DataRequired()])
     remember_me = BooleanField(' Remember Me')
     submit = SubmitField('Login')
 
@@ -43,15 +34,6 @@ class LoginForm(FlaskForm):
                     referer=f'https://{field.data.lower()}.xplan.iress.com.au'
                 )
             )
-            import pickle
-            Meta.company = field.data.lower()
-            Meta.db_company = Meta.db_default if Meta.company == 'ytml' else \
-                mongo_connect(client, Meta.company)
-            Meta.crypto = AESCipher()
-            Meta.jison = Jison(file_name=Meta.company)
-            Meta.parser = ParserLoader(grammar='xplan')
-            Meta.menu_fetcher = FieldFetcher()
-            Meta.interface_fetcher = InterfaceFetcher()
         except:
             raise ValidationError(
                 f'Company name \"{field.data}\" invalid, no such XPLAN site.')
