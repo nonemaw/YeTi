@@ -137,6 +137,8 @@ class Jison:
             except:
                 self.json = ''
         else:
+            if not self.json and self.file_name:
+                raise Exception('No Json string has been provided, the designated file is empty or not exists')
             raise Exception('No Json string has been provided')
 
         if not self.json:
@@ -235,10 +237,10 @@ class Jison:
 
     def replace_object(self, obj_name: str, new_chunk):
         """
-        replace `old_chunk` (object name) with `new_chunk` (dict or Json string),
-        and write result to file
+        replace `old_chunk` (object name) with `new_chunk` (dict or Json), and
+        write result to file
 
-        parser will search for object with `obj_name` and replace with new_chunk
+        parser will search for the `obj_name` and replace it with new_chunk
         """
         if isinstance(new_chunk, str):
             new_chunk = self.check_json_string(new_chunk)
@@ -554,8 +556,10 @@ class Jison:
                 if recursion is not None:
                     if self.recursion_depth == recursion and len(
                             self.chunk_location) == 1:
-                        # condition for search object - chunk_location position 1
-                        # object ends with comma and new key, followed by a the other objects
+                        # condition for search object - chunk_location position
+                        # 1 object ends with comma and new key, followed by a
+                        # the other objects
+                        #
                         # e.g. {target_obj: values, other_obj: values, ...}
 
                         if self.json[self.index - 2] != ',':
@@ -576,10 +580,12 @@ class Jison:
                     current_str, location = self.parse_string()
                     matched = False
                     if isinstance(self.obj_name, str):
-                        if not self.chunk_location and current_str == self.obj_name:
+                        if not self.chunk_location \
+                                and current_str == self.obj_name:
                             matched = True
                     elif isinstance(self.obj_name, list):
-                        if not self.chunk_location and current_str in self.obj_name:
+                        if not self.chunk_location \
+                                and current_str in self.obj_name:
                             matched = True
                     else:
                         raise Exception(
@@ -591,7 +597,8 @@ class Jison:
                         self.recursion_depth = recursion
                         if current_str not in self.chunk_location_dict:
                             self.chunk_location_dict[current_str] = []
-                        # if flag `multi_object` is True, assign current string to it as a cache
+                        # if flag `multi_object` is True, assign current string
+                        # to it as a cache
                         if self.multi_object:
                             self.multi_object = current_str
 
@@ -707,9 +714,12 @@ class Jison:
                 elif isinstance(self.pattern, list) and len(self.pattern) == 2:
                     subgroup_ratio = self.ratio_method(string, self.pattern[0])
                     if subgroup_ratio < 0.33:
-                        # `skipped` works on second level of recursion, AKA subgroup
-                        # once `skipped` is True, parser will ignore current object
-                        # and move to next object on second level of recursion
+                        # `skipped` works on second level of recursion, AKA
+                        # subgroup
+                        #
+                        # once `skipped` is True, parser will ignore current
+                        # object and move to next object on second level of
+                        # recursion
                         self.skipped = True
                     else:
                         self.sub = string

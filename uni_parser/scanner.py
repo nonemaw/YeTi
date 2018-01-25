@@ -447,7 +447,7 @@ class Scanner(ScannerBase):
         print(self.current_char)
 
         raise TokenTypeError(
-            f"""\n    Unknown token while scanning, around line {str(self.tracker)}, near spelling < {repr(self.current_char)} >""")
+            f"""\n    Unknown token while scanning, around line {str(self.tracker)}, spelling < {repr(self.current_char)} >""")
 
     def make_escape(self, char: str):
         self.tracker.char_finish += 1

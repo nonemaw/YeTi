@@ -1,5 +1,3 @@
-""" this file stores methods for a general access across the application
-"""
 import os
 import bleach
 import random
@@ -13,16 +11,6 @@ from flask_mail import Message
 from werkzeug.security import check_password_hash
 
 from app import mail
-from app.db import mongo_connect, client
-
-
-def get_company_list():
-    db = mongo_connect(client, 'ytml')
-    companies = db.Company.find({}).sort([('name', 1)])
-    company_list = []
-    for company_dict in companies:
-        company_list.append(company_dict.get('name'))
-    return company_list
 
 
 def verify_password(password_hash: str, password: str):

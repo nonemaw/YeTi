@@ -1,6 +1,10 @@
 import re
 
 
+# TODO: This file requires lots of works in the future, not functional properly at all
+# TODO: features was removed from application temperately
+
+
 def indent(line: str, level: int) -> str:
     indent = ' ' * (level * 4)
     line = f'{indent}{line}'
