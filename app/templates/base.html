@@ -30,8 +30,6 @@
             </div>
 
             <div class="navbar-collapse collapse">
-                {% block navbar_items %}
-                {% endblock %}
                 <ul class="nav navbar-nav navbar-right">
                     {% if current_user.is_authenticated %}
                         <li class="dropdown">
@@ -51,6 +49,8 @@
                         <li><a href="{{ url_for('auth.login') }}" style="font-family: Centaur;font-size: 20px;">Log In</a></li>
                     {% endif %}
                 </ul>
+                {% block navbar_items %}
+                {% endblock %}
             </div>
         </div>
     </div>

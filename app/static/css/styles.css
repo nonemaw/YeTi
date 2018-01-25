@@ -209,12 +209,6 @@ body {
     border:none;
 }
 
-/*#interface-tree-list {*/
-    /*overflow-y: scroll;*/
-/*}*/
-/*#interface-window {*/
-    /*overflow-y: scroll;*/
-/*}*/
 @media (min-width: 992px) {
     .modal-lg {
         width: 60vw;
@@ -224,9 +218,6 @@ body {
     background: #eaeaea;
 }
 
-/*.modal-dialog{*/
-    /*overflow-y: initial !important*/
-/*}*/
 .modal-body{
     height: 65vh;
     max-height: 65vh;
