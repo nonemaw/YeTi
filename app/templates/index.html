@@ -10,10 +10,213 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
 
+{% block navbar_items %}
+    {% if current_user.is_authenticated and current_user.is_confirmed%}
+        <ul class="nav navbar-nav navbar-left">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" style="font-family: Centaur;font-size: 20px;">Toolbox<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    <li><a href="#" id="format" style="color:#009688">Format Code</a></li>
+                    <li><a href="#" id="indent" style="color:#0063c5">Indent</a></li>
+                    <li><a href="#" id="dedent" style="color:#0063c5">Dedent</a></li>
+                    <li><a href="#" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="color:#00092c">Editor Settings</a></li>
+                </ul>
+            </li>
+        </ul>
+        <ul class="nav navbar-nav">
+            <li><a href="#" id="judge" style="font-family: Centaur;font-size: 20px;">Judge</a></li>
+            <li><a href="{{ url_for('main.create_snippet') }}" style="font-family: Centaur;font-size: 20px;">Create Snippet</a></li>
+        </ul>
+    {% endif %}
+{% endblock %}
+
 {% block wide_content %}
     <div id="overlay" style="display: none;">
         <div class="loader"></div>
     </div>
+
+    <!-- setting panel -->
+    <div class="modal fade bs-setting-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel"><b>Editor Settings</b></h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-10">
+                            <div class="row">
+                                <br>
+                                <label for="syntax">Syntax</label>
+                            </div>
+                            <div class="row">
+                                <select class="selectpicker" id="syntax" data-width="75%">
+                                    <option value="python" selected="selected">XPLAN</option>
+                                    <option value="html">HTML</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <label for="theme">Theme</label>
+                            </div>
+                            <div class="row">
+                                <select class="selectpicker" id="theme" data-width="75%">
+                                    <optgroup label="Bright">
+                                        <option value="github">GitHub</option>
+                                        <option value="solarized_light">Solarized Light</option>
+                                        <option value="xcode">XCode</option>
+                                    </optgroup>
+                                    <optgroup label="Dark">
+                                        <option value="chaos" selected="selected">Chaos</option>
+                                        <option value="monokai">Monokai</option>
+                                        <option value="pastel_on_dark">Pastel on Dark</option>
+                                        <option value="solarized_dark">Solarized Dark</option>
+                                    </optgroup>
+                                </select>
+
+                            </div>
+                            <div class="row">
+                                <label for="font-family">Font Family</label>
+                            </div>
+                            <div class="row">
+                                <select class="selectpicker" id="font-family" data-width="75%">
+                                    <option value="arial">Arial</option>
+                                    <option value="consolas" selected="selected">Consolas</option>
+                                    <option value="courier">Courier</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <label for="font-size">Font Size</label>
+                            </div>
+                            <div class="row">
+                                <select class="selectpicker" id="font-size" data-width="75%">
+                                    <option>12</option>
+                                    <option>14</option>
+                                    <option>16</option>
+                                    <option>18</option>
+                                    <option selected="selected">20</option>
+                                    <option>22</option>
+                                    <option>24</option>
+                                    <option>28</option>
+                                    <option>34</option>
+                                    <option>40</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="checkbox">
+                                    <label><input id="show-invisibles" type="checkbox" value="" checked="checked">&nbsp&nbspShow Invisibles</label>
+                                </div>
+                                <div class="checkbox">
+                                    <label><input id="wrap-text" type="checkbox" value="" checked="checked">&nbsp&nbspWrap Text</label>
+                                </div>
+                                <div class="checkbox">
+                                    <label><input id="save-session" type="checkbox" value="">&nbsp&nbspSave Session & Setting</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end of setting panel -->
+
+    <!-- interface modal view, display when click `Interface` button -->
+    <div class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel"><b>Interface Menu</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company }} )</small></h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row" style="height:100%;">
+                        <div id="interface-tree-list" class="col-md-5" style="height:100%;overflow-y: scroll">
+                            <div id="interface-tree">
+                                <ul class="jstree-container-ul jstree-children">
+                                    <li role="treeitem" class="jstree-node jstree-leaf">
+                                        <i class="jstree-icon jstree-ocl"></i>
+                                        <a id="interface-temp" class="jstree-anchor" href="#"><i class="jstree-icon jstree-themeicon"></i>Loading ...</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div id="interface-window" class="col-md-7" style="height:100%">
+                            <h4 id="interface-note" style="font-weight: bold"></h4>
+                            <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
+                            <button id="interface-title" style="font-size: 18px; display: none">/</button>
+                            <!-- interface collection table1 for xplan collection items -->
+                            <div class="row" id="interface-table-row" style="height:30vh">
+                                <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table1-head">
+                                    <table class="table table-scroll left-column-table" style="height:100px">
+                                        <thead>
+                                            <tr>
+                                                <th id="interface-xplan-table1-title"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="interface-xplan-table1" style="overflow-y: auto">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table2-head">
+                                    <table class="table table-scroll left-column-table" style="height:100px">
+                                        <thead>
+                                            <tr>
+                                                <th id="interface-xplan-table2-title"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="interface-xplan-table2" style="overflow-y: auto">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-11" style="display:none;height:100%" id="interface-group-table-head">
+                                    <table class="table table-scroll left-column-table" style="height:100px">
+                                        <thead>
+                                            <tr>
+                                                <th id="interface-group-table-title"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="interface-group-table" style="overflow-y: auto">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <br>
+                            <br>
+                            <h4 id="interface-entity" style="font-weight: bold; display: none">Applicable Entities</h4>
+                            <div class="checkbox" id="interface-individual" style="display: none">
+                                <label><input type="checkbox">&nbsp&nbspClient & Partner</label>
+                            </div>
+                            <div class="checkbox" id="interface-trust" style="display: none">
+                                <label><input type="checkbox">&nbsp&nbspTrust</label>
+                            </div>
+                            <div class="checkbox" id="interface-superfund" style="display: none">
+                                <label><input type="checkbox">&nbsp&nbspSuperfund</label>
+                            </div>
+                            <div class="checkbox" id="interface-company" style="display: none">
+                                <label><input type="checkbox">&nbsp&nbspCompany</label>
+                            </div>
+                            <div class="checkbox" id="interface-partnership" style="display: none">
+                                <label><input type="checkbox">&nbsp&nbspPartnership</label>
+                            </div>
+                            <br>
+                            <h4 id="interface-suggestion-title" style="font-weight: bold; display: none">/</h4>
+                            <p id="interface-suggestion-body" style="font-size: 16px; display: none">/</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end of interface view -->
+
     <div class="row" style="height: 94vh">
     <div id="progress"></div>
         <!-- left panel column -->
@@ -23,7 +226,7 @@
             <div class="row" style="margin-top: -9px">
                 <div class="col-md-9">
                     <div class="input-group">
-                        <input id="search-field" type="text" class="form-control" placeholder="Need something?">
+                        <input id="search-field" type="text" class="form-control" placeholder="What do you need?">
                         <span class="input-group-btn">
                             <button id="search-button" class="btn btn-info" type="button">Search</button>
                         </span>
@@ -31,103 +234,11 @@
                 </div>
                 <div class="col-md-3">
                     <div class="row">
-                        <button class="btn btn-default" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 60%">Interface</button>
+                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 80%">Interface Menu</button>
                     </div>
                 </div>
             </div>
             <!-- end of search bar row -->
-
-            <!-- interface modal view, display when click `Interface` button -->
-            <div class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-                <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title" id="myModalLabel"><b>Interface</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company }} )</small></h4>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row" style="height:100%;">
-                                <div id="interface-tree-list" class="col-md-5" style="height:100%;overflow-y: scroll">
-                                    <div id="interface-tree">
-                                        <ul class="jstree-container-ul jstree-children">
-                                            <li role="treeitem" class="jstree-node jstree-leaf">
-                                                <i class="jstree-icon jstree-ocl"></i>
-                                                <a id="interface-temp" class="jstree-anchor" href="#"><i class="jstree-icon jstree-themeicon"></i>Loading ...</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div id="interface-window" class="col-md-7" style="height:100%">
-                                    <h4 id="interface-note" style="font-weight: bold"></h4>
-                                    <h4 id="interface-type" style="font-weight: bold; display: none">/</h4>
-                                    <button id="interface-title" style="font-size: 18px; display: none">/</button>
-                                    <!-- interface collection table1 for xplan collection items -->
-                                    <div class="row" id="interface-table-row" style="height:30vh">
-                                        <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table1-head">
-                                            <table class="table table-scroll left-column-table" style="height:100px">
-                                                <thead>
-                                                    <tr>
-                                                        <th id="interface-xplan-table1-title"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="interface-xplan-table1" style="overflow-y: auto">
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table2-head">
-                                            <table class="table table-scroll left-column-table" style="height:100px">
-                                                <thead>
-                                                    <tr>
-                                                        <th id="interface-xplan-table2-title"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="interface-xplan-table2" style="overflow-y: auto">
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div class="col-md-11" style="display:none;height:100%" id="interface-group-table-head">
-                                            <table class="table table-scroll left-column-table" style="height:100px">
-                                                <thead>
-                                                    <tr>
-                                                        <th id="interface-group-table-title"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="interface-group-table" style="overflow-y: auto">
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    <br>
-                                    <br>
-                                    <h4 id="interface-entity" style="font-weight: bold; display: none">Applicable Entities</h4>
-                                    <div class="checkbox" id="interface-individual" style="display: none">
-                                        <label><input type="checkbox">&nbsp&nbspClient & Partner</label>
-                                    </div>
-                                    <div class="checkbox" id="interface-trust" style="display: none">
-                                        <label><input type="checkbox">&nbsp&nbspTrust</label>
-                                    </div>
-                                    <div class="checkbox" id="interface-superfund" style="display: none">
-                                        <label><input type="checkbox">&nbsp&nbspSuperfund</label>
-                                    </div>
-                                    <div class="checkbox" id="interface-company" style="display: none">
-                                        <label><input type="checkbox">&nbsp&nbspCompany</label>
-                                    </div>
-                                    <div class="checkbox" id="interface-partnership" style="display: none">
-                                        <label><input type="checkbox">&nbsp&nbspPartnership</label>
-                                    </div>
-                                    <br>
-                                    <h4 id="interface-suggestion-title" style="font-weight: bold; display: none">/</h4>
-                                    <p id="interface-suggestion-body" style="font-size: 16px; display: none">/</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- end of interface view -->
 
             <!-- choose variable row -->
             <div class="row" style="margin-top: -15px">
@@ -258,118 +369,8 @@
         <!-- right column -->
         <div class="col-md-8" style="height: 99%">
             <div class="row" style="height: 100%">
-                <div class="col-md-11" style="height: 100%">
+                <div class="col-md-12" style="height: 100%">
                     <div id="code-section" style="height: 100%"></div>
-                </div>
-                <div class="col-md-1">
-                    <div class="row">
-                        <button class="btn btn-danger" id="judge" style="width: 85%">Judge</button>
-                        <br>
-                        <br>
-                    </div>
-                    <div class="row">
-                        <label for="format-group">Format Code</label>
-                        <button id="format" type="button" class="btn btn-info" style="width: 85%">Format</button>
-                        <div class="btn-group-vertical" id="format-group" style="width: 85%">
-                            <button id="indent" type="button" class="btn btn-success">Indent</button>
-                            <button id="dedent" type="button" class="btn btn-success">Dedent</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <br>
-                        <button class="btn btn-default" id="setting" data-toggle="modal" data-target=".bs-setting-modal-sm" style="width: 85%">Settings</button>
-                    </div>
-
-                    <!-- setting panel -->
-                    <div class="modal fade bs-setting-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-                        <div class="modal-dialog modal-sm" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                    <h4 class="modal-title" id="myModalLabel"><b>Editor Settings</b></h4>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-md-2"></div>
-                                        <div class="col-md-10">
-                                            <div class="row">
-                                                <br>
-                                                <label for="syntax">Syntax</label>
-                                            </div>
-                                            <div class="row">
-                                                <select class="selectpicker" id="syntax" data-width="75%">
-                                                    <option value="python" selected="selected">XPLAN</option>
-                                                    <option value="html">HTML</option>
-                                                </select>
-                                            </div>
-                                            <div class="row">
-                                                <label for="theme">Theme</label>
-                                            </div>
-                                            <div class="row">
-                                                <select class="selectpicker" id="theme" data-width="75%">
-                                                    <optgroup label="Bright">
-                                                        <option value="github">GitHub</option>
-                                                        <option value="solarized_light">Solarized Light</option>
-                                                        <option value="xcode">XCode</option>
-                                                    </optgroup>
-                                                    <optgroup label="Dark">
-                                                        <option value="chaos" selected="selected">Chaos</option>
-                                                        <option value="monokai">Monokai</option>
-                                                        <option value="pastel_on_dark">Pastel on Dark</option>
-                                                        <option value="solarized_dark">Solarized Dark</option>
-                                                    </optgroup>
-                                                </select>
-
-                                            </div>
-                                            <div class="row">
-                                                <label for="font-family">Font Family</label>
-                                            </div>
-                                            <div class="row">
-                                                <select class="selectpicker" id="font-family" data-width="75%">
-                                                    <option value="arial">Arial</option>
-                                                    <option value="consolas" selected="selected">Consolas</option>
-                                                    <option value="courier">Courier</option>
-                                                </select>
-                                            </div>
-                                            <div class="row">
-                                                <label for="font-size">Font Size</label>
-                                            </div>
-                                            <div class="row">
-                                                <select class="selectpicker" id="font-size" data-width="75%">
-                                                    <option>12</option>
-                                                    <option>14</option>
-                                                    <option>16</option>
-                                                    <option>18</option>
-                                                    <option selected="selected">20</option>
-                                                    <option>22</option>
-                                                    <option>24</option>
-                                                    <option>28</option>
-                                                    <option>34</option>
-                                                    <option>40</option>
-                                                </select>
-                                            </div>
-                                            <div class="row">
-                                                <div class="checkbox">
-                                                    <label><input id="show-invisibles" type="checkbox" value="" checked="checked">&nbsp&nbspShow Invisibles</label>
-                                                </div>
-                                                <div class="checkbox">
-                                                    <label><input id="wrap-text" type="checkbox" value="" checked="checked">&nbsp&nbspWrap Text</label>
-                                                </div>
-                                                <div class="checkbox">
-                                                    <label><input id="save-session" type="checkbox" value="">&nbsp&nbspSave Session & Setting</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- end of setting panel -->
-
                 </div>
             </div>
         </div>
@@ -704,13 +705,19 @@
 
             // copy content to browser clipboard when clicked on var-name, var-type, var-usage
             $('#var-usage').click(function() {
-                copy_to_clipboard(document.getElementById("var-usage"));
+                if ($('#var-usage').text() !== '/') {
+                    copy_to_clipboard(document.getElementById("var-usage"));
+                }
             });
             $('#var-variable').click(function() {
-                copy_to_clipboard(document.getElementById("var-variable"));
+                if ($('#var-variable').text() !== '/') {
+                    copy_to_clipboard(document.getElementById("var-variable"));
+                }
             });
             $('#var-type').click(function() {
-                copy_to_clipboard(document.getElementById("var-type"));
+                if ($('#var-type').text() !== '/') {
+                    copy_to_clipboard(document.getElementById("var-type"));
+                }
             });
 
             // snippet group is selected

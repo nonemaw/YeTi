@@ -233,7 +233,7 @@ body {
     overflow-y: auto;
 }
 .modal {
-    padding-left: 52vh;
+    padding-left: 62vh;
 }
 
 hr {
@@ -291,6 +291,11 @@ hr {
     border: 1px solid transparent;
 }
 
+.navbar.navbar-default .dropdown-menu li > a {
+    font-size: 16px;
+    padding: 8px 8px;
+}
+
 .checkbox label, .radio label, label {
     font-size: 14px;
     font-weight: bold;
@@ -345,7 +350,7 @@ label {
     background: rgba(165, 202, 216, 0.81);
 }
 .btn:not(.btn-raised).btn-success, .input-group-btn .btn:not(.btn-raised).btn-success {
-    color: #00855e;
+    color: #009688;
     background: rgba(163, 213, 193, 0.81);
 }
 .btn:not(.btn-raised).btn-warning, .input-group-btn .btn:not(.btn-raised).btn--warning {
