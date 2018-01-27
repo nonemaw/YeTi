@@ -154,11 +154,19 @@ div.crawler-button {
     left: 9px;
 }
 
+.alert.alert-danger {
+    background-color: #aa0055;
+}
+
+.alert.alert-success {
+    background-color: #009688;
+}
+
 .alert-failed {
 	background-color: #aa0055;
 	border-color: rgba(149, 149, 149, 0.3);
 	border-radius: 3px;
-	color: #F5F5F5;
+	color: rgba(255,255,255, 0.84);
 	padding: 10px;
     animation-duration: 333ms;
 }
@@ -166,7 +174,7 @@ div.crawler-button {
 	display: inline-block;
 }
 .alert-failed > [data-notify="title"] {
-	color: #F5F5F5;
+	color: rgba(255,255,255, 0.84);
 	font-weight: bold;
     font-size: 17px;
 }
@@ -175,10 +183,10 @@ div.crawler-button {
 	font-size: 16px;
 }
 .alert-passed {
-	background-color: #008b7d;
+	background-color: #009688;
 	border-color: rgba(149, 149, 149, 0.3);
 	border-radius: 3px;
-	color: #F5F5F5;
+	color: rgba(255,255,255, 0.84);
 	padding: 10px;
     animation-duration: 333ms;
 }
@@ -186,7 +194,7 @@ div.crawler-button {
 	display: inline-block;
 }
 .alert-passed > [data-notify="title"] {
-	color: #F5F5F5;
+	color: rgba(255,255,255, 0.84);
 	font-weight: bold;
     font-size: 17px;
 }
@@ -351,11 +359,6 @@ label {
 .btn:not(.btn-raised).btn-danger, .input-group-btn .btn:not(.btn-raised).btn-danger {
     color: #dd0065;
     background: rgba(225, 181, 193, 0.81);
-}
-
-.alert.alert-success {
-    background-color: #009688;
-    color: rgba(255,255,255, 0.84);
 }
 
 .table-scroll tbody {

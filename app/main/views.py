@@ -9,6 +9,7 @@ from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from app.models import User
 from common.pagination import PaginationSnippet
+from common.general import random_word
 
 
 @main.route('/test')
@@ -188,7 +189,7 @@ def edit_snippet(group, scenario):
                     for _id in new_scenario_id_list:
                         if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                                 'name') == new_scenario:
-                            new_scenario += '_COPY'
+                            new_scenario = f'{new_scenario}_{random_word(size=4)}'
                             flash(
                                 'A naming conflict occurs to Scenario\'s name in current Group. Current Scenario has been renamed by a suffix.',
                                 category='danger')
@@ -199,7 +200,7 @@ def edit_snippet(group, scenario):
                     for _id in new_scenario_id_list:
                         if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                                 'name') == old_scenario:
-                            new_scenario = f'{old_scenario}_COPY'
+                            new_scenario = f'{old_scenario}_{random_word(size=4)}'
                             flash(
                                 'A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a suffix.',
                                 category='danger')
@@ -231,7 +232,7 @@ def edit_snippet(group, scenario):
             for _id in scenario_id_list:
                 if Snippet.search_scenario({'_id': ObjectId(_id)}).get(
                         'name') == new_scenario:
-                    new_scenario += '_COPY'
+                    new_scenario = f'{new_scenario}_{random_word(size=4)}'
                     flash(
                         'A naming conflict occurs to Snippet Scenario in current Group. Current Snippet Scenario has been renamed by a suffix.',
                         category='danger')
@@ -309,6 +310,12 @@ def acquire_snippet_scenario(_id):
         return json.dumps({'scenario': result}), 200
     except:
         return json.dumps({'scenario': []}), 500
+
+
+@login_required
+@main.route('/database_management', methods=['GET', 'POST'])
+def database_management():
+    pass
 
 
 # TODO: RESERVED, for celery

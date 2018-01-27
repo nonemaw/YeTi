@@ -7,6 +7,14 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
 {% endblock %}
 
+{% block navbar_items %}
+    {% if current_user.is_authenticated and current_user.is_confirmed%}
+        <ul class="nav navbar-nav">
+            <li><a href="{{ url_for('main.create_snippet') }}" style="font-family: Centaur;font-size: 20px;">Create Snippet</a></li>
+        </ul>
+    {% endif %}
+{% endblock %}
+
 {% block narrow_content %}
     <div class="row" style="height: 94vh">
         <div class="col-md-10" style="height: 99%">

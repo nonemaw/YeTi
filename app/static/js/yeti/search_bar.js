@@ -1,4 +1,4 @@
-var local_search_cache = {};
+var local_search_cache = {}; // will be used globally
 
 function search(pattern, count) {
     pattern = pattern.replace('/', ' ').trim();

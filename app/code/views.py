@@ -54,9 +54,6 @@ def code_formatting():
 @login_required
 @code.route('/load_config', methods=['GET'])
 def load_config():
-
-    print('loaded')
-
     try:
         config = User.load_config({'_id': ObjectId(current_user.id)})
         return json.dumps(config), 200
@@ -67,9 +64,6 @@ def load_config():
 @login_required
 @code.route('/save_config', methods=['POST'])
 def save_config():
-
-    print('saved')
-
     received_json = request.json
 
     if received_json:
