@@ -51,7 +51,12 @@ function search(pattern, count) {
 
         },
         error: function () {
-            alert('Notice from Search: Information out of date, please login again');
+            show_notification(
+                'Error',
+                'Login information out of date, please login again.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }
@@ -96,7 +101,12 @@ $('#variable-search-table').on('click','.x',function(event){
             }
         },
         error: function() {
-            alert('Unexpected error in acquiring result');
+            show_notification(
+                'Error',
+                'Unexpected error occurred during acquiring detailed search result.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 });

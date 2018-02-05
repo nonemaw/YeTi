@@ -27,7 +27,12 @@ function save_misc_on_exit() {
         dataType: 'json',
         success: function (data, status, request) {},
         error: function() {
-            alert('Unexpected error in saving configuration and statist');
+            show_notification(
+                'Error',
+                'Unexpected error in saving configuration and statistic information.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }
@@ -81,7 +86,12 @@ function load_config() {
             }
         },
         error: function () {
-            alert('Unexpected error in loading configuration');
+            show_notification(
+                'Error',
+                'Unexpected error in loading configurations.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }

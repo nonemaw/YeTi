@@ -113,6 +113,11 @@ def empty_collection(db, collection: str, force: bool = False) -> bool:
     return True
 
 
+def drop_db(db_name):
+    with MongoClient(MongoConfig.HOST, MongoConfig.PORT) as client:
+        client.drop_database(db_name)
+
+
 def create_timestamp(db, collection: str) -> tuple:
     """
     add `timestamp` for new collection
@@ -131,19 +136,30 @@ def create_timestamp(db, collection: str) -> tuple:
     return now, now
 
 
-def modify_timestamp(db, collection: str) -> bool:
+def modify_timestamp(db, collection) -> bool:
     """
     change the time of `modification`
     """
     try:
-        db[collection].update_one(
-            {'type': '_timestamp'},
-            {
-                '$set': {
-                    'modification': build_timestamp()
+        if isinstance(collection, str):
+            db[collection].update_one(
+                {'type': '_timestamp'},
+                {
+                    '$set': {
+                        'modification': build_timestamp()
+                    }
                 }
-            }
-        )
+            )
+        elif isinstance(collection, list):
+            for c in collection:
+                db[c].update_one(
+                    {'type': '_timestamp'},
+                    {
+                        '$set': {
+                            'modification': build_timestamp()
+                        }
+                    }
+                )
     except:
         return False
 
@@ -172,27 +188,26 @@ def acquire_db_summary(collection_keywords: list = None):
     """
     return a list of db with collections and timestamps
     """
-    client = MongoClient(MongoConfig.HOST, MongoConfig.PORT)
-    import re
+    with MongoClient(MongoConfig.HOST, MongoConfig.PORT) as client:
+        import re
 
-    dbs = client.database_names()
-    db_list = []
-    collection_dict = {}
-    for index, db in enumerate(dbs):
-        if 'yeti' in db.lower():
-            if collection_keywords:
-                collections = [c for c in client[db].collection_names()
-                               if any(key in c for key in collection_keywords)]
-            else:
-                collections = client[db].collection_names()
+        dbs = client.database_names()
+        db_list = []
+        collection_dict = {}
+        for index, db in enumerate(dbs):
+            if 'yeti' in db.lower():
+                if collection_keywords:
+                    collections = [c for c in client[db].collection_names()
+                                   if any(key in c for key in collection_keywords)]
+                else:
+                    collections = client[db].collection_names()
 
-            for c in collections:
-                collection_dict[c] = get_collection_timestamp(client[db], c)
+                for c in collections:
+                    collection_dict[c] = get_collection_timestamp(client[db], c)
 
-            if '_' in db:
-                db_list.append({re.sub('YETI_', '', db): collection_dict})
-            else:
-                db_list.append({MongoConfig.HOME: collection_dict})
+                if '_' in db:
+                    db_list.append({re.sub('YETI_', '', db): collection_dict})
+                else:
+                    db_list.append({MongoConfig.HOME: collection_dict})
 
-    client.close()
     return db_list

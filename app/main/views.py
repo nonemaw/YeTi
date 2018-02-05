@@ -9,7 +9,7 @@ from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from app.models import User
 from common.general import random_word
-from common.db import acquire_db_summary
+from common.db import acquire_db_summary, drop_db
 
 
 @main.route('/test')
@@ -358,12 +358,33 @@ def db_management():
 
     try:
         if received_json:
+            message = received_json.get('message')
+            company = received_json.get('company')
+            login_info = received_json.get('login_info')
+            if company.upper() == 'YTML':
+                company = 'YETI'
+            else:
+                company = f'YETI_{company.upper()}'
+
+            if message == 'delete':
+                drop_db(company)
+
+            elif message == 'update':
+                # run field fetcher
+                # run interface fetcher
+                # login_info
+                pass
+
+                # TODO: 更新DB时若目标DB与当前用户DB不一致，如何处理？
+                # TODO: update 和 create 操作应当一样，都需要登录
 
 
 
+            elif message == 'create':
+                pass
 
-
-
+            else:
+                return json.dumps({'good': False}), 500
 
             return json.dumps({'good': True}), 200
 

@@ -26,7 +26,12 @@ $.ajax({
         snippet_group_selector.selectpicker('refresh');
     },
     error: function() {
-        alert('Unexpected error in Snippet Group selector');
+        show_notification(
+            'Error',
+            'Unexpected error occurred in the selector of Snippet Group.',
+            'OK',
+            'btn-danger'
+        );
     }
 });
 
@@ -61,7 +66,12 @@ function snippet_scenario_initialization(group_id) {
             snippet_scenario_selector.selectpicker('refresh');
         },
         error: function() {
-            alert('Unexpected error in Snippet Scenario selector');
+            show_notification(
+                'Error',
+                'Unexpected error occurred in the selector of Snippet Scenario.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }

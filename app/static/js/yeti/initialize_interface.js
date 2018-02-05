@@ -327,7 +327,12 @@ function initialize_interface(id){
                 //     );
             },
             error: function () {
-                alert('Notice from Interface: Information out of date, please login again');
+                show_notification(
+                'Error',
+                'Login information out of date, please login again.',
+                'OK',
+                'btn-danger'
+                );
             }
         });
     }
@@ -477,7 +482,12 @@ function initialize_interface(id){
                 ipartnership.show();
             },
             error: function () {
-                alert('Unexpected error during update leaf page');
+                show_notification(
+                'Error',
+                'Unexpected error occurred during updating leaf page.',
+                'OK',
+                'btn-danger'
+                );
             }
         });
     }

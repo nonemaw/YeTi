@@ -25,7 +25,12 @@ $.ajax({
         group_selector.selectpicker('refresh');
     },
     error: function() {
-        alert('Notice from Group Selector: Information out of date, please login again');
+        show_notification(
+            'Error',
+            'Login information out of date, please login again.',
+            'OK',
+            'btn-danger'
+        );
     }
 });
 
@@ -82,7 +87,12 @@ function variable_initialization(subgroup_id, local_var_cache) {
             variable_selector.selectpicker('refresh');
         },
         error: function() {
-            alert('Notice from Variable Selector: Information out of date, please login again');
+            show_notification(
+                'Error',
+                'Login information out of date, please login again.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }
@@ -117,7 +127,12 @@ function subgroup_initialization(group_var) {
             variable_selector.selectpicker('refresh');
         },
         error: function() {
-            alert('Notice from Subgroup Selector: Information out of date, please login again');
+            show_notification(
+                'Error',
+                'Login information out of date, please login again.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }

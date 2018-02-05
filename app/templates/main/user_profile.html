@@ -81,18 +81,18 @@
                 {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
                 <div class="tab-pane fade in" id="show-management" role="tabpanel" >
 
-                    <!-- Db list table -->
+                    <!-- DB list table -->
                     <table class="responstable" id="db-table">
                         <thead>
                             <tr >
                                 <th class="text-center" style="font-size:16px;width:20%">Existing Database</th>
                                 <th class="text-center" style="font-size:16px;width:20%">Collection Name</th>
                                 <th class="text-center" style="font-size:16px;width:41%">Timestamp</th>
-                                <th class="text-center" style="font-size:16px;width:9.5%">Delete Me</th>
-                                <th class="text-center" style="font-size:16px;width:9.5%">Update Me</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Delete</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Update</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="db-table-body">
                             <tr id='list0' data-id="0" class="hide">
                                 <td data-name="company" rowspan="2">Company Name</td>
                                 <td data-name="collection-a">Collection1</td>
@@ -109,7 +109,8 @@
                             </tr>
                         </tbody>
                     </table>
-                    <!-- end of Db list table -->
+                    <!-- end of DB list table -->
+
                     <!-- end of new list table -->
                     <table class="responstable" id="new-table">
                         <thead>
@@ -117,8 +118,8 @@
                                 <th class="text-center" style="font-size:16px;width:27%">Company Name</th>
                                 <th class="text-center" style="font-size:16px;width:27%">XPLAN Username</th>
                                 <th class="text-center" style="font-size:16px;width:27%">XPLAN Password</th>
-                                <th class="text-center" style="font-size:16px;width:9.5%">Cancel Me</th>
-                                <th class="text-center" style="font-size:16px;width:9.5%">Add Me</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Cancel</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Create</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -187,18 +188,14 @@
                         };
                         send_db_management_message(company, 'create', login_info);
                     }
-
-                    local_cache = {};
+                    else {
+                        local_cache = {};
+                    }
                 }
                 else {
                     local_cache = {};
                 }
             });
-
-
-
-
-
         });
 
     particlesJS("particles-js", {

@@ -25,22 +25,25 @@ function send_db_management_message(company, message, login_info) {
         dataType: 'json',
         success: function (data, status, request) {
             if (message === 'delete') {
-                var this_row = local_cache['d_this'];
-                $(this_row).closest("tr").next("tr").remove();
-                $(this_row).closest("tr").remove();
-                // if table is empty (only 1 head row and 2 hidden rows left): add an empty row
-                if ($('#db-table tr').length === 3) {
-                    add_row('db-table', '/', ['/', '/'], {
-                        '/': ['/', '/'],
-                        '//': ['/', '/']
-                    })
-                }
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Deleted Successfully',
                     'This database is no more.',
                     'Good',
                     'btn-success'
                 );
+                // rebuild DB table after any modification operations
+                build_db_table();
+
+                // var this_row = local_cache['d_this'];
+                // $(this_row).closest("tr").next("tr").remove();
+                // $(this_row).closest("tr").remove();
+                // // if table is empty (only 1 head row and 2 hidden rows left): add an empty row
+                // if ($('#db-table tr').length === 3) {
+                //     add_row('db-table', '/', ['/', '/'], {
+                //         '/': ['/', '/'],
+                //         '//': ['/', '/']
+                //     })
+                // }
             }
             else if (message === 'update') {
                 show_notification(
@@ -49,12 +52,8 @@ function send_db_management_message(company, message, login_info) {
                     'Good',
                     'btn-success'
                 );
-                // update row's update time:
-
-
-
-
-
+                // rebuild DB table after any modification operations
+                build_db_table();
             }
             else if (message === 'create') {
                 show_notification(
@@ -63,13 +62,8 @@ function send_db_management_message(company, message, login_info) {
                     'Good',
                     'btn-success'
                 );
-                // add row to table:
-
-
-
-
-
-
+                // rebuild DB table after any modification operations
+                build_db_table();
             }
             local_cache = {};
         },
@@ -110,25 +104,41 @@ function build_db_table() {
         url: '/acquire_db_collection_summary',
         dataType: 'json',
         success: function (data, status, request) {
-            for (i = 0; i < data.length; i ++) {
-                for (db in data[i]) {
-                    var collection_data = data[i][db];
-                    var collections = [];
-                    var timestamps = {};
-                    for (collection in collection_data) {
-                        var c;
-                        if (collection.includes('Group')) {
-                            c = 'Field Definition'
+            // empty existing table, only keep row[0] (header), row[1] and row[2] (hidden rows)
+            for (i = $('#db-table tr').length - 1; i >= 3; i --) {
+                $('#db-table tr:nth-child(' + i + ')').remove();
+            }
+
+            // if DB is empty, append an empty line
+            if (!data.length) {
+                add_row('db-table', '/', ['/', '/'], {
+                    '/': ['/', '/'],
+                    '//': ['/', '/']
+                })
+            }
+
+            // else, append rows to table
+            else {
+                for (i = 0; i < data.length; i++) {
+                    for (db in data[i]) {
+                        var collection_data = data[i][db];
+                        var collections = [];
+                        var timestamps = {};
+                        for (collection in collection_data) {
+                            var c;
+                            if (collection.includes('Group')) {
+                                c = 'Field Definition'
+                            }
+                            else if (collection.includes('Interface')) {
+                                c = 'Interface'
+                            }
+                            var create_time = collection_data[collection][0];
+                            var update_time = collection_data[collection][1];
+                            collections.push(c);
+                            timestamps[c] = [create_time, update_time]
                         }
-                        else if (collection.includes('Interface')) {
-                            c = 'Interface'
-                        }
-                        var create_time = collection_data[collection][0];
-                        var update_time = collection_data[collection][1];
-                        collections.push(c);
-                        timestamps[c] = [create_time, update_time]
+                        add_row("db-table", db, collections, timestamps)
                     }
-                    add_row("db-table", db, collections, timestamps)
                 }
             }
         }
@@ -296,7 +306,7 @@ function add_row(table, db, collections, timestamps) {
             local_cache['n_password'] = password;
             show_confirmation(
                 'Create Database <' + company + '>',
-                'By confirming, the progress of database creation will be initiated and the whole operation will take around 30 minutes to finish.',
+                'By confirming, the creation progress of database <b>' + company + '</b> will be initiated and the whole operation will take around 30 minutes to finish.',
                 'Create',
                 'btn-success'
             );
@@ -326,7 +336,7 @@ function add_row(table, db, collections, timestamps) {
             local_cache['u_this'] = this;
             show_confirmation(
                 'Update Database <' + company + '>',
-                'By confirming, the update progress will be initiated and the whole operation will take around 30 minutes to finish.',
+                'By confirming, the update progress of database <b>' + company + '</b> will be initiated and the whole operation will take around 30 minutes to finish.',
                 'Update',
                 'btn-info'
             );

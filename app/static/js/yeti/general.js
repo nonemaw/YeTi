@@ -90,7 +90,12 @@ function send_for_formatting(sent_info) {
             }
         },
         error: function() {
-            alert('Unexpected error in sending code content');
+            show_notification(
+                'Error',
+                'Unexpected error occurred during sending code content.',
+                'OK',
+                'btn-danger'
+            );
         }
     });
 }
