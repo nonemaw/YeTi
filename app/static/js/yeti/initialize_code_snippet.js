@@ -30,6 +30,7 @@ $.ajax({
     }
 });
 
+
 function snippet_scenario_initialization(group_id) {
     local_scenario_cache = {};
     $.ajax({

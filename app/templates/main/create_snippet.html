@@ -4,7 +4,6 @@
 
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
 {% endblock %}
 
 {% block navbar_items %}
@@ -85,8 +84,6 @@
 {% endblock %}
 
 {% block page_script %}
-    <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var show_invisibles = true;
         var wrap_text = true;

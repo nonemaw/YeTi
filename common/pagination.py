@@ -46,7 +46,7 @@ class Pagination:
 #     def __init__(self, current_page, show_followed_posts_cookie=0, per_page=5):
 #         super(PaginationSnippet, self).__init__(current_page, per_page=per_page)
 #         if not show_followed_posts_cookie:  # all posts
-#             self.posts = db.Post.find({}).sort([('timestamp', -1)])
+#             self.posts = db.Post.find({'type': {'$ne': '_timestamp'}}).sort([('timestamp', -1)])
 #         else:  # posts from followers
 #             following = db.User.\
 #                 find_one({'_id': ObjectId(current_user.id)}).get('following')

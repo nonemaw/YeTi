@@ -1,21 +1,21 @@
 
 {% extends "boot.html" %}
 
-{% block title %}YeTi OJ System{% endblock %}
+{% block title %}YeTi OJ{% endblock %}
 
 {% block head %}
     {{ super() }}
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/icon.png') }}" type="image/x-icon">
     <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}" type="image/x-icon">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-material-design.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/ripples.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/animate.css') }}">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.10/css/bootstrap-material-design.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/css/ripples.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
 
 {% block body %}
-    <div id="particles-js"></div>
+    <div id="particles-js" style="z-index: -999"></div>
 {% block navbar %}
     <div class="navbar navbar-default" role="navigation" style="background: #343A40">
         <div class="container">
@@ -38,9 +38,6 @@
                             </a>
                             <ul class="dropdown-menu">
                                 {% if current_user.is_authenticated and current_user.is_confirmed %}
-                                    {% if current_user.is_administrator() %}
-                                        <li><a href="{{ url_for('main.database_management') }}" style="color:#009688">Management</a></li>
-                                    {% endif %}
                                     <li><a href="{{ url_for('main.user', id=current_user.id) }}">Profile</a></li>
                                     <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
                                     <li><a href="{{ url_for('auth.change_email_request') }}">Change Email</a></li>
@@ -64,8 +61,7 @@
 {% block content %}
     <div class="container-fluid" id="yeti">
         <div class="row">
-            <div class="col-md-2 col-lg-2"></div>
-            <div class="col-md-8 col-lg-8">
+            <div style="width: 67%;margin:0px auto;">
                 {% for category, message in get_flashed_messages(with_categories=true) %}
                     <div class="alert alert-{{ category }}">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -75,8 +71,46 @@
 
                 {% block narrow_content %}{% endblock %}
             </div>
-            <div class="col-md-2 col-lg-2"></div>
         </div>
+        <!-- general confirmation window -->
+        <div class="modal fade" id="confirmation" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" datatype="">
+            <div class="modal-dialog">
+                <div class="modal-content" id="confirmation-content" style="background: #eaeaea;">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="confirmation-title" style="font-weight: bold"></h4>
+                    </div>
+
+                    <div class="modal-body" id="confirmation-body">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" id="confirmation-btn1">Cancel</button>
+                        <button class="btn btn-danger btn-ok" id="confirmation-btn2">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end of general confirmation window -->
+        <!-- general notification window -->
+        <div class="modal fade" id="notification" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" datatype="">
+            <div class="modal-dialog">
+                <div class="modal-content" id="notification-content" style="background: #eaeaea;">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="notification-title" style="font-weight: bold"></h4>
+                    </div>
+
+                    <div class="modal-body" id="notification-body">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-ok" data-dismiss="modal" id="notification-btn1">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end of general notification window -->
 
         {% block wide_content %}{% endblock %}
     </div>
@@ -85,11 +119,18 @@
 {% block scripts %}
     {{ super() }}
     {{ moment.include_moment() }}
-    <script type=text/javascript>$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};</script>
-    <script src="{{ url_for('static', filename='js/jquery.js', _external=True) }}"></script>
-    <script src="{{ url_for('static', filename='js/material.js', _external=True) }}"></script>
-    <script src="{{ url_for('static', filename='js/ripples.js', _external=True) }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-notify.js', _external=True) }}"></script>
+    <script type="text/javascript">$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>         <!-- modified, dropdown plugin removed -->
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>  <!-- modified, default display changed -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.10/js/material.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/js/ripples.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/ace/ace.js') }}"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mouse0270-bootstrap-notify/3.1.7/bootstrap-notify.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/yeti/animation.js', _external=True) }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/yeti/misc.js') }}"></script>
     <script>
     $.material.init();
     </script>

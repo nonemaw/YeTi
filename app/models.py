@@ -7,7 +7,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from bson import ObjectId
 
 from app import login_manager
-from app.db import mongo_connect, client
+from common.db import mongo_connect, MongoConfig, create_dict_path
 from common.meta import Meta
 from fuzzier.jison import Jison
 
@@ -154,7 +154,7 @@ class InterfaceNode:
         (when depth = 0 is the normal case)
         """
 
-        # TODO: FIX
+        # TODO: FIX ME
         legacy = current_user.db.InterfaceNode.find_one(
             {'id': self.node.get('id')})
         if not legacy:
@@ -163,8 +163,8 @@ class InterfaceNode:
         elif force and not depth:
             pushed_list = [x for x in self.node.get('children')
                            if x.get('text') not in
-                               [l.get('text') for l in legacy.get('children')]
-                          ]
+                           [l.get('text') for l in legacy.get('children')]
+                           ]
             # `pushed_list` is a list of {child} which are not in legacy children
             # is `pushed_list` then append each {child} to legacy's children list
             if pushed_list:
@@ -207,8 +207,6 @@ class InterfaceNode:
             else:
                 pass
 
-
-
         return str(legacy.get('_id'))
 
     @staticmethod
@@ -221,7 +219,8 @@ class InterfaceNode:
 
 
 class InterfaceLeafPage:
-    def __init__(self, id: str, text: str, leaf_type: str, menu_path: str, page: dict):
+    def __init__(self, id: str, text: str, leaf_type: str, menu_path: str,
+                 page: dict):
         self.id = id
         self.text = text
         self.leaf_type = leaf_type
@@ -322,6 +321,7 @@ class User:
     """
     a base class for constructing user object
     """
+
     def __init__(self, email: str, username: str, password: str,
                  location: str):
         self.email = email
@@ -372,12 +372,39 @@ class User:
         return Meta.db.User.find_one(locate)
 
     @staticmethod
-    def save_config(locate: dict, config: dict):
-        Meta.db.User.update_one(locate, {'$set': {'config': config}})
+    def save_misc(locate: dict, key: str, data: dict):
+        # save non-statistic data
+        if key != 'statistic':
+            Meta.db.User.update_one(locate, {'$set': {key: data}})
+        # save statistic data
+        else:
+            legacy = User.get_misc({'_id': ObjectId(current_user.id)},
+                                   'statistic')
+            # no legacy statistic data
+            if legacy is None:
+                Meta.db.User.update_one(locate, {'$set': {key: data}})
+            # has existing statistic data
+            else:
+                Meta.db.User.update_one(
+                    locate,
+                    {
+                        '$push': {
+                            'statistic.search_history': {
+                                '$each': data.get('search_history')
+                            }
+                        },
+                        '$set': {
+                            'statistic.search_count': data.get('search_count') + legacy.get('search_count'),
+                            'statistic.judge_count': data.get('judge_count') + legacy.get('judge_count'),
+                            'statistic.failed_count': data.get('failed_count') + legacy.get('failed_count'),
+                            'statistic.success_count': data.get('success_count') + legacy.get('success_count')
+                        }
+                    }
+                )
 
     @staticmethod
-    def load_config(locate: dict) -> dict:
-        return Meta.db.User.find_one(locate).get('config')
+    def get_misc(locate: dict, key: str):
+        return Meta.db.User.find_one(locate).get(key)
 
 
 class UserUtl(UserMixin):
@@ -385,6 +412,7 @@ class UserUtl(UserMixin):
     a utility class based from UserMixin for Flask 'current_user', operating
     current logged user utilities on a global level
     """
+
     def __init__(self, user: dict):
         self.id = str(user.get('_id'))
         self.email = user.get('email')
@@ -399,8 +427,8 @@ class UserUtl(UserMixin):
         self.last_login = user.get('last_login')
         self.member_since = user.get('member_since')
         self.company = user.get('company')
-        self.db = Meta.db if self.company == 'ytml' else\
-            mongo_connect(client, self.company)
+        self.db = Meta.db if self.company == MongoConfig.HOME else \
+            mongo_connect(self.company)
         self.jison = Jison(file_name=user.get('company'))
 
     def __repr__(self):
@@ -437,8 +465,8 @@ class UserUtl(UserMixin):
 
     def ping(self):
         Meta.db.User.update_one({'email': self.email},
-                                        {'$set': {
-                                            'last_login': datetime.utcnow()}})
+                                {'$set': {
+                                    'last_login': datetime.utcnow()}})
 
     def generate_token(self, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -491,7 +519,8 @@ class Snippet():
                 # update new scenario id into existing group
                 group_id = str(group_dict.get('_id'))
                 Meta.db.SnippetGroup.update_one({'name': self.group},
-                                        {'$push': {'scenarios': scenario_id}})
+                                                {'$push': {
+                                                    'scenarios': scenario_id}})
             else:
                 # insert new group for the new scenario
                 document = {
@@ -587,4 +616,3 @@ def load_user(user_id):
     in the session (as current_user)
     """
     return UserUtl(Meta.db.User.find_one({'_id': ObjectId(user_id)}))
-

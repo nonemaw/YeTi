@@ -4,6 +4,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
     ValidationError, SelectField
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo
 from app.models import User
+from common.db import MongoConfig
 
 cities = [('New South Wales', ' New South Wales'),
           ('Australian Capital Territory', ' Australian Capital Territory'),
@@ -19,7 +20,8 @@ class LoginForm(FlaskForm):
                         validators=[DataRequired(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     company = StringField('Company for Access (Case Insensitive)',
-                          default='ytml', validators=[DataRequired()])
+                          default=MongoConfig.HOME,
+                          validators=[DataRequired()])
     remember_me = BooleanField(' Remember Me')
     submit = SubmitField('Login')
 

@@ -1,7 +1,7 @@
 
 Dear {{ user.username }},
 
-Welcome to YeTi OJ System!
+Welcome to YeTi OJ!
 
 To confirm your account please click on the following link:
 

@@ -222,17 +222,10 @@ body {
         width: 60vw;
     }
 }
-.modal-content {
-    background: #eaeaea;
-}
 
-.modal-body{
-    height: 65vh;
-    max-height: 65vh;
-    overflow-y: auto;
-}
-.modal {
+.modal-index {
     padding-left: 62vh;
+    padding-top: 20px;
 }
 
 hr {
@@ -295,6 +288,14 @@ hr {
     padding: 8px 8px;
 }
 
+.nav-tabs>li.active {
+    background-color: #aa0055;
+}
+
+.nav-tabs>li {
+    margin-bottom: 0px;
+}
+
 .checkbox label, .radio label, label {
     font-size: 14px;
     font-weight: bold;
@@ -349,7 +350,7 @@ label {
     background: rgba(165, 202, 216, 0.81);
 }
 .btn:not(.btn-raised).btn-success, .input-group-btn .btn:not(.btn-raised).btn-success {
-    color: #009688;
+    color: #008173;
     background: rgba(163, 213, 193, 0.81);
 }
 .btn:not(.btn-raised).btn-warning, .input-group-btn .btn:not(.btn-raised).btn--warning {
@@ -435,3 +436,5 @@ label {
     font-size: 18px;
     font-weight: bold;
 }
+
+

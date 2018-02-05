@@ -43,7 +43,7 @@ class EditProfileAdminForm(FlaskForm):
     def __init__(self, user, *args, **kwargs):
         super(EditProfileAdminForm, self).__init__(*args, **kwargs)
         # self.role.choices = [(str(r.get('_id')), r.get('type')) for r in\
-        #                      db.Role.find({}).sort([('type', -1)])]
+        #                      db.Role.find({'type': {'$ne': '_timestamp'}}).sort([('type', -1)])]
         self.user = user
 
     def validate_email(self, field):

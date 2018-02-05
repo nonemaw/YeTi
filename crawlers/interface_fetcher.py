@@ -89,9 +89,9 @@ class InterfaceFetcher:
                 raise Exception(
                     'Currently there is another user using this XPLAN account.')
 
-            self.jison.load_json(session.post(self.URL_SOURCE,
-                                              json=menu_post,
-                                              headers=self.interface_header).json())
+            self.jison.load(session.post(self.URL_SOURCE,
+                                         json=menu_post,
+                                         headers=self.interface_header).json())
             menu_nodes = self.jison.get_object('children', value_only=True)
 
             menu = []
@@ -185,13 +185,13 @@ class InterfaceFetcher:
         if _q is not None:
             jison = Jison()
             cookies = session.cookies.get_dict()
-            jison.load_json(requests.post(self.URL_SOURCE, json=menu_post,
-                                          headers=self.interface_header,
-                                          cookies=cookies).json())
+            jison.load(requests.post(self.URL_SOURCE, json=menu_post,
+                                     headers=self.interface_header,
+                                     cookies=cookies).json())
         else:
             jison = self.jison
-            jison.load_json(session.post(self.URL_SOURCE, json=menu_post,
-                                         headers=self.interface_header).json())
+            jison.load(session.post(self.URL_SOURCE, json=menu_post,
+                                    headers=self.interface_header).json())
         local_children = jison.get_object('children', value_only=True)
 
         children = []
@@ -277,15 +277,15 @@ class InterfaceFetcher:
 
         if _q is not None:
             jison = Jison()
-            jison.load_json(requests.post(self.URL_SOURCE,
-                                          json=leaf_post,
-                                          headers=self.interface_header,
-                                          cookies=session.cookies.get_dict()).json())
+            jison.load(requests.post(self.URL_SOURCE,
+                                     json=leaf_post,
+                                     headers=self.interface_header,
+                                     cookies=session.cookies.get_dict()).json())
         else:
             jison = self.jison
-            jison.load_json(session.post(self.URL_SOURCE,
-                                         json=leaf_post,
-                                         headers=self.interface_header).json())
+            jison.load(session.post(self.URL_SOURCE,
+                                    json=leaf_post,
+                                    headers=self.interface_header).json())
         leaf_type = jison.get_object('title', value_only=True).lower()
 
         if leaf_type in ['gap', 'title', 'text']:
@@ -363,12 +363,12 @@ class InterfaceFetcher:
 
             leaf_post_xtable['method'] = table1_method
             if _q is not None:
-                jison.load_json(
+                jison.load(
                     requests.post(self.URL_SOURCE, json=leaf_post_xtable,
                                   headers=self.interface_header,
                                   cookies=session.cookies.get_dict()).json())
             else:
-                jison.load_json(
+                jison.load(
                     session.post(self.URL_SOURCE, json=leaf_post_xtable,
                                  headers=self.interface_header).json())
 

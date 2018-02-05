@@ -8,8 +8,8 @@ from .forms import EditProfileForm, EditProfileAdminForm
 from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from app.models import User
-from common.pagination import PaginationSnippet
 from common.general import random_word
+from common.db import acquire_db_summary
 
 
 @main.route('/test')
@@ -36,13 +36,7 @@ def user(id):
         return render_template('errors/missing_user.html')
     user_utl = UserUtl(user_dict)
 
-    current_page = request.args.get('page', 1, type=int)
-    pagination = PaginationSnippet(current_page)
-    snippets = pagination.items
-
-    return render_template('main/user_profile.html', user_utl=user_utl,
-                           pagination=pagination,
-                           snippets=snippets)
+    return render_template('main/user_profile.html', user_utl=user_utl)
 
 
 @main.route('/edit_profile', methods=['GET', 'POST'])
@@ -55,7 +49,7 @@ def edit_profile():
                             'name': form.name.data,
                             'location': form.location.data,
                             'about_me': form.about_me.data
-                         })
+                        })
         flash('Your profile has been updated successfully.', category='info')
         return redirect(url_for('main.user', id=current_user.id))
     form.name.data = current_user.name
@@ -306,16 +300,78 @@ def acquire_snippet_scenario(_id):
                 )
         result = sorted(result,
                         key=lambda item: next(iter(item.values()))[0].lower()
-                 )
+                        )
         return json.dumps({'scenario': result}), 200
     except:
         return json.dumps({'scenario': []}), 500
 
 
 @login_required
-@main.route('/database_management', methods=['GET', 'POST'])
-def database_management():
-    pass
+@main.route('/load_config', methods=['GET'])
+def load_config():
+    try:
+        config = User.get_misc({'_id': ObjectId(current_user.id)}, 'config')
+        return json.dumps(config), 200
+    except:
+        return json.dumps({}), 500
+
+
+@login_required
+@main.route('/save_misc', methods=['POST'])
+def save_misc():
+    received_json = request.json
+
+    try:
+        if received_json:
+            # save configurations
+            config = received_json.get('config')
+            statistic = received_json.get('statistic')
+
+            User.save_misc({'_id': ObjectId(current_user.id)}, 'statistic',
+                           statistic)
+            User.save_misc({'_id': ObjectId(current_user.id)}, 'config',
+                           config)
+
+            return json.dumps({'good': True}), 200
+
+        else:
+            return json.dumps({'good': False}), 500
+
+    except:
+        return json.dumps({'good': False}), 500
+
+
+@login_required
+@main.route('/acquire_db_collection_summary', methods=['GET'])
+def acquire_db_collection_summary():
+    try:
+        db_summary = acquire_db_summary(['SubGroup', 'InterfaceNode'])
+        return json.dumps(db_summary), 200
+    except:
+        return json.dumps({}), 500
+
+
+@login_required
+@main.route('/db_management', methods=['POST'])
+def db_management():
+    received_json = request.json
+
+    try:
+        if received_json:
+
+
+
+
+
+
+
+            return json.dumps({'good': True}), 200
+
+        else:
+            return json.dumps({'good': False}), 500
+
+    except:
+        return json.dumps({'good': False}), 500
 
 
 # TODO: RESERVED, for celery

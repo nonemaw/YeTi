@@ -527,11 +527,12 @@ ititle.on('click', function(){
     var current_subugroup = '/';
 
     if (/\[.+\]/.test(title)) {
-        re_result = /\[ *(.+) *\] *(.+)/.exec(title);
+        var re_result = /\[ *(.+) *\] *(.+)/.exec(title);
         current_subugroup = re_result[1];
         variable = re_result[2];
     }
     if (variable !== '_NONE') {
+        var pattern = '';
         if (current_subugroup !== '/') {
             pattern = current_subugroup + ':' + variable;
         }

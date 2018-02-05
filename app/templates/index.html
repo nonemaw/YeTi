@@ -5,7 +5,6 @@
 
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='js/jstree/themes/proton/style.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 {% endblock %}
@@ -24,8 +23,8 @@
             </li>
         </ul>
         <ul class="nav navbar-nav">
-            <li><a href="#" id="judge" style="font-family: Centaur;font-size: 20px;color:#ff6398;">&nbsp;&nbsp;&nbsp;Judge</a></li>
-            <li><a href="{{ url_for('main.create_snippet') }}" style="font-family: Centaur;font-size: 20px;">Create Snippet</a></li>
+            <li><a href="#" id="judge" style="font-family: Centaur;font-size: 22px;color:#ff3f8b;padding-left:40px">Judge</a></li>
+            <li><a href="{{ url_for('main.create_snippet') }}" style="font-family: Centaur;font-size: 22px;">Create Snippet</a></li>
         </ul>
     {% endif %}
 {% endblock %}
@@ -36,14 +35,14 @@
     </div>
 
     <!-- setting panel -->
-    <div id="modal-small" class="modal fade bs-setting-modal-sm" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div id="modal-small" class="modal fade bs-setting-modal-sm modal-index" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="padding-left:62vh;">
         <div class="modal-dialog modal-sm" role="document">
-            <div class="modal-content">
+            <div class="modal-content" style="background:#eaeaea">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title" id="myModalLabel"><b>Editor Settings</b></h4>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="height:55vh;max-height:55vh;overflow-y:auto;">
                     <div class="row">
                         <div class="col-md-2"></div>
                         <div class="col-md-10">
@@ -123,14 +122,14 @@
     <!-- end of setting panel -->
 
     <!-- interface modal view, display when click `Interface` button -->
-    <div id="modal-large" class="modal fade interface-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div id="modal-large" class="modal fade interface-modal modal-index" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="padding-left:62vh;">
         <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
+            <div class="modal-content" style="background: #eaeaea;">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel"><b>Interface Menu</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company }} )</small></h4>
+                    <h4 class="modal-title" id="myModalLabel"><b style="color:#009688">Interface Menu</b><small>&nbsp;&nbsp;&nbsp;&nbsp;( Site {{ company }} )</small></h4>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="height:65vh;max-height:65vh;overflow-y:auto;">
                     <div class="row" style="height:100%;">
                         <div id="interface-tree-list" class="col-md-5" style="height:100%;overflow-y: scroll">
                             <div id="interface-tree">
@@ -149,7 +148,7 @@
                             <!-- interface collection table1 for xplan collection items -->
                             <div class="row" id="interface-table-row" style="height:30vh">
                                 <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table1-head">
-                                    <table class="table table-scroll left-column-table" style="height:100px">
+                                    <table class="table table-scroll left-column-table table-hover">
                                         <thead>
                                             <tr>
                                                 <th id="interface-xplan-table1-title"></th>
@@ -160,7 +159,7 @@
                                     </table>
                                 </div>
                                 <div class="col-md-6" style="display:none;height:100%" id="interface-xplan-table2-head">
-                                    <table class="table table-scroll left-column-table" style="height:100px">
+                                    <table class="table table-scroll left-column-table table-hover">
                                         <thead>
                                             <tr>
                                                 <th id="interface-xplan-table2-title"></th>
@@ -171,7 +170,7 @@
                                     </table>
                                 </div>
                                 <div class="col-md-11" style="display:none;height:100%" id="interface-group-table-head">
-                                    <table class="table table-scroll left-column-table" style="height:100px">
+                                    <table class="table table-scroll left-column-table table-hover">
                                         <thead>
                                             <tr>
                                                 <th id="interface-group-table-title"></th>
@@ -231,7 +230,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="row">
-                        <button class="btn btn-danger" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 80%">Interface Menu</button>
+                        <button class="btn btn-success" id="interface" data-toggle="modal" data-target=".interface-modal" style="float: right; width: 80%">Interface Menu</button>
                     </div>
                 </div>
             </div>
@@ -271,7 +270,7 @@
             <div class="row" style="height: 32vh">
                 <!-- Variable Table -->
                 <div class="col-md-12" style="height: 100%">
-                    <table class="table table-scroll left-column-table" style="height: 100%">
+                    <table class="table table-scroll left-column-table table-hover">
                         <tbody id="variable-selector-table" style="overflow-y: auto;">
                             <tr>
                                 <td class="col-md-2" style="color: #009688"><b><i>Variable</i></b></td>
@@ -285,16 +284,16 @@
                                 <td class="col-md-2" style="color: #009688"><b><i>Type</i></b></td>
                                 <td class="col-md-10" style="font-family:Consolas"><button id="var-type" style="border:none">/</button></td>
                             </tr>
-                            <tr>
-                                <td id="choice-type" class="col-md-2" style="color: #009688"><b><i>Choice(s)</i></b></td>
+                            <tr style="background: #eaeaea">
+                                <td id="choice-type" class="col-md-2" style="color:#009688"><b><i>Choice(s)</i></b></td>
                                 <td class="col-md-10">
 
                                     <!-- Multi Choice list table -->
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th id="choice-value-title" class="col-md-5" style="color:#009688;font-style:italic;padding:2px">Value</th>
-                                                <th id="choice-text-title" class="col-md-7" style="color:#009688;font-style:italic;padding:2px">Text</th>
+                                                <th id="choice-value-title" class="col-md-5" style="color:#009688;font-family:consolas;padding:2px">.value</th>
+                                                <th id="choice-text-title" class="col-md-7" style="color:#009688;font-family:consolas;padding:2px">.text</th>
                                             </tr>
                                         </thead>
                                         <tbody id="multi-choice-table">
@@ -377,16 +376,19 @@
 {% endblock %}
 
 {% block page_script %}
-    <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/jstree/jstree.min.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/yeti/search_bar.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/yeti/initialize_group_subgroup_variable.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/yeti/initialize_code_snippet.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/yeti/initialize_interface.js') }}" type="text/javascript" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='js/yeti/general.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
+        var search_count = 0;
+        var judge_count = 0;
+        var failed_count = 0;
+        var success_count = 0;
+        var search_history = [];
+
         var show_invisibles = true;
         var wrap_text = true;
         var initial_syntax = $('#syntax option:selected').val();
@@ -419,9 +421,11 @@
 
         $(document).ready(function() {
             load_config();
+
             // right panel
             // judge button
             $('#judge').on('click', function(){
+                judge_count += 1;
                 click_and_send('judge');
             });
             // indent button
@@ -518,29 +522,16 @@
                 var subgroup_id = $('#subgroup-selector option:selected').val();
                 variable_initialization(subgroup_id, local_var_cache);
             });
-            // update table when a variable is selected
-            $('#variable-selector').on('change', function(){
-                $('#variable-search-table').css('display', 'none');
-                $('#variable-search-table-head').css('display', 'none');
-                $('#variable-selector-table').css('display', '');
-                var var_detail = local_var_cache[$('#variable-selector option:selected').val()];
-                $('#var-variable').text($('#variable-selector option:selected').val());
-                $('#var-usage').text(var_detail[0]);
-                $('#var-type').text(var_detail[1]);
-                var multi_choice_table = $('#multi-choice-table');
-                multi_choice_table.empty();
-                if (var_detail[2] && (Object.keys(var_detail[2]).length)) {
-                    $('#choice-value-title').text('Value');
-                    $('#choice-text-title').text('Text');
-                    for (index in var_detail[2]) {
-                        multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-7">' + var_detail[2][index][1] + '</td></tr>');
-                    }
+            // click search button
+            $('#search-button').click(function() {
+                var pattern = $('#search-field').val();
+                if (pattern) {
+                    search_count += 1;
+                    search_history.push(pattern);
+                    search(pattern, 8);
                 }
-                else {
-                    multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
-                }
+                return false;
             });
-
             // copy content to browser clipboard when clicked on var-name, var-type, var-usage
             $('#var-usage').click(function() {
                 if ($('#var-usage').text() !== '/') {
@@ -596,12 +587,10 @@
                 initialize_interface(id, text);
             });
 
-            // save current user env before a refresh
-            window.onbeforeunload = function(event)
-            {
-                save_config();
+            // save current user env on refresh/quit
+            window.onbeforeunload = function(event) {
+                save_misc_on_exit();
             };
-
         });
     </script>
 {% endblock %}

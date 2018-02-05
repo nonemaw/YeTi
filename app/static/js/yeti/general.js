@@ -1,3 +1,18 @@
+function click_and_send(message) {
+    var code = code_section.getValue();
+    if (code) {
+        var sent_info = {
+            message: message,
+            code: code
+        };
+        send_for_formatting(sent_info);
+        if (message === 'judge') {
+            $('#overlay').fadeIn();
+        }
+    }
+}
+
+
 function send_for_formatting(sent_info) {
     $.ajax({
         contentType: "application/json",
@@ -6,23 +21,26 @@ function send_for_formatting(sent_info) {
         url: '/code/code_formatting',
         dataType: 'json',
         success: function(data, status, request) {
+            // normal case: just display result code
             if (data.code) {
                 code_section.setValue(data.code);
             }
+            // judge case: show banner based on result
             else if (data.judge_result) {
                 $('#overlay').fadeOut();
-                judge_result = data.judge_result;
+                var judge_result = data.judge_result;
                 if (!judge_result.passed) {
                     /* judge not passed */
-                    error_start = judge_result.error_start;
-                    error_end = judge_result.error_end;
-                    spelling = judge_result.spelling;
-                    spelling_last = judge_result.spelling_last;
-                    message = "Error between &lt;line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[0] + "</span>] position <span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[1] + "</span>&gt;" +
+                    failed_count += 1;
+                    var error_start = judge_result.error_start;
+                    var error_end = judge_result.error_end;
+                    var spelling = judge_result.spelling;
+                    var spelling_last = judge_result.spelling_last;
+                    var message = "Error between &lt;line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[0] + "</span>] position <span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[1] + "</span>&gt;" +
                               " and &lt;line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" +  error_end[0] + "</span>] position <span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_end[1] + "</span>&gt;. " +
                               "\nCurrent spelling &lt;<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + spelling + "</span>&gt;, last processed spelling &lt;<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + spelling_last + "</span>&gt;. ";
                     if (judge_result.analysis) {
-                        analysis_message = "";
+                        var analysis_message = "";
                         if (judge_result.analysis === "end") {
                             analysis_message = "The [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">end</span>] tag on line [<span style=\"font-family:courier;font-size:18px;font-weight:bold\">" + error_start[0] + "</span>] does not match any condition / loop.";
                         }
@@ -52,6 +70,7 @@ function send_for_formatting(sent_info) {
                 }
                 else {
                     /* judge passed */
+                    success_count += 1;
                     $.notify({
                             icon: 'glyphicon glyphicon-ok-sign',
                             title: "Judge Passed: ",
@@ -76,99 +95,6 @@ function send_for_formatting(sent_info) {
     });
 }
 
-function save_config() {
-    sent_info = {
-        code: code_section.getValue(),
-        theme: $('#theme').val(),
-        font: $('#font-family').val(),
-        font_size: parseInt($('#font-size').val()),
-        show_i: $('#show-invisibles').prop('checked'),
-        wrap_t: $('#wrap-text').prop('checked')
-    };
-
-    $.ajax({
-        contentType: "application/json",
-        data: JSON.stringify(sent_info),
-        type: 'POST',
-        url: '/code/save_config',
-        dataType: 'json',
-        success: function (data, status, request) {},
-        error: function() {
-            alert('Unexpected error in saving configuration');
-        }
-    });
-}
-
-function load_config() {
-    $.ajax({
-        type: 'GET',
-        url: '/code/load_config',
-        dataType: 'json',
-        success: function (data, status, request) {
-            // set code
-            if (data) {
-                if (data.code !== undefined) {
-                    code_section.setValue(data.code);
-                }
-                // set theme
-                if (data.theme !== undefined) {
-                    code_section.setTheme("ace/theme/" + data.theme);
-                    snippet_section.setTheme("ace/theme/" + data.theme);
-                    $('#theme').selectpicker('val', data.theme);
-                }
-                //set font
-                if (data.font !== undefined) {
-                    code_section.setOption("fontFamily", data.font);
-                    snippet_section.setOption("fontFamily", data.font);
-                    $('#font-family').selectpicker('val', data.font);
-                }
-                //set font-size
-                if (data.font_size !== undefined) {
-                    code_section.setOption("fontSize", data.font_size);
-                    $('#font-size').selectpicker('val', data.font_size);
-                }
-                //set show invisible
-                if (data.show_i !== undefined) {
-                    code_section.setOption("showInvisibles", data.show_i);
-                    snippet_section.setOption("showInvisibles", data.show_i);
-                    if (data.show_i === true) {
-                        $('#show-invisibles').attr('checked', 'checked');
-                    }
-                    else {
-                        $('#show-invisibles').removeAttr('checked');
-                    }
-                }
-                //set wrap text
-                if (data.wrap_t !== undefined) {
-                    code_section.getSession().setUseWrapMode(data.wrap_t);
-                    if (data.wrap_t === true) {
-                        $('#wrap-text').attr('checked', 'checked');
-                    }
-                    else {
-                        $('#wrap-text').removeAttr('checked');
-                    }
-                }
-            }
-        },
-        error: function() {
-            alert('Unexpected error in loading configuration');
-        }
-    });
-}
-
-function click_and_send(message) {
-    code = code_section.getValue();
-    if (code) {
-        var sent_info = {
-            message: message,
-            code: code
-        };
-        send_for_formatting(sent_info);
-        if (message === 'judge') {
-            $('#overlay').fadeIn();
-        }
-    }
-}
 
 // https://stackoverflow.com/questions/22581345/click-button-copy-to-clipboard-using-jquery
 function copy_to_clipboard(elem) {

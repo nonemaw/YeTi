@@ -4,7 +4,6 @@
 
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
 {% endblock %}
 
 {% block navbar_items %}
@@ -28,7 +27,7 @@
                     <label style="font-size:15px">Snippet Scenario Name</label>
                     <input id="snippet-scenario" name="scenario" type="text" class="form-control" value="{{ snippet_scenario }}">
                     <button class="btn btn-info" name="edit" id="save-snippet" style="width:45%">Save</button>
-                    <button class="btn btn-danger" name="delete" id="delete-snippet" style="width:45%">Delete</button>
+                    <button class="btn btn-danger" name="delete" id="delete-snippet" style="width:45%" data-toggle="modal" data-target="#_notification">Delete</button>
                 </form>
             {% endif %}
             <br>
@@ -86,8 +85,6 @@
 {% endblock %}
 
 {% block page_script %}
-    <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         var show_invisibles = true;
         var wrap_text = true;
@@ -165,15 +162,25 @@
                     $("#snippet-form").submit();
                 }
             });
+
             $('#delete-snippet').on('click', function () {
-                $('#snippet-group').val(group_backup);
-                $('#snippet-scenario').val(scenario_backup);
-                if (confirm("Are you sure? A deletion cannot be undone.")) {
+                show_confirmation(
+                    'Confirm Snippet Deletion',
+                    'Are you sure? A deletion cannot be undone.',
+                    'Delete',
+                    'btn-danger'
+                );
+                return false;
+            });
+
+            get_confirmation_result(function(confirmed) {
+                if (confirmed) {
+                    $('#snippet-group').val(group_backup);
+                    $('#snippet-scenario').val(scenario_backup);
                     snippet_form = $('#snippet-form');
                     snippet_form.attr('action', '/delete_snippet');
                     snippet_form.submit();
                 }
-                return false;
             });
         });
     </script>

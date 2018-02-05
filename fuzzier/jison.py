@@ -78,7 +78,7 @@ class Jison:
         self.ratio_method = None
 
         if json_string or file_name:
-            self.load_json(json_string, file_name)
+            self.load(json_string, file_name)
 
     def check_json_string(self, json_content: str) -> str:
         if json_content:
@@ -103,7 +103,7 @@ class Jison:
 
         return multi_sub.sub(one_xlat, text)
 
-    def load_json(self, json_string=None, file_name: str = None):
+    def load(self, json_string=None, file_name: str = None):
         """
         if Json string is manually provided then Json in file is ignored
 
@@ -145,6 +145,7 @@ class Jison:
             raise Exception('Json file is empty')
 
         self.length = len(self.json)
+        return self
 
     def get_object(self, obj_name: str, value_only: bool = False):
         """
@@ -161,11 +162,11 @@ class Jison:
             return {}
 
         cache = self.json
-        self.load_json(
+        self.load(
             f'{{{self.json[self.chunk_location[0]:self.chunk_location[1]]}}}')
         returned_dict = self.parse()
 
-        self.load_json(cache)
+        self.load(cache)
         self.chunk_location.clear()
 
         if returned_dict:
@@ -202,7 +203,7 @@ class Jison:
         if isinstance(obj_name, str):
             for key in self.chunk_location_dict:
                 for chunk in self.chunk_location_dict.get(key):
-                    self.load_json(f'{{{cache[chunk[0]:chunk[1]]}}}')
+                    self.load(f'{{{cache[chunk[0]:chunk[1]]}}}')
                     result_dict = self.parse()
 
                     if result_dict:
@@ -217,7 +218,7 @@ class Jison:
                 if chunks_for_each_string:
                     returned_list.append([])
                     for chunk in chunks_for_each_string:
-                        self.load_json(f'{{{cache[chunk[0]:chunk[1]]}}}')
+                        self.load(f'{{{cache[chunk[0]:chunk[1]]}}}')
                         result_dict = self.parse()
 
                         if result_dict:
@@ -228,7 +229,7 @@ class Jison:
                 else:
                     returned_list.append(None)
 
-        self.load_json(cache)
+        self.load(cache)
         self.chunk_location_dict.clear()
 
         if not returned_list:
@@ -382,7 +383,7 @@ class Jison:
     def parse(self, recursion: int = None) -> dict:
         if not hasattr(self, 'json'):
             raise JsonNotLoaded(
-                'Json string is not loaded\nPlease load Json via running Jison.load_json() before any operation')
+                'Json string is not loaded\nPlease load Json via running Jison.load() before any operation')
 
         if self.json:
             result_dict = self.scanner(recursion)

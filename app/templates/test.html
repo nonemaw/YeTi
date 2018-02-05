@@ -1,43 +1,83 @@
+{% extends "base.html" %}
 
-{% block scripts %}
+{% block head %}
     {{ super() }}
-    {{ moment.include_moment() }}
-    <script type=text/javascript>$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};</script>
-    <script src="{{ url_for('static', filename='js/jquery.js', _external=True) }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-select.min.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script src="{{ url_for('static', filename='js/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
-    <script>
-        $.material.init();
-        var save_session = true;
-        var show_invisibles = true;
-        var wrap_text = true;
-        var initial_syntax = $('#syntax option:selected').val();
-        var initial_theme = $('#theme option:selected').val();
-        var initial_font_size = $('#font-size option:selected').val();
-        var initial_font_family = $('#font-family option:selected').val();
-        var code_section = ace.edit("code-section");
-        var snippet_section = ace.edit("snippet-section");
-        code_section.setTheme("ace/theme/" + initial_theme);
-        code_section.session.setMode("ace/mode/" + initial_syntax);
-        code_section.setOption("showInvisibles", show_invisibles);
-        code_section.setOption("fontFamily", initial_font_family);
-        code_section.setOption("fontSize", parseInt(initial_font_size));
-        code_section.getSession().setUseWrapMode(wrap_text);
-        code_section.setShowPrintMargin(false);
-        snippet_section.setTheme("ace/theme/" + initial_theme);
-        snippet_section.session.setMode("ace/mode/" + initial_syntax);
-        snippet_section.setOption("showInvisibles", show_invisibles);
-        snippet_section.setOption("fontFamily", initial_font_family);
-        snippet_section.setOption("fontSize", 16);
-        snippet_section.getSession().setUseWrapMode(true);
-        snippet_section.setShowPrintMargin(false);
-        // get selected code: code_section.getSelectedText()
 
-        $('#subgroup-selector').prop('disabled', true);
-        $('#variable-selector').prop('disabled', true);
-        $('#snippet-scenario-selector').prop('disabled', true);
-    </script>
-    {% block page_script %}{% endblock %}
+{% endblock %}
+
+
+{% block narrow_content %}
+<button class="btn btn-default" id="test">Test</button>
+{% endblock %}
+
+
+{% block page_script %}
+<script>
+$(document).ready(function() {
+    function hide_notification() {
+        var m = $('#notification');
+        m.modal('hide');
+    }
+
+    function show_confirmation(title, body, back_color, button_text, button_type) {
+        var m = $('#notification');
+        var m_content = $('#notification-content');
+        var m_title = $('#notification-title');
+        var m_body = $('#notification-body');
+        var m_btn2 = $('#notification-btn2');
+
+        if (title !== undefined) {
+            m_title.text(title);
+        }
+        if (body !== undefined) {
+            m_body.text(body);
+        }
+        if (back_color !== undefined) {
+            m_content.css('background-color', back_color);
+        }
+        if (button_text !== undefined) {
+            m_btn2.text(button_text);
+        }
+        if (button_type !== undefined) {
+            m_btn2.removeClass("btn-default btn-warning btn-success btn-info btn-danger").addClass(button_type);
+        }
+        m.modal('show');
+    }
+
+    function get_confirm(callback) {
+        var m_btn1 = $('#notification-btn1');
+        var m_btn2 = $('#notification-btn2');
+        m_btn1.click(function() {
+            hide_notification();
+            callback(false);
+        });
+        m_btn2.click(function() {
+            hide_notification();
+            callback(true);
+        });
+    }
+
+
+
+    $("#test").on("click", function() {
+        show_confirmation(
+            'Confirm Deletion',
+            'Are you sure? A deletion cannot be undone.',
+            '#eadbdb',
+            'Delete',
+            'btn-danger'
+        );
+    });
+
+    get_confirm(function(result) {
+        if (result) {
+            $("#test").remove();
+        }
+    })
+
+
+});
+</script>
 {% endblock %}
 
 

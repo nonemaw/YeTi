@@ -29,6 +29,7 @@ $.ajax({
     }
 });
 
+
 function variable_initialization(subgroup_id, local_var_cache) {
     $.ajax({
         type: 'GET',
@@ -62,8 +63,8 @@ function variable_initialization(subgroup_id, local_var_cache) {
                         var multi_choice_table = $('#multi-choice-table');
                         multi_choice_table.empty();
                         if (variable_detail[3] && (Object.keys(variable_detail[3]).length)) {
-                            $('#choice-value-title').text('Value');
-                            $('#choice-text-title').text('Text');
+                            $('#choice-value-title').text('.value');
+                            $('#choice-text-title').text('.text');
                             for (index in variable_detail[3]) {
                                 multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(variable_detail[3][index][0]) + '</td><td class="col-md-7">' + variable_detail[3][index][1] + '</td></tr>');
                             }

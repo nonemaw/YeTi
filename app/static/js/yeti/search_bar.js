@@ -56,14 +56,6 @@ function search(pattern, count) {
     });
 }
 
-$('#search-button').click(function() {
-    var pattern = $('#search-field').val();
-    if (pattern) {
-        search(pattern, 8);
-    }
-    return false;
-});
-
 // click on search result
 $('#variable-search-table').on('click','.x',function(event){
     // get table's row id, replace all leading non-digits with nothing
@@ -107,4 +99,27 @@ $('#variable-search-table').on('click','.x',function(event){
             alert('Unexpected error in acquiring result');
         }
     });
+});
+
+// update table when a variable of search result is selected
+$('#variable-selector').on('change', function(){
+    $('#variable-search-table').css('display', 'none');
+    $('#variable-search-table-head').css('display', 'none');
+    $('#variable-selector-table').css('display', '');
+    var var_detail = local_var_cache[$('#variable-selector option:selected').val()];
+    $('#var-variable').text($('#variable-selector option:selected').val());
+    $('#var-usage').text(var_detail[0]);
+    $('#var-type').text(var_detail[1]);
+    var multi_choice_table = $('#multi-choice-table');
+    multi_choice_table.empty();
+    if (var_detail[2] && (Object.keys(var_detail[2]).length)) {
+        $('#choice-value-title').text('Value');
+        $('#choice-text-title').text('Text');
+        for (index in var_detail[2]) {
+            multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">' + String(var_detail[2][index][0]) + '</td><td class="col-md-7">' + var_detail[2][index][1] + '</td></tr>');
+        }
+    }
+    else {
+        multi_choice_table.append('<tr><td class="col-md-5" style="font-family:Consolas">/</td><td class="col-md-7">/</td></tr>');
+    }
 });

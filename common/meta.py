@@ -1,10 +1,10 @@
-from app.db import mongo_connect, client
+from common.db import mongo_connect, MongoConfig
 from common.crypto import AESCipher
 from uni_parser.loader import ParserLoader
 
 
 class Meta:
-    db = mongo_connect(client, 'ytml')
+    db = mongo_connect(MongoConfig.HOME.lower())
 
     # `crypto` variable is an instance for AESCipher
     crypto = None

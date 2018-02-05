@@ -1,149 +1,315 @@
 
 {% extends "base.html" %}
-{% import "_macros.html" as macros %}
 
 {% block title %}{{ user_utl.username }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/responstable.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+{% endblock %}
 
 {% block narrow_content %}
     <div class="container">
         <div class="row">
-            <div class="col-md-1"></div>
-            <div class="col-md-7">
-                <div class="page-header">
-                    <img class="img-thumbnail profile-thumbnail" src="{{ user_utl.gravatar(size=256) }}">
-                    <div class="profile-header">
-                        {% if user_utl.is_administrator() %}
-                            <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
-                        {% elif not user_utl.is_confirmed %}
-                            <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
-                        {% else %}
-                            <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
-                        {% endif %}
-                        {% if user_utl.name or user_utl.location %}
-                        <p>
-                            {% if user_utl.name %}
-                                <strong>Real Name:</strong> {{ user_utl.name }}
-                                <br>
-                            {% endif %}
-                            {% if user_utl.location %}
-                                <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
-                                <br>
-                            {% endif %}
-                        {% endif %}
-                        <p>
-                            <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
+            <div class="page-header">
+                <img class="img-thumbnail profile-thumbnail" src="{{ user_utl.gravatar(size=256) }}">
+                <div class="profile-header">
+                    {% if user_utl.is_administrator() %}
+                        <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
+                    {% elif not user_utl.is_confirmed %}
+                        <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
+                    {% else %}
+                        <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
+                    {% endif %}
+                    {% if user_utl.name or user_utl.location %}
+                    <p>
+                        {% if user_utl.name %}
+                            <strong>Real Name:</strong> {{ user_utl.name }}
                             <br>
-                            <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
-                            <br>
-                            <strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>
-                        </p>
-                        {% if user_utl.about_me %}
-                            <p>
-                                <strong>About Me:</strong> {{ user_utl.about_me }}
-                            </p>
                         {% endif %}
+                        {% if user_utl.location %}
+                            <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
+                            <br>
+                        {% endif %}
+                    {% endif %}
+                    <p>
+                        <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
+                        <br>
+                        <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
+                        <br>
+                        <strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>
+                    </p>
+                    {% if user_utl.about_me %}
                         <p>
-                            {% if user_utl.id == current_user.id %}
-                                <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
-                            {% endif %}
-                            {% if current_user.is_administrator() %}
-                                <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
-                            {% endif %}
+                            <strong>About Me:</strong> {{ user_utl.about_me }}
                         </p>
-                    </div>
+                    {% endif %}
+                    <p>
+                        {% if user_utl.id == current_user.id %}
+                            <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
+                        {% endif %}
+                        {% if current_user.is_administrator() %}
+                            <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
+                        {% endif %}
+                    </p>
                 </div>
             </div>
-            <div class="col-md-3" style="padding-top: 50px">
-                {% if user_utl.is_administrator() %}
-                    <form id="connect-to-company-form">
-                        <label for="syntax" style="font-size:15px">Company</label>
-                        <input id="company-name" type="text" class="form-control" value="{{ current_company }}" style="width: 80%">
-                        <label for="syntax" style="font-size:15px">XPLAN Username</label>
-                        <input id="company-username" type="text" class="form-control" style="width: 80%">
-                        <label for="syntax" style="font-size: 15px">XPLAN Password</label>
-                        <input id="company-password" type="password" class="form-control" style="width: 80%">
-                        <button class="btn btn-warning" id="refresh-database">Refresh Database</button>
-                    </form>
-                {% endif %}
-            </div>
-            <div class="col-md-1"></div>
         </div>
         <div class="row">
-            <ul class="nav nav-tabs">
-                <li class="active"><a href="">Statistic</a></li>
-                <li class="active"><a href="">Snippet Management</a></li>
+            <ul class="nav nav-tabs" role="tablist" style="border-bottom: 4px solid #aa0055;">
+                <li class="active" id="show-statistic-tab">
+                    <a href="#show-statistic" role="tab" data-toggle="tab">Statistics</a>
+                </li>
+                <li id="show-snippet-tab">
+                    <a href="#show-snippet" role="tab" data-toggle="tab">Snippet Management</a>
+                </li>
+                {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
+                <li id="show-management-tab">
+                    <a href="#show-management" role="tab" data-toggle="tab">Database Management</a>
+                </li>
+                {% endif %}
             </ul>
 
+            <div class="tab-content">
+                <div class="tab-pane fade in active" id="show-statistic" role="tabpanel" >
+                    ...xoxoxoxoxox xoxoxoxoxox
+                </div>
+                <div class="tab-pane fade in" id="show-snippet" role="tabpanel" >
+                    ...xoxoxoxoxox xoxoxoxoxox
+                </div>
+                {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
+                <div class="tab-pane fade in" id="show-management" role="tabpanel" >
 
+                    <!-- Db list table -->
+                    <table class="responstable" id="db-table">
+                        <thead>
+                            <tr >
+                                <th class="text-center" style="font-size:16px;width:20%">Existing Database</th>
+                                <th class="text-center" style="font-size:16px;width:20%">Collection Name</th>
+                                <th class="text-center" style="font-size:16px;width:41%">Timestamp</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Delete Me</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Update Me</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id='list0' data-id="0" class="hide">
+                                <td data-name="company" rowspan="2">Company Name</td>
+                                <td data-name="collection-a">Collection1</td>
+                                <td data-name="timestamp-a">Timestamp1</td>
+                                <td data-name="del" rowspan="2">
+                                    <button name="" class='btn btn-danger glyphicon glyphicon-trash row-delete'></button>
+                                <td data-name="update" rowspan="2">
+                                    <button name="" class='btn btn-info glyphicon glyphicon-open row-update'></button>
+                                </td>
+                            </tr>
+                            <tr class="hide">
+                                <td data-name="collection-b">Collection2</td>
+                                <td data-name="timestamp-b">Timestamp2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- end of Db list table -->
+                    <!-- end of new list table -->
+                    <table class="responstable" id="new-table">
+                        <thead>
+                            <tr id="new-table-head" style="display:none">
+                                <th class="text-center" style="font-size:16px;width:27%">Company Name</th>
+                                <th class="text-center" style="font-size:16px;width:27%">XPLAN Username</th>
+                                <th class="text-center" style="font-size:16px;width:27%">XPLAN Password</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Cancel Me</th>
+                                <th class="text-center" style="font-size:16px;width:9.5%">Add Me</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id='add0' data-id="0" class="hide">
+                                <td data-name="name">
+                                    <input name='company-name'  placeholder='Company Name' class="form-control"/>
+                                </td>
+                                <td data-name="username">
+                                    <input name='company-username' placeholder='XPLAN Username' class="form-control"/>
+                                </td>
+                                <td data-name="password">
+                                    <input name="company-password" placeholder="XPLAN Password" class="form-control">
+                                </td>
+                                <td data-name="del">
+                                    <button name="del0" class='btn btn-warning glyphicon glyphicon-minus row-remove'></button>
+                                </td>
+                                <td data-name="new">
+                                    <button name="new0" class='btn btn-success glyphicon glyphicon-plus row-new'></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <a id="add-company" class="btn btn-default pull-right">Add New Company</a>
+                    <!-- end of new list table -->
 
-{#            <ul class="posts">#}
-{#                {% for post in posts %}#}
-{#                <li class="post">#}
-{#                    <div class="post-content">#}
-{#                        <div class="post-date">{{ moment(post.get('timestamp')).fromNow() }}</div>#}
-{#                        <div class="post-author">#}
-{#                            <a href="{{ url_for('main.user', id=post.get('author_id')) }}">{{ post.get('author') }}</a>#}
-{#                        </div>#}
-{#                        <div class="post-body">#}
-                            {# 如果 post.body_html 字段存在，还要把 post.body 换成 post.body_html #}
-                            {# 渲染 HTML 格式内容时使用 | safe 后缀，其目的是告诉 Jinja2 不要转义 HTML 元素。出于安全考虑默认情况下 Jinja2 会转义所有模板变量 #}
-                            {# 因为 body_html 的 HTML 内容是在服务器上生成，因此可以放心渲染#}
-{#                            {% if post.get('body_html') %}#}
-{#                                {{ post.get('body_html') | safe }}#}
-{#                            {% else %}#}
-{#                                {{ post.body }}#}
-{#                            {% endif %}#}
-{#                        </div>#}
-{#                        <div class="post-footer">#}
-{#                            {% if current_user.id == post.get('author_id') %}#}
-{#                            <a href="{{ url_for('main.edit_post', id=post.get('_id')) }}"><span class="label label-primary">Edit</span></a>#}
-{#                            <a href="{{ url_for('main.delete_post', id=post.get('_id')) }}"><span class="label label-warning">Delete</span></a>#}
-{#                            {% elif current_user.is_administrator() %}#}
-{#                            <a href="{{ url_for('main.delete_post', id=post.get('_id')) }}"><span class="label label-danger">Delete [Admin]</span></a>#}
-{#                            {% endif %}#}
-{#                            <a href="{{ url_for('main.post', id=post.get('_id')) }}"><span class="label label-default">Permalink</span></a>#}
-{#                            {% if current_user.is_confirmed %}#}
-{#                            <a href="{{ url_for('main.post', id=post.get('_id')) }}#comments">#}
-{#                                <span class="label label-primary">{{ post.get('comments').__len__() }} Comments</span>#}
-{#                            </a>#}
-{#                            {% endif %}#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </li>#}
-{#                {% endfor %}#}
-{#            </ul>#}
-{##}
-{##}
-{##}
-{##}
-{#            {% if pagination %}#}
-{#                <div class="pagination">#}
-{#                    {{ macros.pagination_widget(pagination, 'main.user', id=user_utl.id) }}#}
-{#                </div>#}
-{#            {% endif %}#}
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}
 
 {% block page_script %}
+    <script src="{{ url_for('static', filename='js/yeti/db_management.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
-    $('#refresh-database').click(function(ev){
-        ev.preventDefault();
-        function validate(fields) {
-            var success = true;
-            fields.forEach(function(field) {
-                if (!field.val()) {
-                    success = false;
+        $(document).ready(function() {
+            build_db_table();
+
+            $("#add-company").on("click", function() {
+                $("#add-company").hide();
+                $('#new-table-head').fadeIn();
+                add_row("new-table");
+            });
+
+            get_confirmation_result(function(confirmed) {
+                if (confirmed) {
+                    var company;
+                    var confirm_type = $('#confirmation').attr('datatype');
+
+                    if (confirm_type === 'Delete') {
+                        company = local_cache['d_company'];
+                        send_db_management_message(company, 'delete');
+                    }
+
+                    else if (confirm_type === 'Update') {
+                        company = local_cache['u_company'];
+                        send_db_management_message(company, 'update');
+                    }
+
+                    else if (confirm_type === 'Create') {
+                        company = local_cache['n_company'];
+                        var login_info = {
+                            'company': company,
+                            'username': local_cache['n_username'],
+                            'password': local_cache['n_password']
+                        };
+                        send_db_management_message(company, 'create', login_info);
+                    }
+
+                    local_cache = {};
+                }
+                else {
+                    local_cache = {};
                 }
             });
-            return success;
-        }
 
 
 
 
 
+        });
 
+    particlesJS("particles-js", {
+        "particles": {
+            "number": {
+                "value": 24,
+                "density": {
+                    "enable": true,
+                    "value_area": 1000
+                }
+            },
+            "color": {
+                "value": "#009688"
+            },
+            "shape": {
+                "type": "circle",
+                "stroke": {
+                    "width": 0,
+                    "color": "#000000"
+                },
+                "polygon": {
+                    "nb_sides": 5
+                },
+                "image": {
+                    "src": "img/github.svg",
+                    "width": 100,
+                    "height": 100
+                }
+            },
+            "opacity": {
+                "value": 0.5,
+                "random": false,
+                "anim": {
+                    "enable": false,
+                    "speed": 1,
+                    "opacity_min": 0.1,
+                    "sync": false
+                }
+            },
+            "size": {
+                "value": 3,
+                "random": true,
+                "anim": {
+                    "enable": false,
+                    "speed": 40,
+                    "size_min": 0.1,
+                    "sync": false
+                }
+            },
+            "line_linked": {
+                "enable": true,
+                "distance": 150,
+                "color": "#009688",
+                "opacity": 0.4,
+                "width": 1
+            },
+            "move": {
+                "enable": true,
+                "speed": 2,
+                "direction": "none",
+                "random": false,
+                "straight": false,
+                "out_mode": "out",
+                "bounce": false,
+                "attract": {
+                    "enable": false,
+                    "rotateX": 600,
+                    "rotateY": 1200
+                }
+            }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": {
+                "onhover": {
+                    "enable": false,
+                    "mode": "repulse"
+                },
+                "onclick": {
+                    "enable": false,
+                    "mode": "push"
+                },
+                "resize": true
+            },
+            "modes": {
+                "grab": {
+                    "distance": 400,
+                    "line_linked": {
+                        "opacity": 1
+                    }
+                },
+                "bubble": {
+                    "distance": 400,
+                    "size": 40,
+                    "duration": 2,
+                    "opacity": 8,
+                    "speed": 3
+                },
+                "repulse": {
+                    "distance": 200,
+                    "duration": 0.4
+                },
+                "push": {
+                    "particles_nb": 4
+                },
+                "remove": {
+                    "particles_nb": 2
+                }
+            }
+        },
+        "retina_detect": true
     });
     </script>
 {% endblock %}
