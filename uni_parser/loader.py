@@ -69,6 +69,10 @@ class ParserLoader:
         result = None
         local_dict = locals()
         if source_file and source_code:
+            # bug of Python3.6 ? `exec()` does not change variable's value
+            # on Python2.x it works
+            #
+            # globals() as alternative solution
             exec(
                 f'from uni_parser.parser_{self.grammar} import parse\nresult = parse({source_file}, """{source_code}""", {message_only}, "{debug}")',
                 globals(),

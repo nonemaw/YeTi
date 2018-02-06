@@ -1,4 +1,5 @@
 import json
+import os
 from flask import render_template, redirect, url_for, request, abort, flash
 from flask_login import current_user, login_required
 from bson import ObjectId
@@ -9,7 +10,9 @@ from app.models import UserUtl, Snippet
 from app.decorators import admin_required
 from app.models import User
 from common.general import random_word
-from common.db import acquire_db_summary, drop_db
+from common.db import acquire_db_summary, drop_db, empty_collection, \
+    mongo_connect
+from crawlers.loader import CrawlerLoader
 
 
 @main.route('/test')
@@ -362,26 +365,33 @@ def db_management():
             company = received_json.get('company')
             login_info = received_json.get('login_info')
             if company.upper() == 'YTML':
-                company = 'YETI'
+                db_name = 'YTML'
             else:
-                company = f'YETI_{company.upper()}'
+                db_name = f'{company.upper()}'
 
+            # delte a DB
             if message == 'delete':
-                drop_db(company)
+                if db_name == 'YETI':
+                    empty_collection(db_name,
+                                     ['Group', 'SubGroup', 'InterfaceNode',
+                                      'InterfaceLeafPage'],
+                                     force=True)
+                else:
+                    drop_db(db_name)
 
-            elif message == 'update':
-                # run field fetcher
-                # run interface fetcher
-                # login_info
-                pass
+                json_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 'fuzzier', 'json', f'{company.lower()}.json')
+                try:
+                    os.remove(json_file)
+                except:
+                    pass
 
-                # TODO: 更新DB时若目标DB与当前用户DB不一致，如何处理？
-                # TODO: update 和 create 操作应当一样，都需要登录
-
-
-
-            elif message == 'create':
-                pass
+            # update or create a DB
+            elif message in ['update', 'create']:
+                local_db = mongo_connect(db_name)
+                loader = CrawlerLoader(company, f_db=local_db, i_db=local_db)
+                loader.fetch(login_info.get('username'),
+                             login_info.get('password'),
+                             operation_type=message)
 
             else:
                 return json.dumps({'good': False}), 500
@@ -393,7 +403,6 @@ def db_management():
 
     except:
         return json.dumps({'good': False}), 500
-
 
 # TODO: RESERVED, for celery
 # @login_required

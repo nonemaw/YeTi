@@ -12,47 +12,59 @@
 {% block narrow_content %}
     <div class="container">
         <div class="row">
-            <div class="page-header">
+            <div class="page-header" style="padding-bottom:0;margin: 35px 0 20px;">
                 <img class="img-thumbnail profile-thumbnail" src="{{ user_utl.gravatar(size=256) }}">
-                <div class="profile-header">
-                    {% if user_utl.is_administrator() %}
-                        <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
-                    {% elif not user_utl.is_confirmed %}
-                        <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
-                    {% else %}
-                        <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
-                    {% endif %}
-                    {% if user_utl.name or user_utl.location %}
-                    <p>
-                        {% if user_utl.name %}
-                            <strong>Real Name:</strong> {{ user_utl.name }}
-                            <br>
-                        {% endif %}
-                        {% if user_utl.location %}
-                            <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
-                            <br>
-                        {% endif %}
-                    {% endif %}
-                    <p>
-                        <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
-                        <br>
-                        <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
-                        <br>
-                        <strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>
-                    </p>
-                    {% if user_utl.about_me %}
-                        <p>
-                            <strong>About Me:</strong> {{ user_utl.about_me }}
-                        </p>
-                    {% endif %}
-                    <p>
-                        {% if user_utl.id == current_user.id %}
-                            <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
-                        {% endif %}
-                        {% if current_user.is_administrator() %}
-                            <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
-                        {% endif %}
-                    </p>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="profile-header">
+                            {% if user_utl.is_administrator() %}
+                                <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as the Glorious Site Administrator</i></h4>
+                            {% elif not user_utl.is_confirmed %}
+                                <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>(Account Unconfirmed)</i></h4>
+                            {% else %}
+                                <h1>&lt;/ {{ user_utl.username }}&gt;</h1><h4><i>as a very normal user</i></h4>
+                            {% endif %}
+                            {% if user_utl.name or user_utl.location %}
+                                {% if user_utl.name %}
+                                    <strong>Real Name:</strong> {{ user_utl.name }}
+                                    <br>
+                                {% endif %}
+                                {% if user_utl.location %}
+                                    <strong>From:</strong> <a href="http://maps.google.com/?q={{ user_utl.location }}">{{ user_utl.location }}</a>
+                                    <br>
+                                {% endif %}
+                            {% endif %}
+                                <strong>Email:</strong> <a href="mailto:{{ user_utl.email }}">{{ user_utl.email }}</a>
+                                <br>
+                                <strong>Member since</strong> <i>{{ moment(user_utl.member_since).format('L') }}.</i>
+                                <!--<br>-->
+                                <!--<strong>Last seen since</strong> <i>{{ moment(user_utl.last_login).fromNow() }}.</i>-->
+                            {% if user_utl.about_me %}
+                                <p>
+                                    <strong>About Me:</strong> {{ user_utl.about_me }}
+                                </p>
+                            {% endif %}
+                            <p>
+                                {% if user_utl.id == current_user.id %}
+                                    <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
+                                {% endif %}
+                                {% if current_user.is_administrator() %}
+                                    <a class="btn btn-danger" href="{{ url_for('main.edit_profile_admin', id=user_utl.id) }}">Modify Profile (Admin)</a>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div>
+                            <ul class="list-group" style="margin-top: 20px">
+                                <b>Reserved User List</b>
+                                <li class="list-group-item">User1<span class="badge">1</span></li>
+                                <li class="list-group-item">User2<span class="badge">2</span></li>
+                                <li class="list-group-item">User3<span class="badge">3</span></li>
+                                <li class="list-group-item">User4<span class="badge">4</span></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -61,10 +73,10 @@
                 <li class="active" id="show-statistic-tab">
                     <a href="#show-statistic" role="tab" data-toggle="tab">Statistics</a>
                 </li>
+                {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
                 <li id="show-snippet-tab">
                     <a href="#show-snippet" role="tab" data-toggle="tab">Snippet Management</a>
                 </li>
-                {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
                 <li id="show-management-tab">
                     <a href="#show-management" role="tab" data-toggle="tab">Database Management</a>
                 </li>
@@ -125,13 +137,13 @@
                         <tbody>
                             <tr id='add0' data-id="0" class="hide">
                                 <td data-name="name">
-                                    <input name='company-name'  placeholder='Company Name' class="form-control"/>
+                                    <input name="company-name"  placeholder="Company Name (Case Insensitive)" class="form-control"/>
                                 </td>
                                 <td data-name="username">
-                                    <input name='company-username' placeholder='XPLAN Username' class="form-control"/>
+                                    <input name="company-username" placeholder="XPLAN Username" class="form-control"/>
                                 </td>
                                 <td data-name="password">
-                                    <input name="company-password" placeholder="XPLAN Password" class="form-control">
+                                    <input name="company-password" placeholder="XPLAN Password" class="form-control" type="password">
                                 </td>
                                 <td data-name="del">
                                     <button name="del0" class='btn btn-warning glyphicon glyphicon-minus row-remove'></button>
@@ -164,10 +176,13 @@
                 add_row("new-table");
             });
 
-            get_confirmation_result(function(confirmed) {
+            get_confirmation(function(confirmed) {
                 if (confirmed) {
                     var company;
-                    var confirm_type = $('#confirmation').attr('datatype');
+                    var login_info = null;
+                    var c = $('#confirmation');
+                    var c_body = $('#confirmation-body');
+                    var confirm_type = c.attr('datatype');
 
                     if (confirm_type === 'Delete') {
                         company = local_cache['d_company'];
@@ -176,12 +191,18 @@
 
                     else if (confirm_type === 'Update') {
                         company = local_cache['u_company'];
-                        send_db_management_message(company, 'update');
+                        login_info = {
+                            'company': company,
+                            'username': $(c_body.find('input')[0]).val(),
+                            'password': $(c_body.find('input')[1]).val()
+                        };
+                        c.modal('hide');
+                        send_db_management_message(company, 'update', login_info);
                     }
 
                     else if (confirm_type === 'Create') {
                         company = local_cache['n_company'];
-                        var login_info = {
+                        login_info = {
                             'company': company,
                             'username': local_cache['n_username'],
                             'password': local_cache['n_password']

@@ -60,6 +60,9 @@
 
 {% block content %}
     <div class="container-fluid" id="yeti">
+        <div id="overlay" style="display: none;">
+            <div class="loader"></div>
+        </div>
         <div class="row">
             <div style="width: 67%;margin:0px auto;">
                 {% for category, message in get_flashed_messages(with_categories=true) %}

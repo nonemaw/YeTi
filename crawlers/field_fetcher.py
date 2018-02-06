@@ -12,9 +12,10 @@ from fuzzier.jison import Jison
 
 
 class FieldFetcher:
-    def __init__(self, company: str, jison: Jison):
+    def __init__(self, company: str, jison: Jison, db=None):
         self.jison = jison
-        self.company = company
+        self.company = company.lower()
+        self.db = db
         self.BASE = f'https://{company}.xplan.iress.com.au'
         self.URL_LOGIN = f'https://{company}.xplan.iress.com.au/home'
         self.URL_LIST = f'https://{company}.xplan.iress.com.au/ufield/list'
@@ -22,12 +23,15 @@ class FieldFetcher:
         self.URL_LOGOUT = f'https://{company}.xplan.iress.com.au/home/logoff?'
 
     def change_company(self, company: str):
-        self.company = company
+        self.company = company.lower()
         self.BASE = f'https://{company}.xplan.iress.com.au'
         self.URL_LOGIN = f'https://{company}.xplan.iress.com.au/home'
         self.URL_LIST = f'https://{company}.xplan.iress.com.au/ufield/list'
         self.URL_WALKER = ''.join([f'https://{company}.xplan.iress.com.au/ufield/list_iframe?group=', '{}'])
         self.URL_LOGOUT = f'https://{company}.xplan.iress.com.au/home/logoff?'
+
+    def change_db(self, db=None):
+        self.db = db
 
     def fetch(self, username: str, password: str, group_only: str = None):
         # TODO: code is ugly, will refactored in the future
@@ -44,7 +48,7 @@ class FieldFetcher:
                         )
         logger = logging.getLogger('my_logger')
         logfile_hdlr = logging.FileHandler(
-            os.path.join(log_directory, 'fetcher.log'), 'w')
+            os.path.join(log_directory, 'f_fetcher.log'), 'w')
         logfile_hdlr.setFormatter(
             logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
         logger.addHandler(logfile_hdlr)
@@ -89,7 +93,8 @@ class FieldFetcher:
                             # update former group
                             Group.update_doc(
                                 {'_id': ObjectId(former_group_id)},
-                                {'sub_groups': sub_group_list})
+                                {'sub_groups': sub_group_list},
+                                specific_db=self.db)
                             break
 
                         try:
@@ -118,10 +123,12 @@ class FieldFetcher:
                                         sub_group_list):
                                     Group.update_doc(
                                         {'_id': ObjectId(former_group_id)},
-                                        {'sub_groups': sub_group_list})
+                                        {'sub_groups': sub_group_list},
+                                        specific_db=self.db)
                                     sub_group_list = []
                                 former_group_id = Group(str(group_var),
-                                                        str(group_name)).new()
+                                                        str(group_name)).new(
+                                    specific_db=self.db)
                                 former_group = group_var
 
                             logger.info(
@@ -158,8 +165,11 @@ class FieldFetcher:
                                         # SubGroup to DB
                                         if former_sub_group and former_sub_group_id:
                                             SubGroup.update_doc(
-                                                {'_id': ObjectId(former_sub_group_id)},
-                                                {'variables': former_sub_group_variables})
+                                                {'_id': ObjectId(
+                                                    former_sub_group_id)},
+                                                {
+                                                    'variables': former_sub_group_variables},
+                                                specific_db=self.db)
                                             if group_var in to_json:
                                                 to_json[group_var].append({
                                                     former_sub_group: variables_to_json})
@@ -170,7 +180,7 @@ class FieldFetcher:
                                             variables_to_json = []
 
                                         former_sub_group_id = SubGroup(
-                                            sub_group).new()
+                                            sub_group).new(specific_db=self.db)
                                         former_sub_group = sub_group
                                         sub_group_list.append(
                                             former_sub_group_id)
@@ -237,7 +247,8 @@ class FieldFetcher:
                             # update last subgroup's variables
                             SubGroup.update_doc(
                                 {'_id': ObjectId(former_sub_group_id)},
-                                {'variables': former_sub_group_variables})
+                                {'variables': former_sub_group_variables},
+                                specific_db=self.db)
                             if group_var in to_json:
                                 to_json[group_var].append(
                                     {former_sub_group: variables_to_json})
@@ -249,7 +260,7 @@ class FieldFetcher:
                         except Exception as e:
                             logger.warning(f'Error message: {str(e)}')
                             continue
-                    # endfor
+                            # endfor
 
                 # endif, logout
                 session.get(self.URL_LOGOUT)

@@ -108,15 +108,15 @@ function show_notification(title, body, button_text, button_type) {
         n_title.text(title);
         if (button_type && button_type === 'btn-danger') {
             n_title.css('color', '#aa0055');
-            n_content.css('background-color', '#eadee2');
+            n_content.css('background-color', '#fff3f7');
         }
         else if (button_type && button_type === 'btn-info') {
             n_title.css('color', '#0063c5');
-            n_content.css('background-color', '#dae4ea');
+            n_content.css('background-color', '#eef9ff');
         }
         else {
             n_title.css('color', '#009688');
-            n_content.css('background-color', '#deeae5');
+            n_content.css('background-color', '#f2fffa');
         }
     }
     if (body !== undefined) {
@@ -144,15 +144,15 @@ function show_confirmation(title, body, button_text, button_type) {
         c_title.text(title);
         if (button_type && button_type === 'btn-danger') {
             c_title.css('color', '#aa0055');
-            c_content.css('background-color', '#eadee2');
+            c_content.css('background-color', '#fff2f7');
         }
         else if (button_type && button_type === 'btn-info') {
             c_title.css('color', '#0063c5');
-            c_content.css('background-color', '#dae4ea');
+            c_content.css('background-color', '#eff9ff');
         }
         else {
             c_title.css('color', '#009688');
-            c_content.css('background-color', '#deeae5');
+            c_content.css('background-color', '#f3fffa');
         }
     }
     if (body !== undefined) {
@@ -169,16 +169,37 @@ function show_confirmation(title, body, button_text, button_type) {
 }
 
 
-function get_confirmation_result(callback) {
+function get_confirmation(callback) {
     var c = $('#confirmation');
+    var c_body = $('#confirmation-body');
     var c_btn1 = $('#confirmation-btn1');
     var c_btn2 = $('#confirmation-btn2');
+
     c_btn1.click(function() {
         c.modal('hide');
         callback(false);
     });
+
     c_btn2.click(function() {
-        c.modal('hide');
-        callback(true);
+        // if modal has a form
+        // `true` if the form has been fully filled, `false` vise versa
+        // the modal will be hidden in callback function
+        var inputs = c_body.find('input');
+        if (inputs.length) {
+            var filled = true;
+            inputs.each(function(i) {
+                if (!$(this).val()) {
+                    filled = false;
+                }
+            });
+            if (filled) {
+                callback(true);
+            }
+        }
+        // if the modal has no form, `true` and hide modal
+        else {
+            c.modal('hide');
+            callback(true);
+        }
     });
 }

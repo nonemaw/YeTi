@@ -28,27 +28,42 @@ class Group:
     def __str__(self):
         return f'<Group {self.var} - {self.name}>'
 
-    def new(self) -> str:
+    def new(self, specific_db = None) -> str:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
         document = {
             'var': self.var,
             'name': self.name,
             'sub_groups': []
         }
-        legacy = current_user.db.Group.find_one({'var': self.var})
+        legacy = db.Group.find_one({'var': self.var})
         if not legacy:
-            return str(current_user.db.Group.insert(document))
+            return str(db.Group.insert(document))
         else:
             return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(locate: dict, update: dict):
-        current_user.db.Group.update_one(locate, {'$set': update})
+    def update_doc(locate: dict, update: dict, specific_db = None):
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        db.Group.update_one(locate, {'$set': update})
 
     @staticmethod
-    def delete_doc(locate: dict):
-        to_be_deleted = current_user.db.Group.find_one(locate)
+    def delete_doc(locate: dict, specific_db = None):
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        to_be_deleted = db.Group.find_one(locate)
         sub_groups = to_be_deleted.get('sub_groups')
-        current_user.db.Group.delete_one(locate)
+        db.Group.delete_one(locate)
 
         for sub_group_id in sub_groups:
             try:
@@ -57,8 +72,13 @@ class Group:
                 pass
 
     @staticmethod
-    def search(locate: dict) -> dict:
-        return current_user.db.Group.find_one(locate)
+    def search(locate: dict, specific_db = None) -> dict:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        return db.Group.find_one(locate)
 
 
 class SubGroup:
@@ -71,28 +91,48 @@ class SubGroup:
     def __str__(self):
         return f'<SubGroup {self.name}>'
 
-    def new(self) -> str:
+    def new(self, specific_db = None) -> str:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
         document = {
             'name': self.name,
             'variables': []
         }
-        legacy = current_user.db.Variables.find_one({'name': self.name})
+        legacy = db.Variables.find_one({'name': self.name})
         if not legacy:
-            return str(current_user.db.SubGroup.insert(document))
+            return str(db.SubGroup.insert(document))
         else:
             return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(locate: dict, update: dict):
-        current_user.db.SubGroup.update_one(locate, {'$set': update})
+    def update_doc(locate: dict, update: dict, specific_db = None):
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        db.SubGroup.update_one(locate, {'$set': update})
 
     @staticmethod
-    def delete_doc(locate: dict):
-        current_user.db.SubGroup.delete_one(locate)
+    def delete_doc(locate: dict, specific_db = None):
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        db.SubGroup.delete_one(locate)
 
     @staticmethod
-    def search(locate: dict) -> dict:
-        return current_user.db.SubGroup.find_one(locate)
+    def search(locate: dict, specific_db = None) -> dict:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        return db.SubGroup.find_one(locate)
 
 
 class InterfaceNode:
@@ -126,7 +166,7 @@ class InterfaceNode:
                 return '', ''
         return '', ''
 
-    def new(self, force: bool = False, depth: int = 0) -> str:
+    def new(self, force: bool = False, depth: int = 0, specific_db = None) -> str:
         """
         normally when `new()` is called and a legacy data already exists, it
         does nothing but just return legacy data's serial number
@@ -153,12 +193,16 @@ class InterfaceNode:
         then I ONLY update/insert the content of the leaf node on depth = 3
         (when depth = 0 is the normal case)
         """
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
 
         # TODO: FIX ME
-        legacy = current_user.db.InterfaceNode.find_one(
+        legacy = db.InterfaceNode.find_one(
             {'id': self.node.get('id')})
         if not legacy:
-            return str(current_user.db.InterfaceNode.insert(self.node))
+            return str(db.InterfaceNode.insert(self.node))
 
         elif force and not depth:
             pushed_list = [x for x in self.node.get('children')
@@ -168,7 +212,7 @@ class InterfaceNode:
             # `pushed_list` is a list of {child} which are not in legacy children
             # is `pushed_list` then append each {child} to legacy's children list
             if pushed_list:
-                current_user.db.InterfaceNode.update_one(
+                db.InterfaceNode.update_one(
                     {'id': self.node.get('id')},
                     {
                         '$set': {
@@ -180,7 +224,7 @@ class InterfaceNode:
             # if `pushed_list` is empty, just make current children to overwrite
             # legacy's children
             else:
-                current_user.db.InterfaceNode.update_one(
+                db.InterfaceNode.update_one(
                     {'id': self.node.get('id')},
                     {'$set': {
                         'text': self.node.get('text'),
@@ -194,7 +238,7 @@ class InterfaceNode:
 
             # child node is a root node
             if re.search('^client_[0-9]+', child_node_id):
-                current_user.db.InterfaceNode.update_one(
+                db.InterfaceNode.update_one(
                     {
                         'id': self.node.get('id'),
                         query: child_node_id
@@ -210,12 +254,22 @@ class InterfaceNode:
         return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(locate: dict, update: dict):
-        current_user.db.InterfaceNode.update_one(locate, {'$set': update})
+    def update_doc(locate: dict, update: dict, specific_db = None):
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        db.InterfaceNode.update_one(locate, {'$set': update})
 
     @staticmethod
-    def search(locate: dict) -> dict:
-        return current_user.db.InterfaceNode.find_one(locate)
+    def search(locate: dict, specific_db = None) -> dict:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        return db.InterfaceNode.find_one(locate)
 
 
 class InterfaceLeafPage:
@@ -233,7 +287,12 @@ class InterfaceLeafPage:
     def __str__(self):
         return f'<InterfaceLeafPage {self.id}>'
 
-    def new(self, force: bool = False) -> str:
+    def new(self, force: bool = False, specific_db = None) -> str:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
         document = {
             'id': self.id,
             'text': self.text,
@@ -241,11 +300,11 @@ class InterfaceLeafPage:
             'menu_path': self.menu_path,
             'page': self.page
         }
-        legacy = current_user.db.InterfaceLeafPage.find_one({'id': self.id})
+        legacy = db.InterfaceLeafPage.find_one({'id': self.id})
         if not legacy:
-            return str(current_user.db.InterfaceLeafPage.insert(document))
+            return str(db.InterfaceLeafPage.insert(document))
         elif force:
-            current_user.db.InterfaceLeafPage.update_one(
+            db.InterfaceLeafPage.update_one(
                 {'id': self.id},
                 {'$set': {
                     'text': self.text,
@@ -258,12 +317,22 @@ class InterfaceLeafPage:
         return str(legacy.get('_id'))
 
     @staticmethod
-    def update_doc(locate: dict, update: dict):
-        current_user.db.InterfaceLeafPage.update_one(locate, {'$set': update})
+    def update_doc(locate: dict, update: dict, specific_db = None):
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        db.InterfaceLeafPage.update_one(locate, {'$set': update})
 
     @staticmethod
-    def search(locate: dict) -> dict:
-        return current_user.db.InterfaceLeafPage.find_one(locate)
+    def search(locate: dict, specific_db = None) -> dict:
+        if specific_db:
+            db = specific_db
+        else:
+            db = current_user.db
+
+        return db.InterfaceLeafPage.find_one(locate)
 
 
 class AnonymousUser(AnonymousUserMixin):

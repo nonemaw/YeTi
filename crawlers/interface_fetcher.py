@@ -1,15 +1,10 @@
 import requests
 import re
 import threading
-from multiprocessing.managers import BaseManager
 import queue
 from fuzzier.jison import Jison
 from bs4 import BeautifulSoup
 from app.models import InterfaceNode, InterfaceLeafPage
-
-
-class MetaManager(BaseManager):
-    pass
 
 
 class InterfaceFetcher:
@@ -32,22 +27,26 @@ class InterfaceFetcher:
         'medical insurance': 'Medical Insurance',
     }
 
-    def __init__(self, company: str, jison: Jison):
+    def __init__(self, company: str, jison: Jison, db=None):
         self.interface_header = {
             'Content-Type': 'application/json',
-            'referer': f'https://{company}.xplan.iress.com.au/factfind/edit_interface',
+            'referer': f'https://{company.lower()}.xplan.iress.com.au/factfind/edit_interface',
         }
-        self.URL_SOURCE = f'https://{company}.xplan.iress.com.au/RPC2/'
-        self.company = company
+        self.URL_SOURCE = f'https://{company.lower()}.xplan.iress.com.au/RPC2/'
+        self.company = company.lower()
         self.jison = jison
+        self.db = db
 
     def change_company(self, company: str):
         self.interface_header = {
             'Content-Type': 'application/json',
-            'referer': f'https://{company}.xplan.iress.com.au/factfind/edit_interface',
+            'referer': f'https://{company.lower()}.xplan.iress.com.au/factfind/edit_interface',
         }
-        self.URL_SOURCE = f'https://{company}.xplan.iress.com.au/RPC2/'
-        self.company = company
+        self.URL_SOURCE = f'https://{company.lower()}.xplan.iress.com.au/RPC2/'
+        self.company = company.lower()
+
+    def change_db(self, db=None):
+        self.db = db
 
     def update_name_ref(self, name_chunk: dict):
         if isinstance(name_chunk, dict):
@@ -123,7 +122,8 @@ class InterfaceFetcher:
                                                                  session,
                                                                  specific=specific)
                         InterfaceNode(node).new(force=True,
-                                                depth=len(specific))
+                                                depth=len(specific),
+                                                specific_db=self.db)
                         break
                     elif specific:
                         continue
@@ -132,14 +132,18 @@ class InterfaceFetcher:
                         threads.append(
                             threading.Thread(target=self.r_dump_interface,
                                              args=(menu_path, session,
-                                                   node.get('id'), _q)))
+                                                   node.get('id'), _q
+                                             )
+                            )
+                        )
                     else:
                         children = self.r_dump_interface(menu_path, session)
                         if children:
                             node['children'] = children
                         else:
                             node['type'] = 'other'
-                        InterfaceNode(node).new(force=True)
+                        InterfaceNode(node).new(force=True,
+                                                specific_db=self.db)
 
             if threads:
                 for _t in threads:
@@ -157,7 +161,7 @@ class InterfaceFetcher:
                         node['children'] = children
                     else:
                         node['type'] = 'other'
-                    InterfaceNode(node).new(force=True)
+                    InterfaceNode(node).new(force=True, specific_db=self.db)
 
             session.get(
                 f'https://{self.company}.xplan.iress.com.au/home/logoff?')
@@ -412,7 +416,7 @@ class InterfaceFetcher:
 
                 for option in soup.find('select',
                                         {'id': 'select_fields_0'}).find_all(
-                        'option'):
+                    'option'):
                     content.get('group').append(option.getText())
 
                 page['leaf_group'] = content
@@ -420,6 +424,7 @@ class InterfaceFetcher:
             elif leaf_type == 'field':
                 leaf_type = 'variable'
 
-        InterfaceLeafPage(node_id, name, leaf_type, menu_path, page).new()
+        InterfaceLeafPage(node_id, name, leaf_type, menu_path, page).new(
+            specific_db=self.db)
 
         return leaf_type

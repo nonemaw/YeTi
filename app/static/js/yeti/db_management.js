@@ -1,21 +1,11 @@
 var local_cache = {};
 
 function send_db_management_message(company, message, login_info) {
-    var sent_info;
-    if (message === 'create' && login_info) {
-        sent_info = {
-            company: company,
-            message: message,
-            login_info: login_info
-        };
-    }
-    else {
-        sent_info = {
-            company: company,
-            message: message,
-            login_info: null
-        };
-    }
+    var sent_info = {
+        company: company,
+        message: message,
+        login_info: login_info
+    };
 
     $.ajax({
         contentType: "application/json",
@@ -104,7 +94,7 @@ function build_db_table() {
         url: '/acquire_db_collection_summary',
         dataType: 'json',
         success: function (data, status, request) {
-            // empty existing table, only keep row[0] (header), row[1] and row[2] (hidden rows)
+            // empty existing table, only keep row[0] (header), row[1] and row[2] (hidden template rows)
             for (i = $('#db-table tr').length - 1; i >= 3; i --) {
                 $('#db-table tr:nth-child(' + i + ')').remove();
             }
@@ -213,7 +203,7 @@ function add_row(table, db, collections, timestamps) {
                     td.attr('style', 'font-size:15px;font-weight:bold')
                 }
                 else if (column_count === 3) {  // timestamp
-                    var timestamp1 = "<b>Created On:</b> " + timestamps[collections[0]][0] + "<br><b>Updated Since:</b> " + timestamps[collections[0]][1] + "";
+                    var timestamp1 = "<b>Created On:</b> " + timestamps[collections[0]][0] + "<br/><b>Updated Since:</b> " + timestamps[collections[0]][1] + "";
                     td = $("<td></td>", {
                         "data-name": data_name
                     });
@@ -306,7 +296,7 @@ function add_row(table, db, collections, timestamps) {
             local_cache['n_password'] = password;
             show_confirmation(
                 'Create Database <' + company + '>',
-                'By confirming, the creation progress of database <b>' + company + '</b> will be initiated and the whole operation will take around 30 minutes to finish.',
+                '<p>By confirming, the creation progress of database <b>' + company + '</b> will be initiated and the whole operation will take around 30 minutes to finish.</p><i>(Please make sure that the XPLAN account is correct and not under use, and will not be kicked out by others)</i>',
                 'Create',
                 'btn-success'
             );
@@ -321,7 +311,7 @@ function add_row(table, db, collections, timestamps) {
             local_cache['d_this'] = this;
             show_confirmation(
                 'Delete Database <' + company + '>',
-                'Are you sure? The database <b>' + company + '</b> will be deleted. You can recreate new database via button "<b>Add New Company</b>".',
+                '<p>Are you sure?</p><p>The database <b>' + company + '</b> will be deleted. You can create new database via button "<b>Add New Company</b>".</p>',
                 'Delete',
                 'btn-danger'
             );
@@ -336,7 +326,9 @@ function add_row(table, db, collections, timestamps) {
             local_cache['u_this'] = this;
             show_confirmation(
                 'Update Database <' + company + '>',
-                'By confirming, the update progress of database <b>' + company + '</b> will be initiated and the whole operation will take around 30 minutes to finish.',
+                '<p>By filling the form below to initiate the update progress of database <b>' + company + '</b>. The whole operation will take around 30 minutes to finish.</p><i>(Please make sure that the XPLAN account is correct and not under use, and will not be kicked out by others)</i>' +
+                '<div class="form-group is-empty"><input name="company-username" placeholder="XPLAN Username for ' + company + '" class="form-control" style="width:65%"/></div>' +
+                '<div class="form-group is-empty"><input name="company-password" placeholder="XPLAN Password for ' + company + '" class="form-control" style="width:65%" type="password"/></div>',
                 'Update',
                 'btn-info'
             );

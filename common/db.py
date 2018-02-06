@@ -11,13 +11,13 @@ class MongoConfig:
     PWD = 'admin123'
 
 
-def mongo_connect(company: str,):
+def mongo_connect(db_name: str,):
     client = MongoClient(MongoConfig.HOST, MongoConfig.PORT)
-    if company.upper() == MongoConfig.HOME:
+    if db_name.upper() == MongoConfig.HOME:
         db = client['YETI']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI')
     else:
-        db = client[f'YETI_{company.upper()}']
+        db = client[f'YETI_{db_name.upper()}']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI_'+company.upper())
 
     return db
@@ -80,7 +80,7 @@ def build_str_time(time) -> str:
         return time.strftime("%d/%m/%Y %H:%M")
 
 
-def create_dict_path(data: dict, path_dict: dict = None):
+def create_dict_path(data: dict, path_dict: dict = None) -> dict:
     """
     create a mongodb update path for a dictionary
     """
@@ -96,40 +96,64 @@ def create_dict_path(data: dict, path_dict: dict = None):
     return path_dict
 
 
-def empty_collection(db, collection: str, force: bool = False) -> bool:
+def empty_collection(db, collection, force: bool = False) -> bool:
     """
     empty collection but keep `timestamp`
     """
     try:
+        # drop collection
         if force:
-            db[collection].delete_many({})
+            if isinstance(collection, str):
+                db.drop_collection(collection)
+            elif isinstance(collection, list):
+                for c in collection:
+                    db.drop_collection(c)
+        # empty collection
         else:
-            db[collection].delete_many({
-                'type': {'$ne': '_timestamp'}
-            })
+            if isinstance(collection, str):
+                db[collection].delete_many({
+                    'type': {'$ne': '_timestamp'}
+                })
+            elif isinstance(collection, list):
+                for c in collection:
+                    db[c].delete_many({
+                        'type': {'$ne': '_timestamp'}
+                    })
     except:
         return False
 
     return True
 
 
-def drop_db(db_name):
-    with MongoClient(MongoConfig.HOST, MongoConfig.PORT) as client:
-        client.drop_database(db_name)
+def drop_db(db_name) -> bool:
+    try:
+        with MongoClient(MongoConfig.HOST, MongoConfig.PORT) as client:
+            client.drop_database(db_name)
+            return True
+    except:
+        return False
 
 
-def create_timestamp(db, collection: str) -> tuple:
+def create_timestamp(db, collection) -> tuple:
     """
     add `timestamp` for new collection
     """
     try:
         now = build_timestamp()
 
-        db[collection].insert_one({
-            'type': '_timestamp',
-            'creation': now,
-            'modification': now
-        })
+        if isinstance(collection, str):
+            db[collection].insert_one({
+                'type': '_timestamp',
+                'creation': now,
+                'modification': now
+            })
+        elif isinstance(collection, list):
+            for c in collection:
+                db[c].insert_one({
+                    'type': '_timestamp',
+                    'creation': now,
+                    'modification': now
+                })
     except:
         return None, None
 

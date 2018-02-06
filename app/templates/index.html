@@ -30,10 +30,6 @@
 {% endblock %}
 
 {% block wide_content %}
-    <div id="overlay" style="display: none;">
-        <div class="loader"></div>
-    </div>
-
     <!-- setting panel -->
     <div id="modal-small" class="modal fade bs-setting-modal-sm modal-index" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="padding-left:62vh;">
         <div class="modal-dialog modal-sm" role="document">
@@ -309,10 +305,10 @@
                             </tr>
                         </tbody>
                         <thead id="variable-search-table-head" style="display:none">
-                            <tr>
-                                <th id="choice-value-title" class="col-md-3" style="font-size:15px;padding:5px;"><i>Group</i></th>
-                                <th id="choice-text-title" class="col-md-4" style="font-size:15px;padding:5px;"><i>Sub-Group</i></th>
-                                <th id="choice-text-title" class="col-md-5" style="font-size:15px;padding:5px;"><i>Search Result</i></th>
+                            <tr style="color:#fff;">
+                                <th id="choice-value-title" class="col-md-3" style="font-size:15px;padding:5px;background-color:#167f92">Group</th>
+                                <th id="choice-text-title" class="col-md-4" style="font-size:15px;padding:5px;background-color:#167f92">Sub-Group</th>
+                                <th id="choice-text-title" class="col-md-5" style="font-size:15px;padding:5px;background-color:#167f92">Search Result</th>
                             </tr>
                         </thead>
                         <tbody id="variable-search-table" style="display:none; overflow-y: auto; height: 88%">
