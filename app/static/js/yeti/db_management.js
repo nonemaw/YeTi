@@ -14,6 +14,12 @@ function send_db_management_message(company, message, login_info) {
         url: '/db_management',
         dataType: 'json',
         success: function (data, status, request) {
+            var this_btn = local_cache['this'];
+            var btn_class = $(this_btn).attr('class').split(' ');
+            btn_class = btn_class[btn_class.length - 1];
+            dis_enable_row(this_btn, btn_class, false);
+            local_cache = {};
+
             if (message === 'delete') {
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Deleted Successfully',
@@ -23,17 +29,6 @@ function send_db_management_message(company, message, login_info) {
                 );
                 // rebuild DB table after any modification operations
                 build_db_table();
-
-                // var this_row = local_cache['d_this'];
-                // $(this_row).closest("tr").next("tr").remove();
-                // $(this_row).closest("tr").remove();
-                // // if table is empty (only 1 head row and 2 hidden rows left): add an empty row
-                // if ($('#db-table tr').length === 3) {
-                //     add_row('db-table', '/', ['/', '/'], {
-                //         '/': ['/', '/'],
-                //         '//': ['/', '/']
-                //     })
-                // }
             }
             else if (message === 'update') {
                 show_notification(
@@ -55,13 +50,18 @@ function send_db_management_message(company, message, login_info) {
                 // rebuild DB table after any modification operations
                 build_db_table();
             }
-            local_cache = {};
         },
         error: function() {
+            var this_btn = local_cache['this'];
+            var btn_class = $(this_btn).attr('class').split(' ');
+            btn_class = btn_class[btn_class.length - 1];
+            dis_enable_row(this_btn, btn_class, false);
+            local_cache = {};
+
             if (message === 'delete') {
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Deletion Failed',
-                    'The deletion operation is failed',
+                    'The deletion operation is failed.',
                     'OK',
                     'btn-danger'
                 );
@@ -69,7 +69,7 @@ function send_db_management_message(company, message, login_info) {
             else if (message === 'update') {
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Update Failed',
-                    'The update operation is failed',
+                    'The update operation is failed, possibly because the account is unusable.',
                     'OK',
                     'btn-danger'
                 );
@@ -77,12 +77,11 @@ function send_db_management_message(company, message, login_info) {
             else if (message === 'create') {
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Creation Failed',
-                    'The creation operation is failed',
+                    'The creation operation is failed, possibly because the account is unusable.',
                     'OK',
                     'btn-danger'
                 );
             }
-            local_cache = {};
         }
     });
 }
@@ -284,13 +283,15 @@ function add_row(table, db, collections, timestamps) {
 
     // click green plus to add new DB
     tr.find("td button.row-new").on("click", function () {
-        var company = $(this).closest("tr").children("td:first").find('input').val();
+        var company = $(this).closest("tr").children("td:nth-child(1)").find('input').val();
         var username = $(this).closest("tr").children("td:nth-child(2)").find('input').val();
         var password = $(this).closest("tr").children("td:nth-child(3)").find('input').val();
         if (!company || !username || !password) {
             return false
         }
         else {
+            dis_enable_row(this, 'row-new', true);
+            local_cache['this'] = this;
             local_cache['n_company'] = company;
             local_cache['n_username'] = username;
             local_cache['n_password'] = password;
@@ -308,7 +309,7 @@ function add_row(table, db, collections, timestamps) {
         var company = $(this).closest("tr").children("td:first").text();
         if (company !== '/') {
             local_cache['d_company'] = company;
-            local_cache['d_this'] = this;
+            local_cache['this'] = this;
             show_confirmation(
                 'Delete Database <' + company + '>',
                 '<p>Are you sure?</p><p>The database <b>' + company + '</b> will be deleted. You can create new database via button "<b>Add New Company</b>".</p>',
@@ -322,8 +323,9 @@ function add_row(table, db, collections, timestamps) {
     tr.find("td button.row-update").on("click", function () {
         var company = $(this).closest("tr").children("td:first").text();
         if (company !== '/') {
+            dis_enable_row(this, 'row-update', true);
             local_cache['u_company'] = company;
-            local_cache['u_this'] = this;
+            local_cache['this'] = this;
             show_confirmation(
                 'Update Database <' + company + '>',
                 '<p>By filling the form below to initiate the update progress of database <b>' + company + '</b>. The whole operation will take around 30 minutes to finish.</p><i>(Please make sure that the XPLAN account is correct and not under use, and will not be kicked out by others)</i>' +
@@ -334,4 +336,22 @@ function add_row(table, db, collections, timestamps) {
             );
         }
     });
+}
+
+
+function dis_enable_row(btn, btn_type, disable) {
+    var row = $(btn).closest("tr");
+    console.warn(btn_type);
+    console.warn(btn);
+    console.warn(disable);
+    if (btn_type === 'row-update') {
+        row.children("td:nth-child(4)").find('button').prop('disabled', disable);
+        row.children("td:nth-child(5)").find('button').prop('disabled', disable);
+        }
+    else if (btn_type === 'row-new') {
+        row.children("td:nth-child(1)").find('input').prop('disabled', disable);
+        row.children("td:nth-child(2)").find('input').prop('disabled', disable);
+        row.children("td:nth-child(3)").find('input').prop('disabled', disable);
+        row.children("td:nth-child(5)").find('button').prop('disabled', disable);
+    }
 }

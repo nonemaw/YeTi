@@ -233,5 +233,6 @@ def acquire_db_summary(collection_keywords: list = None):
                     db_list.append({re.sub('YETI_', '', db): collection_dict})
                 else:
                     db_list.append({MongoConfig.HOME: collection_dict})
+                collection_dict = {}
 
     return db_list

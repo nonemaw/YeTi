@@ -214,6 +214,10 @@
                     }
                 }
                 else {
+                    var this_btn = local_cache['this'];
+                    var btn_class = $(this_btn).attr('class').split(' ');
+                    btn_class = btn_class[btn_class.length - 1];
+                    dis_enable_row(this_btn, btn_class, false);
                     local_cache = {};
                 }
             });

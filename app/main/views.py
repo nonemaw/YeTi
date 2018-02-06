@@ -348,6 +348,12 @@ def save_misc():
 @main.route('/acquire_db_collection_summary', methods=['GET'])
 def acquire_db_collection_summary():
     try:
+        # the list parameter `['SubGroup', 'InterfaceNode']` in here works like
+        # a filter, for example:
+        #
+        # if the list is ['Group'] only, then for any collections whose name
+        # contains `Group` will be returned, such as `SnippetGroup`,
+        # `UserGroup`, etc.
         db_summary = acquire_db_summary(['SubGroup', 'InterfaceNode'])
         return json.dumps(db_summary), 200
     except:
