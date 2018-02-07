@@ -2,82 +2,92 @@
 
 {% block head %}
     {{ super() }}
-
 {% endblock %}
 
 
 {% block narrow_content %}
-<button class="btn btn-default" id="test">Test</button>
+    <form id="emit" method="POST" action='#'>
+        <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+        <input type="submit" value="Echo">
+    </form>
+    <form id="broadcast" method="POST" action='#'>
+        <input type="text" name="broadcast_data" id="broadcast_data" placeholder="Message">
+        <input type="submit" value="Broadcast">
+    </form>
+    <form id="join" method="POST" action='#'>
+        <input type="text" name="join_room" id="join_room" placeholder="Room Name">
+        <input type="submit" value="Join Room">
+    </form>
+    <form id="leave" method="POST" action='#'>
+        <input type="text" name="leave_room" id="leave_room" placeholder="Room Name">
+        <input type="submit" value="Leave Room">
+    </form>
+    <form id="send_room" method="POST" action='#'>
+        <input type="text" name="room_name" id="room_name" placeholder="Room Name">
+        <input type="text" name="room_data" id="room_data" placeholder="Message">
+        <input type="submit" value="Send to Room">
+    </form>
+    <form id="close" method="POST" action="#">
+        <input type="text" name="close_room" id="close_room" placeholder="Room Name">
+        <input type="submit" value="Close Room">
+    </form>
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="Disconnect">
+    </form>
+    <h2>Receive:</h2>
+    <div><p id="log"></p></div>
 {% endblock %}
 
 
 {% block page_script %}
-<script>
-$(document).ready(function() {
-    function hide_notification() {
-        var m = $('#notification');
-        m.modal('hide');
-    }
+    <script>
+        $(document).ready(function(){
+            var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
 
-    function show_confirmation(title, body, back_color, button_text, button_type) {
-        var m = $('#notification');
-        var m_content = $('#notification-content');
-        var m_title = $('#notification-title');
-        var m_body = $('#notification-body');
-        var m_btn2 = $('#notification-btn2');
+            socket.on('connect', function() {
+                socket.emit('my event', {data: 'I\'m connected!'});
+            });
+            socket.on('disconnect', function() {
+                $('#log').append('<br>Disconnected');
+            });
+            socket.on('my response', function(msg) {
+                $('#log').append('<br>Received: ' + msg.data);
+            });
 
-        if (title !== undefined) {
-            m_title.text(title);
-        }
-        if (body !== undefined) {
-            m_body.text(body);
-        }
-        if (back_color !== undefined) {
-            m_content.css('background-color', back_color);
-        }
-        if (button_text !== undefined) {
-            m_btn2.text(button_text);
-        }
-        if (button_type !== undefined) {
-            m_btn2.removeClass("btn-default btn-warning btn-success btn-info btn-danger").addClass(button_type);
-        }
-        m.modal('show');
-    }
-
-    function get_confirm(callback) {
-        var m_btn1 = $('#notification-btn1');
-        var m_btn2 = $('#notification-btn2');
-        m_btn1.click(function() {
-            hide_notification();
-            callback(false);
+            // event handler for server sent data
+            // the data is displayed in the "Received" section of the page
+            // handlers for the different forms in the page
+            // these send data to the server in a variety of ways
+            $('form#emit').submit(function(event) {
+                socket.emit('my event', {data: $('#emit_data').val()});
+                return false;
+            });
+            $('form#broadcast').submit(function(event) {
+                socket.emit('my broadcast event', {data: $('#broadcast_data').val()});
+                return false;
+            });
+            $('form#join').submit(function(event) {
+                socket.emit('join', {room: $('#join_room').val()});
+                return false;
+            });
+            $('form#leave').submit(function(event) {
+                socket.emit('leave', {room: $('#leave_room').val()});
+                return false;
+            });
+            $('form#send_room').submit(function(event) {
+                socket.emit('my room event', {room: $('#room_name').val(), data: $('#room_data').val()});
+                return false;
+            });
+            $('form#close').submit(function(event) {
+                socket.emit('close room', {room: $('#close_room').val()});
+                return false;
+            });
+            $('form#disconnect').submit(function(event) {
+                socket.emit('disconnect request');
+                return false;
+            });
         });
-        m_btn2.click(function() {
-            hide_notification();
-            callback(true);
-        });
-    }
-
-
-
-    $("#test").on("click", function() {
-        show_confirmation(
-            'Confirm Deletion',
-            'Are you sure? A deletion cannot be undone.',
-            '#eadbdb',
-            'Delete',
-            'btn-danger'
-        );
-    });
-
-    get_confirm(function(result) {
-        if (result) {
-            $("#test").remove();
-        }
-    })
-
-
-});
-</script>
+    </script>
 {% endblock %}
 
 

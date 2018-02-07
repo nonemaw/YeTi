@@ -371,17 +371,19 @@ def db_management():
             company = received_json.get('company')
             login_info = received_json.get('login_info')
             if company.upper() == 'YTML':
-                db_name = 'YTML'
+                db_name = 'YETI'
             else:
-                db_name = f'{company.upper()}'
+                db_name = f'YETI_{company.upper()}'
 
-            # delte a DB
+            # delete a DB
             if message == 'delete':
                 if db_name == 'YETI':
                     empty_collection(db_name,
                                      ['Group', 'SubGroup', 'InterfaceNode',
                                       'InterfaceLeafPage'],
                                      force=True)
+                    if current_user.company == 'YTML':
+                        current_user.jison.empty_json()
                 else:
                     drop_db(db_name)
 
@@ -393,11 +395,16 @@ def db_management():
 
             # update or create a DB
             elif message in ['update', 'create']:
-                local_db = mongo_connect(db_name)
+                local_db = mongo_connect(company)
                 loader = CrawlerLoader(company, f_db=local_db, i_db=local_db)
                 loader.fetch(login_info.get('username'),
                              login_info.get('password'),
                              operation_type=message)
+
+                # reload json to current_user if current_user's login company
+                # is same as the one updated/created
+                if current_user.company.lower() == company.lower():
+                    current_user.jison.load(file_name=company.lower())
 
             else:
                 return json.dumps({'good': False}), 500
@@ -409,6 +416,7 @@ def db_management():
 
     except:
         return json.dumps({'good': False}), 500
+
 
 # TODO: RESERVED, for celery
 # @login_required

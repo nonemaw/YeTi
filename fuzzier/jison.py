@@ -147,6 +147,10 @@ class Jison:
         self.length = len(self.json)
         return self
 
+    def empty_json(self):
+        if hasattr(self, 'json'):
+            self.json = ''
+
     def get_object(self, obj_name: str, value_only: bool = False):
         """
         return a matched object key-value pair
@@ -381,27 +385,23 @@ class Jison:
             pass
 
     def parse(self, recursion: int = None) -> dict:
-        if not hasattr(self, 'json'):
+        if not hasattr(self, 'json') or not self.json:
             raise JsonNotLoaded(
                 'Json string is not loaded\nPlease load Json via running Jison.load() before any operation')
 
-        if self.json:
-            result_dict = self.scanner(recursion)
-            # reset data after each parse operation
-            self.index = 0
-            self.recursion_depth = 0
+        result_dict = self.scanner(recursion)
+        # reset data after each parse operation
+        self.index = 0
+        self.recursion_depth = 0
 
-            if self.obj_name:
-                self.obj_name = None
-            if self.single_object:
-                self.single_object = False
-            if self.multi_object:
-                self.multi_object = False
+        if self.obj_name:
+            self.obj_name = None
+        if self.single_object:
+            self.single_object = False
+        if self.multi_object:
+            self.multi_object = False
 
-            return result_dict
-
-        else:
-            raise JsonSyntaxError('No Json string provided')
+        return result_dict
 
     def scanner(self, recursion: int = None):
         """

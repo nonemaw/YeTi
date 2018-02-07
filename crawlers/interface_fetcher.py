@@ -91,6 +91,7 @@ class InterfaceFetcher:
             self.jison.load(session.post(self.URL_SOURCE,
                                          json=menu_post,
                                          headers=self.interface_header).json())
+
             menu_nodes = self.jison.get_object('children', value_only=True)
 
             menu = []
@@ -111,6 +112,11 @@ class InterfaceFetcher:
 
             threads = []
             _q = queue.Queue()
+
+            if not menu:
+                raise Exception(
+                    'Currently there is another user using this XPLAN account.')
+
             for node in menu:
                 menu_path = re.search('client_([0-9_\-]+)', node.get('id'))
                 if menu_path:
@@ -290,6 +296,7 @@ class InterfaceFetcher:
             jison.load(session.post(self.URL_SOURCE,
                                     json=leaf_post,
                                     headers=self.interface_header).json())
+
         leaf_type = jison.get_object('title', value_only=True).lower()
 
         if leaf_type in ['gap', 'title', 'text']:
@@ -428,3 +435,11 @@ class InterfaceFetcher:
             specific_db=self.db)
 
         return leaf_type
+
+
+if __name__ == '__main__':
+    from common.db import mongo_connect
+    company = 'ytml'
+    db = mongo_connect(company)
+    interface_fetcher = InterfaceFetcher(company, Jison(), db)
+    interface_fetcher.fetch('username', 'password')

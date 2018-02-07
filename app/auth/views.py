@@ -36,6 +36,7 @@ def login():
     """
     form = LoginForm()
     if form.validate_on_submit():
+        User.login({'email': form.email.data}, logged=True)
         user_dict = User.search({'email': form.email.data})
         if user_dict is not None\
             and verify_password(user_dict.get('password'),form.password.data):
@@ -57,6 +58,7 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
+    User.login({'email': current_user.email}, logged=False)
     logout_user()
     flash('You have been logged out.', category='success')
     return redirect(url_for('main.index'))

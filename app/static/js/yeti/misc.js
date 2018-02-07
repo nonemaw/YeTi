@@ -195,6 +195,14 @@ function get_confirmation(callback) {
             if (filled) {
                 callback(true);
             }
+            else {
+                show_notification(
+                    'Please Fill the Form',
+                    'Please fill the form in order to proceed.',
+                    'OK',
+                    'btn-success'
+                );
+            }
         }
         // if the modal has no form, `true` and hide modal
         else {

@@ -383,7 +383,7 @@
         var judge_count = 0;
         var failed_count = 0;
         var success_count = 0;
-        var search_history = [];
+        var search_history = {};
 
         var show_invisibles = true;
         var wrap_text = true;
@@ -523,7 +523,12 @@
                 var pattern = $('#search-field').val();
                 if (pattern) {
                     search_count += 1;
-                    search_history.push(pattern);
+                    if (search_history[pattern]) {
+                        search_history[pattern] ++;
+                    }
+                    else {
+                        search_history[pattern] = 1;
+                    }
                     search(pattern, 8);
                 }
                 return false;

@@ -9,6 +9,7 @@ from bson import ObjectId
 from app import login_manager
 from common.db import mongo_connect, MongoConfig, create_dict_path
 from common.meta import Meta
+from common.general import merge_dict
 from fuzzier.jison import Jison
 
 
@@ -454,15 +455,18 @@ class User:
                 Meta.db.User.update_one(locate, {'$set': {key: data}})
             # has existing statistic data
             else:
+                new_search_history = merge_dict(legacy.get('search_history'),
+                                                data.get('search_history'))
                 Meta.db.User.update_one(
                     locate,
                     {
-                        '$push': {
-                            'statistic.search_history': {
-                                '$each': data.get('search_history')
-                            }
-                        },
+                        # '$push': {
+                        #     'statistic.search_history': {
+                        #         '$each': data.get('search_history')
+                        #     }
+                        # },
                         '$set': {
+                            'statistic.search_history': new_search_history,
                             'statistic.search_count': data.get('search_count') + legacy.get('search_count'),
                             'statistic.judge_count': data.get('judge_count') + legacy.get('judge_count'),
                             'statistic.failed_count': data.get('failed_count') + legacy.get('failed_count'),
@@ -474,6 +478,10 @@ class User:
     @staticmethod
     def get_misc(locate: dict, key: str):
         return Meta.db.User.find_one(locate).get(key)
+
+    @staticmethod
+    def login(locate: dict, logged):
+        Meta.db.User.update_one(locate, {'$set': {'logged': logged}})
 
 
 class UserUtl(UserMixin):
@@ -498,7 +506,11 @@ class UserUtl(UserMixin):
         self.company = user.get('company')
         self.db = Meta.db if self.company == MongoConfig.HOME else \
             mongo_connect(self.company)
-        self.jison = Jison(file_name=user.get('company'))
+        try:
+            self.jison = Jison(file_name=user.get('company'))
+        except:
+            # if user is login into an empty company (no database)
+            self.jison = Jison()
 
     def __repr__(self):
         return str(self)

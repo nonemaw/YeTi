@@ -4,6 +4,7 @@ import random
 import string
 import logging
 from functools import wraps
+from collections import Counter
 from markdown import markdown
 from threading import Thread
 from flask import current_app, render_template, request
@@ -91,3 +92,9 @@ def exception_logger(filename: str, logger_name: str):
         return wrapper
 
     return decorator
+
+
+def merge_dict(dict1: dict, dict2: dict) -> dict:
+    dict1 = Counter(dict1)
+    dict2 = Counter(dict2)
+    return dict1 + dict2

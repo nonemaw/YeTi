@@ -33,7 +33,7 @@ class FieldFetcher:
     def change_db(self, db=None):
         self.db = db
 
-    def fetch(self, username: str, password: str, group_only: str = None):
+    def fetch(self, username: str, password: str, group_only: str = None,):
         # TODO: code is ugly, will refactored in the future
 
         this_path = os.path.dirname(os.path.realpath(__file__))
@@ -44,8 +44,7 @@ class FieldFetcher:
         if not os.path.exists(log_directory):
             os.makedirs(log_directory)
         if not os.path.exists(json_directory):
-            os.makedirs(json_directory
-                        )
+            os.makedirs(json_directory)
         logger = logging.getLogger('my_logger')
         logfile_hdlr = logging.FileHandler(
             os.path.join(log_directory, 'f_fetcher.log'), 'w')
@@ -71,7 +70,7 @@ class FieldFetcher:
                 fields = session.get(self.URL_LIST,
                                      headers=dict(referer=self.URL_LIST))
 
-                if re.search(r'permission_error', fields.text):
+                if re.search(r'permission_error|Login for User', fields.text):
                     # login failed
                     raise Exception(
                         'Currently there is another user using this XPLAN account.')
@@ -283,3 +282,11 @@ class FieldFetcher:
 
     def delete_subgroup(self, name: str):
         pass
+
+
+if __name__ == '__main__':
+    from common.db import mongo_connect
+    company = 'ytml'
+    db = mongo_connect(company)
+    field_fetcher = FieldFetcher(company, Jison(), db)
+    field_fetcher.fetch('username', 'password')

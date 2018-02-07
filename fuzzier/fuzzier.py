@@ -58,5 +58,8 @@ def ratio(target: str, pattern: str):
 
 
 def search(jison: Jison, pattern: str, count: int = 8) -> list:
-    result = jison.search(pattern=pattern, ratio_method=ratio, count=count)
-    return result
+    if hasattr(jison, 'json') and jison.json:
+        return jison.search(pattern=pattern, ratio_method=ratio, count=count)
+    else:
+        return []
+

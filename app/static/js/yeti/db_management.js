@@ -33,7 +33,7 @@ function send_db_management_message(company, message, login_info) {
             else if (message === 'update') {
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Updated Successfully',
-                    'You can now return to main page to start using the updated database.',
+                    'If you have logged in with <b>' + company.toUpperCase() + '</b> then you can just return to main page to start using this updated database, otherwise you need to logout and login again for using this updated database.',
                     'Good',
                     'btn-success'
                 );
@@ -43,7 +43,7 @@ function send_db_management_message(company, message, login_info) {
             else if (message === 'create') {
                 show_notification(
                     'Database < ' + company.toUpperCase() + ' > Created Successfully',
-                    'You can now login again to use this company.',
+                    'If you have logged in with <b>' + company.toUpperCase() + '</b> then you can just return to main page to start using this new database, otherwise you need to logout and login again for using this new database.',
                     'Good',
                     'btn-success'
                 );
@@ -286,7 +286,23 @@ function add_row(table, db, collections, timestamps) {
         var company = $(this).closest("tr").children("td:nth-child(1)").find('input').val();
         var username = $(this).closest("tr").children("td:nth-child(2)").find('input').val();
         var password = $(this).closest("tr").children("td:nth-child(3)").find('input').val();
+        var companies = company_list();
         if (!company || !username || !password) {
+            show_notification(
+                'Please Fill the Form',
+                'Please fill the form in order to proceed.',
+                'OK',
+                'btn-success'
+            );
+            return false
+        }
+        else if (companies.indexOf(company.toUpperCase()) > -1) {
+            show_notification(
+                '< ' + company.toUpperCase() + ' > Already Exists',
+                'The target company <b>' + company.toUpperCase() + '</b> already exists in database.',
+                'OK',
+                'btn-success'
+            );
             return false
         }
         else {
@@ -341,9 +357,6 @@ function add_row(table, db, collections, timestamps) {
 
 function dis_enable_row(btn, btn_type, disable) {
     var row = $(btn).closest("tr");
-    console.warn(btn_type);
-    console.warn(btn);
-    console.warn(disable);
     if (btn_type === 'row-update') {
         row.children("td:nth-child(4)").find('button').prop('disabled', disable);
         row.children("td:nth-child(5)").find('button').prop('disabled', disable);
@@ -352,6 +365,17 @@ function dis_enable_row(btn, btn_type, disable) {
         row.children("td:nth-child(1)").find('input').prop('disabled', disable);
         row.children("td:nth-child(2)").find('input').prop('disabled', disable);
         row.children("td:nth-child(3)").find('input').prop('disabled', disable);
+        row.children("td:nth-child(4)").find('button').prop('disabled', disable);
         row.children("td:nth-child(5)").find('button').prop('disabled', disable);
     }
+}
+
+
+function company_list() {
+    var t_body = $('#db-table-body');
+    var list = [];
+    for (i = 2; i < t_body.find('tr').length; i += 2) {
+        list.push($(t_body.find('tr')[i]).find('td:nth-child(1)').text());
+    }
+    return list;
 }

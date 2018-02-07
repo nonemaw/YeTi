@@ -11,13 +11,15 @@ class MongoConfig:
     PWD = 'admin123'
 
 
-def mongo_connect(db_name: str,):
+def mongo_connect(name: str,):
     client = MongoClient(MongoConfig.HOST, MongoConfig.PORT)
-    if db_name.upper() == MongoConfig.HOME:
+    if name.upper() == MongoConfig.HOME:
         db = client['YETI']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI')
+    elif 'YETI_' in name.upper():
+        db = client[name.upper()]
     else:
-        db = client[f'YETI_{db_name.upper()}']
+        db = client[f'YETI_{name.upper()}']
         # db.authenticate(MongoCfg.USER, MongoCfg.PWD, source='YETI_'+company.upper())
 
     return db
@@ -96,33 +98,34 @@ def create_dict_path(data: dict, path_dict: dict = None) -> dict:
     return path_dict
 
 
-def empty_collection(db, collection, force: bool = False) -> bool:
+def empty_collection(db_name, collection, force: bool = False) -> bool:
     """
     empty collection but keep `timestamp`
     """
-    try:
-        # drop collection
-        if force:
-            if isinstance(collection, str):
-                db.drop_collection(collection)
-            elif isinstance(collection, list):
-                for c in collection:
-                    db.drop_collection(c)
-        # empty collection
-        else:
-            if isinstance(collection, str):
-                db[collection].delete_many({
-                    'type': {'$ne': '_timestamp'}
-                })
-            elif isinstance(collection, list):
-                for c in collection:
-                    db[c].delete_many({
+    with MongoClient(MongoConfig.HOST, MongoConfig.PORT) as client:
+        try:
+            # drop collection
+            if force:
+                if isinstance(collection, str):
+                    client[db_name].drop_collection(collection)
+                elif isinstance(collection, list):
+                    for c in collection:
+                        client[db_name].drop_collection(c)
+            # empty collection
+            else:
+                if isinstance(collection, str):
+                    client[db_name][collection].delete_many({
                         'type': {'$ne': '_timestamp'}
                     })
-    except:
-        return False
+                elif isinstance(collection, list):
+                    for c in collection:
+                        client[db_name][c].delete_many({
+                            'type': {'$ne': '_timestamp'}
+                        })
+        except:
+            return False
 
-    return True
+        return True
 
 
 def drop_db(db_name) -> bool:
@@ -229,10 +232,11 @@ def acquire_db_summary(collection_keywords: list = None):
                 for c in collections:
                     collection_dict[c] = get_collection_timestamp(client[db], c)
 
-                if '_' in db:
-                    db_list.append({re.sub('YETI_', '', db): collection_dict})
-                else:
-                    db_list.append({MongoConfig.HOME: collection_dict})
-                collection_dict = {}
+                if collection_dict:
+                    if '_' in db:
+                        db_list.append({re.sub('YETI_', '', db): collection_dict})
+                    else:
+                        db_list.append({MongoConfig.HOME: collection_dict})
+                    collection_dict = {}
 
     return db_list
