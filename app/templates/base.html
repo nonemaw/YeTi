@@ -137,12 +137,9 @@
     <script>
         $.material.init();
 
-        var socket = io.connect('http://' + document.domain + ':' + location.port + '/db_event');
         // all pages will join room 'db_job' for listening background db operations (update/create)
-        socket.emit('join', {room: 'db_job'});
-
-
-
+        var socket = io.connect('http://' + document.domain + ':' + location.port + '/db_event');
+        socket.emit('join', {room: 'db_event'});
 
     </script>
 

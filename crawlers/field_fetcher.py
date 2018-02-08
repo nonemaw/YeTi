@@ -3,7 +3,6 @@ import re
 import os
 import gc
 from bs4 import BeautifulSoup
-
 from bson import ObjectId
 from app.models import Group, SubGroup
 from fuzzier.jison import Jison
@@ -118,13 +117,8 @@ class FieldFetcher:
                     former_sub_group_id = None
                     former_sub_group_variables = []
                     variables_to_json = []
-
                     all_vars_under_current_group = soup.find('tbody', {'class': 'list2'}).find_all('tr')
                     for var_entry in all_vars_under_current_group:
-
-                        print(var_entry)
-                        print('-----------------------------------------------')
-
                         # for each option's entry ([sub_group] - variable pair),
                         # analysis sub_group and variable
                         try:

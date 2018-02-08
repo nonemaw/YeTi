@@ -19,6 +19,7 @@
 
 {% block page_script %}
     <script>
+        socket.emit('leave', {room: 'db_event'});
         particlesJS("particles-js", {
             "particles": {
                 "number": {

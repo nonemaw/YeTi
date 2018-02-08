@@ -19,6 +19,7 @@ from app.models import Role
 from app.socketio import sio
 from common.meta import Meta
 
+
 # add socketio to Flask app
 yeti = create_app(os.getenv('FLASK_CONFIG') or 'default')
 yeti.wsgi_app = socketio.Middleware(sio, yeti.wsgi_app)

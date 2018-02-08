@@ -44,7 +44,7 @@
                                     <strong>About Me:</strong> {{ user_utl.about_me }}
                                 </p>
                             {% endif %}
-                            <p>
+                            <p style="position:absolute;bottom: 5px;margin: 0 0 0 0;">
                                 {% if user_utl.id == current_user.id %}
                                     <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
                                 {% endif %}
@@ -168,7 +168,21 @@
     <script src="{{ url_for('static', filename='js/yeti/db_management.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         $(document).ready(function() {
+            var db_fetching = [];
+            var notification_displayed = false;
             build_db_table();
+
+            socket.on('DB Fetching', function(msg) {
+                var db = msg.db_name;
+                if (!notification_displayed && db) {
+                    show_notification(
+                        '<' + db.toUpperCase() + '> Is Being Updated/Created',
+                        'Database <b>' + db.toUpperCase() + '</b> is being updated or created in background, please do not operate further operations to this database.',
+                        'OK',
+                        'btn-success');
+                    notification_displayed = true;
+                }
+            });
 
             $("#add-company").on("click", function() {
                 $("#add-company").hide();

@@ -42,15 +42,13 @@
 {% block page_script %}
     <script>
         $(document).ready(function(){
-            var socket = io.connect('http://' + document.domain + ':' + location.port + '/db_event');
-
             socket.on('connect', function() {
                 socket.emit('my event', {data: 'I\'m connected!'});
             });
             socket.on('disconnect', function() {
                 $('#log').append('<br>Disconnected');
             });
-            socket.on('my response', function(msg) {
+            socket.on('DB Fetching', function(msg) {
                 $('#log').append('<br>Received: ' + msg.data);
             });
 
@@ -89,7 +87,6 @@
         });
     </script>
 {% endblock %}
-
 
 
 
