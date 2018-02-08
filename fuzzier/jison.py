@@ -360,7 +360,6 @@ class Jison:
             file_name = self.file_name
 
         if not skip_check and json_string:
-
             if isinstance(json_string, str):
                 self.json = self.check_json_string(json_string)
             elif isinstance(json_string, dict):
@@ -387,7 +386,7 @@ class Jison:
     def parse(self, recursion: int = None) -> dict:
         if not hasattr(self, 'json') or not self.json:
             raise JsonNotLoaded(
-                'Json string is not loaded\nPlease load Json via running Jison.load() before any operation')
+                'Json string is not loaded\nPlease load Json via Jison.load() before any operation')
 
         result_dict = self.scanner(recursion)
         # reset data after each parse operation
@@ -693,7 +692,7 @@ class Jison:
                 elif char == 'u':
                     remaining_length = self.length - self.index
                     if remaining_length >= 4:
-                        # TODO: handling 32 bit unicode, reserved for future development when I have time
+                        # TODO: handling annoying 32 bit unicode, reserved
                         pass
             else:
                 # build string a-zA-Z0-9

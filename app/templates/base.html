@@ -135,7 +135,15 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/yeti/animation.js', _external=True) }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/yeti/misc.js') }}"></script>
     <script>
-    $.material.init();
+        $.material.init();
+
+        var socket = io.connect('http://' + document.domain + ':' + location.port + '/db_event');
+        // all pages will join room 'db_job' for listening background db operations (update/create)
+        socket.emit('join', {room: 'db_job'});
+
+
+
+
     </script>
 
     {% block page_script %}{% endblock %}

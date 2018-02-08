@@ -61,7 +61,7 @@ class InterfaceFetcher:
                     pass
 
     def fetch(self, username: str, password: str, specific: list = None,
-              thread: bool = True):
+              thread: bool = True, debug: bool = False) -> bool:
         with requests.session() as session:
             payload = {
                 "userid": username,
@@ -126,7 +126,8 @@ class InterfaceFetcher:
                         specific.pop(0)
                         node['children'] = self.r_dump_interface(menu_path,
                                                                  session,
-                                                                 specific=specific)
+                                                                 specific=specific,
+                                                                 debug=debug)
                         InterfaceNode(node).new(force=True,
                                                 depth=len(specific),
                                                 specific_db=self.db)
@@ -138,12 +139,14 @@ class InterfaceFetcher:
                         threads.append(
                             threading.Thread(target=self.r_dump_interface,
                                              args=(menu_path, session,
-                                                   node.get('id'), _q
+                                                   node.get('id'), _q, None,
+                                                   debug
                                              )
                             )
                         )
                     else:
-                        children = self.r_dump_interface(menu_path, session)
+                        children = self.r_dump_interface(menu_path, session,
+                                                         debug=debug)
                         if children:
                             node['children'] = children
                         else:
@@ -169,13 +172,13 @@ class InterfaceFetcher:
                         node['type'] = 'other'
                     InterfaceNode(node).new(force=True, specific_db=self.db)
 
-            session.get(
-                f'https://{self.company}.xplan.iress.com.au/home/logoff?')
+            session.get(f'https://{self.company}.xplan.iress.com.au/home/logoff?')
+            return True
 
     def r_dump_interface(self, menu_path: str,
                          session: requests.sessions.Session,
                          node_id: str = None, _q: queue.Queue = None,
-                         specific: list = None) -> list:
+                         specific: list = None, debug: bool = False) -> list:
         """
         get `children` under current `menu_path`
 
@@ -215,6 +218,9 @@ class InterfaceFetcher:
             child_path = re.search('client_([0-9_\-]+)', child_id)
             specific_flag = False
             sub_children = []
+
+            if debug:
+                print(text)
 
             if specific and specific[0].lower() in text.lower():
                 specific.pop(0)
@@ -435,11 +441,3 @@ class InterfaceFetcher:
             specific_db=self.db)
 
         return leaf_type
-
-
-if __name__ == '__main__':
-    from common.db import mongo_connect
-    company = 'ytml'
-    db = mongo_connect(company)
-    interface_fetcher = InterfaceFetcher(company, Jison(), db)
-    interface_fetcher.fetch('username', 'password')
