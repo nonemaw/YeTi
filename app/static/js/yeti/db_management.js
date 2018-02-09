@@ -1,4 +1,6 @@
 var local_cache = {};
+var running_status_displayed = false;
+var finishing_status_displayed = false;
 
 function send_db_management_message(company, message, login_info) {
     var sent_info = {

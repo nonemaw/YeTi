@@ -25,10 +25,17 @@ class CrawlerLoader:
         self.interface_fetcher.change_company(company)
 
     def fetch(self, username: str, password: str, specific: list = None,
-              group_only: str = None, operation_type: str = None):
+              group_only: str = None, operation_type: str = None) -> bool:
         sio.start_background_task(self.notification, db_name=self.company)
-        # self.field_fetcher.fetch(username, password, group_only=group_only)
-        # self.interface_fetcher.fetch(username, password, specific=specific)
+        try:
+            self.field_fetcher.fetch(username, password, group_only='entity_objectives')
+            # self.interface_fetcher.fetch(username, password, specific=specific)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+            self.stop_notify()
+            return False
         import time
         time.sleep(20)
 
@@ -42,6 +49,7 @@ class CrawlerLoader:
         #     create_timestamp(self.f_db, ['Group', 'SubGroup', 'InterfaceNode',
         #                                  'InterfaceLeafPage'])
         self.stop_notify()
+        return True
 
     def notification(self, db_name: str):
         while not self.terminate:
@@ -52,16 +60,18 @@ class CrawlerLoader:
     def stop_notify(self):
         self.terminate = True
 
-    def notify_success(self):
-        counter = 2
+    def notify_success(self, db_name):
+        counter = 4
         while counter:
-            sio.emit('DB Fetching', {'data': 'db running', 'status': True},
+            sio.sleep(1)
+            sio.emit('DB Fetching', {'data': 'db running', 'db_name': db_name, 'status': True},
                      namespace='/db_event')
             counter -= 1
 
-    def notify_failed(self):
-        counter = 2
+    def notify_failed(self, db_name):
+        counter = 4
         while counter:
-            sio.emit('DB Fetching', {'data': 'db running', 'status': False},
+            sio.sleep(1)
+            sio.emit('DB Fetching', {'data': 'db running', 'db_name': db_name, 'status': False},
                      namespace='/db_event')
             counter -= 1

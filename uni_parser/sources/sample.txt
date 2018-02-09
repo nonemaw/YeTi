@@ -4990,7 +4990,7 @@ The following provides an illustration of your portfolio following the implement
 <:end:>
 <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, [filter(lambda x: x in '0123456789.(', $client.DoReport.ipsv.portfolio_value(valtype='value', portfolios='CX', date='Today'))])[0]):>
 <:for subfund in dict([(sr['subfund'], None) for sr in holding]):>
-<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':> <:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
 <:=$CLIENT.PREFERRED_NAME:>
 <:if 1:><:let line = 0:>
 <:end:>
@@ -5036,7 +5036,7 @@ Total 		<:=currency(total_allocation, 2):>	$<:=currency(total, 0):>
 <:let holding=$client.DoReport.ipsv.any_report('value', report_source='proposedandcurrent', subreports=['position_id'], portfolios='PX', date='Today', exclude_subfunds='on'):>
 <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, [filter(lambda x: x in '0123456789.(', $client.DoReport.ipsv.portfolio_value(valtype='value', portfolios='PX', date='Today'))])[0]):>
 <:for subfund in dict([(sr['subfund'], None) for sr in holding]):>
-<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':> <:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
 <:=$PARTNER.PREFERRED_NAME:>
 <:if 1:><:let line = 0:>
 <:end:>
@@ -5080,7 +5080,7 @@ Total 		<:=currency(total_allocation, 2):>	$<:=currency(total, 0):>
 <:let holding=$client.DoReport.ipsv.any_report('value', report_source='proposedandcurrent', subreports=['position_id'], portfolios='JX', date='Today', exclude_subfunds='on'):>
 <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, [filter(lambda x: x in '0123456789.(', $client.DoReport.ipsv.portfolio_value(valtype='value', portfolios='JX', date='Today'))])[0]):>
 <:for subfund in dict([(sr['subfund'], None) for sr in holding]):>
-<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+<:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':> <:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
 <:=$CLIENT.PREFERRED_NAME:> AND <:=$PARTNER.PREFERRED_NAME:>
 <:if 1:><:let line = 0:>
 <:end:>
@@ -5129,7 +5129,7 @@ Total 		<:=currency(total_allocation, 2):>	$<:=currency(total, 0):>
 <:let holding=[item for item in $client.DoReport.ipsv.any_report('value', report_source='proposedandcurrent', subreports=['position_id'], portfolios='OX', date='Today', exclude_subfunds='on') if item.get('firstname') == str(superfund)]:>
 <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, [filter(lambda x: x in '0123456789.(', $client.DoReport.ipsv.portfolio_value(valtype='value', portfolios='OX', date='Today'))])[0]):>
     <:for subfund in dict([(sr['subfund'], None) for sr in holding]):>
-        <:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+        <:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':> <:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
         <:if 1:><:let line = 0:>
         <:end:>
 Investment Code	Investment	Allocation (%)	Value ($)
@@ -5177,7 +5177,7 @@ Total 		<:=currency(total_allocation, 2):>	$<:=currency(total, 0):>
 <:let holding=[item for item in $client.DoReport.ipsv.any_report('value', report_source='proposedandcurrent', subreports=['position_id'], portfolios='OX', date='Today', exclude_subfunds='on') if item.get('firstname') == str(trust)]:>
 <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, [filter(lambda x: x in '0123456789.(', $client.DoReport.ipsv.portfolio_value(valtype='value', portfolios='OX', date='Today'))])[0]):>
     <:for subfund in dict([(sr['subfund'], None) for sr in holding]):>
-        <:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+        <:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':> <:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
         <:if 1:><:let line = 0:>
         <:end:>
 Investment Code	Investment	Allocation (%)	Value ($)
@@ -5225,7 +5225,7 @@ Total 		<:=currency(total_allocation, 2):>	$<:=currency(total, 0):>
 <:let holding=[item for item in $client.DoReport.ipsv.any_report('value', report_source='proposedandcurrent', subreports=['position_id'], portfolios='OX', date='Today', exclude_subfunds='on') if item.get('firstname') == str(company)]:>
 <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, [filter(lambda x: x in '0123456789.(', $client.DoReport.ipsv.portfolio_value(valtype='value', portfolios='OX', date='Today'))])[0]):>
     <:for subfund in dict([(sr['subfund'], None) for sr in holding]):>
-        <:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':><:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
+        <:LET SDATA=[R FOR R IN HOLDING IF R['SUBFUND'] == SUBFUND]:> <:IF SUBFUND == '':> <:ELSE:><:=SUBFUND:><:END:> <:LET IGNORE=SDATA.SORT(LAMBDA A, B: CMP(A['DESCRIPTION'], B['DESCRIPTION'])):>
         <:if 1:><:let line = 0:>
         <:end:>
 Investment Code	Investment	Allocation (%)	Value ($)

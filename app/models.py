@@ -63,14 +63,15 @@ class Group:
             db = current_user.db
 
         to_be_deleted = db.Group.find_one(locate)
-        sub_groups = to_be_deleted.get('sub_groups')
-        db.Group.delete_one(locate)
+        if to_be_deleted:
+            sub_groups = to_be_deleted.get('sub_groups')
+            db.Group.delete_one(locate)
 
-        for sub_group_id in sub_groups:
-            try:
-                SubGroup.delete_doc({'_id': ObjectId(sub_group_id)})
-            except:
-                pass
+            for sub_group_id in sub_groups:
+                try:
+                    SubGroup.delete_doc({'_id': ObjectId(sub_group_id)})
+                except:
+                    pass
 
     @staticmethod
     def search(locate: dict, specific_db = None) -> dict:

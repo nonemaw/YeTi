@@ -376,6 +376,7 @@ def db_management():
                 db_name = f'YETI_{company.upper()}'
 
             # delete a DB
+            result = False
             if message == 'delete':
                 if db_name == 'YETI':
                     empty_collection(db_name,
@@ -387,6 +388,7 @@ def db_management():
                 else:
                     drop_db(db_name)
 
+                result = True
                 json_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 'fuzzier', 'json', f'{company.lower()}.json')
                 try:
                     os.remove(json_file)
@@ -397,23 +399,29 @@ def db_management():
             elif message in ['update', 'create']:
                 local_db = mongo_connect(company)
                 loader = CrawlerLoader(company, f_db=local_db, i_db=local_db)
-                loader.fetch(login_info.get('username'),
-                             login_info.get('password'),
-                             operation_type=message)
+                result = loader.fetch(login_info.get('username'),
+                                      login_info.get('password'),
+                                      operation_type=message)
 
                 # reload json to current_user if current_user's login company
                 # is same as the one updated/created
-                if current_user.company.lower() == company.lower():
-                    current_user.jison.load(file_name=company.lower())
+                if result:
+                    if current_user.company.lower() == company.lower():
+                        current_user.jison.load(file_name=company.lower())
 
+            # unknown message type
             else:
                 return json.dumps({'good': False}), 500
 
-            return json.dumps({'good': True}), 200
+            if result:
+                return json.dumps({'good': True}), 200
+            else:
+                return json.dumps({'good': False}), 500
 
+        # an empty json
         else:
             return json.dumps({'good': False}), 500
-
+    # if anything goes wrong
     except:
         return json.dumps({'good': False}), 500
 

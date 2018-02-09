@@ -44,7 +44,7 @@
                                     <strong>About Me:</strong> {{ user_utl.about_me }}
                                 </p>
                             {% endif %}
-                            <p style="position:absolute;bottom: 5px;margin: 0 0 0 0;">
+                            <p style="position:absolute;bottom: 5px;">
                                 {% if user_utl.id == current_user.id %}
                                     <a class="btn btn-success" href="{{ url_for('main.edit_profile') }}">Edit Your Profile</a>
                                 {% endif %}
@@ -70,28 +70,28 @@
         </div>
         <div class="row">
             <ul class="nav nav-tabs" role="tablist" style="border-bottom: 4px solid #aa0055;">
-                <li class="active" id="show-statistic-tab">
-                    <a href="#show-statistic" role="tab" data-toggle="tab">Statistics</a>
-                </li>
                 {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
+                <li id="show-management-tab" class="active" >
+                    <a href="#show-management" role="tab" data-toggle="tab">Database Management</a>
+                </li>
                 <li id="show-snippet-tab">
                     <a href="#show-snippet" role="tab" data-toggle="tab">Snippet Management</a>
                 </li>
-                <li id="show-management-tab">
-                    <a href="#show-management" role="tab" data-toggle="tab">Database Management</a>
-                </li>
                 {% endif %}
+                <li id="show-statistic-tab">
+                    <a href="#show-statistic" role="tab" data-toggle="tab">Statistics</a>
+                </li>
             </ul>
 
             <div class="tab-content">
-                <div class="tab-pane fade in active" id="show-statistic" role="tabpanel" >
+                <div class="tab-pane fade in" id="show-statistic" role="tabpanel" >
                     ...xoxoxoxoxox xoxoxoxoxox
                 </div>
                 <div class="tab-pane fade in" id="show-snippet" role="tabpanel" >
                     ...xoxoxoxoxox xoxoxoxoxox
                 </div>
                 {% if user_utl.is_administrator() and user_utl.id == current_user.id %}
-                <div class="tab-pane fade in" id="show-management" role="tabpanel" >
+                <div class="tab-pane fade in active" id="show-management" role="tabpanel" >
 
                     <!-- DB list table -->
                     <table class="responstable" id="db-table">
@@ -168,19 +168,20 @@
     <script src="{{ url_for('static', filename='js/yeti/db_management.js') }}" type="text/javascript" charset="utf-8"></script>
     <script>
         $(document).ready(function() {
-            var db_fetching = [];
-            var notification_displayed = false;
             build_db_table();
 
             socket.on('DB Fetching', function(msg) {
                 var db = msg.db_name;
-                if (!notification_displayed && db) {
+                if (db !== undefined) {
+                    db = db.toUpperCase();
+                }
+                if (!running_status_displayed && db) {
                     show_notification(
-                        '<' + db.toUpperCase() + '> Is Being Updated/Created',
-                        'Database <b>' + db.toUpperCase() + '</b> is being updated or created in background, please do not operate further operations to this database.',
+                        '<' + db + '> Is Being Updated/Created',
+                        'Database <b>' + db + '</b> is being updated or created in background, please do not operate further operations to this database.',
                         'OK',
-                        'btn-success');
-                    notification_displayed = true;
+                        'btn-info');
+                    running_status_displayed = true;
                 }
             });
 
