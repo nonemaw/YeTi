@@ -13,7 +13,7 @@ class Scanner(ScannerBase):
     def __init__(self,
                  source_file: SourceFile,
                  comment_tag: str = '#',
-                 template_tag: str = None,
+                 template_tag: list = None,
                  var_define: str = None,
                  end_tag: list = None):
         """
@@ -41,8 +41,11 @@ class Scanner(ScannerBase):
         self.var_define = var_define
         self.end_tag = end_tag
         if template_tag:
-            self.template_tag = template_tag[:int(len(template_tag) / 2)]
-            self.template_close = template_tag[int(len(template_tag) / 2):]
+            try:
+                self.template_tag = [t[:int(len(t) / 2)] for t in template_tag]
+                self.template_close = [t[int(len(t) / 2):] for t in template_tag]
+            except:
+                raise Exception('Invalid template tag')
         else:
             self.template_tag = None
             self.template_close = None
@@ -176,7 +179,7 @@ class Scanner(ScannerBase):
                 self.accept(2)
                 return TokenType.NOTEQ
         elif self.current_char == '=':
-            if self.prev_char == self.template_tag:
+            if self.prev_char in self.template_tag:
                 token = TokenType.PRINT
             else:
                 token = TokenType.EQ
@@ -487,9 +490,10 @@ class Scanner(ScannerBase):
                 # jump template's comments, loop stops when current char &
                 # next char matches template tag
                 while True:
-                    if (self.current_char == self.template_close[
-                        0] and self.look_ahead(1) == self.template_close[
-                        1]) or self.current_char == self.source_file.eof:
+                    check_tag = ''.join(
+                        [self.current_char, self.look_ahead(1)])
+                    if check_tag in self.template_close or \
+                                    self.current_char == self.source_file.eof:
                         break
                     else:
                         self.move_ahead(1)
@@ -524,8 +528,9 @@ class Scanner(ScannerBase):
                         return self.build_token(TokenType.NEWLINE, '\n',
                                                 offset=-1)
 
-                    if self.current_char == self.template_close[0]\
-                            and self.look_ahead(1) == self.template_close[1]:
+                    check_tag = ''.join(
+                        [self.current_char, self.look_ahead(1)])
+                    if check_tag in self.template_close:
                         if self.if_for_flag or self.print_flag:
                             if self.if_for_flag:
                                 self.if_for_flag = False
@@ -570,8 +575,8 @@ class Scanner(ScannerBase):
                     and self.current_char != self.source_file.eof:
                 # if meets template tag, build text token when not null then
                 # set code flag to True
-                if self.current_char == self.template_tag[
-                    0] and self.look_ahead(1) == self.template_tag[1]:
+                checked_tag = ''.join([self.current_char, self.look_ahead(1)])
+                if checked_tag in self.template_tag:
                     token = None
                     if self.text:
                         if self.text[-1] == '\n':
@@ -583,7 +588,7 @@ class Scanner(ScannerBase):
                     self.move_ahead(2)
                     self.tracker.char_finish += 2
                     self.code_flag = True
-                    self.prev_char = self.template_tag
+                    self.prev_char = checked_tag
                     if token:
                         return token
                 else:
@@ -674,7 +679,7 @@ if __name__ == '__main__':
     import os
     this_path = os.path.dirname(os.path.realpath(__file__))
     scanner = Scanner(SourceFile(source_file='', source_code="""<:for partnership in $partnership:>"""),
-                      template_tag='<::>', var_define='def', end_tag=['end'])
+                      template_tag=['<::>'], var_define='def', end_tag=['end'])
 
     while scanner.current_char != scanner.source_file.eof:
         token = scanner.get_token()

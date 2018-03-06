@@ -11,7 +11,7 @@ class ParserLoader:
         self.grammar = grammar
 
     def generator(self,
-                  template_tag: str = None,
+                  template_tag: list = None,
                   var_define: str = None,
                   end_tag: list = None,
                   return_ast: bool = False,
@@ -22,7 +22,7 @@ class ParserLoader:
         """
         Parameters
         --------
-        template_tag: str
+        template_tag: list
             for parsing template
         var_define: str
             definition to variable declare in template
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     # TODO: FATAL BUG: two `stmt` syntax on same line can pass the judge
     # TODO: FATAL BUG: `stmt` ends with `.` can pass the judge, e.g. `let a = b.`
     p = ParserLoader('xplan')
-    p.generator(template_tag='<::>',
+    p.generator(template_tag=['{{}}'],
                 var_define='let',
                 end_tag=['end'],
                 return_ast=True,
@@ -102,6 +102,6 @@ if __name__ == '__main__':
                 reserved_names=[],
                 overwrite=True,
                 indent=4)
-    r = p.parse(source_file='', source_code="""<:if$partner:>""",
+    r = p.parse(source_file='', source_code="""{{if $partner}}a{%end%}""",
                 message_only=True, debug=0)
     print(r)

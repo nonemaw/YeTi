@@ -5,7 +5,7 @@ from uni_parser.ebnf.ebnf_grammar_source import *
 
 
 def parser_generator(grammar: str,
-                     template_tag: str = None,
+                     template_tag: list = None,
                      var_define: str = None,
                      end_tag: list = None,
                      return_ast: bool = False,
@@ -21,7 +21,7 @@ def parser_generator(grammar: str,
     --------
     grammar: str
         grammar file under directory grammars for target code (e.g., python means python.ebnf)
-    template_tag: str
+    template_tag: list
         for parsing template
     var_define: str
         definition to variable declare in template
@@ -61,9 +61,9 @@ def parse(source_file: str = None, source_code: str = None, message_only: bool =
 
     parser.append(f'\n{indent}ReservedNames.add_name(*{str(reserved_names)})')
     if template_tag and var_define:
-        parser.append(f"\n{indent}code_lexer = Lexer(Scanner(SourceFile(source_file=source_file, source_code=source_code), template_tag='{template_tag}', var_define='{var_define}', end_tag={str(end_tag)}))")
+        parser.append(f"\n{indent}code_lexer = Lexer(Scanner(SourceFile(source_file=source_file, source_code=source_code), template_tag={str(template_tag)}, var_define='{var_define}', end_tag={str(end_tag)}))")
     elif template_tag:
-        parser.append(f"\n{indent}code_lexer = Lexer(Scanner(SourceFile(source_file=source_file, source_code=source_code), template_tag='{template_tag}', end_tag={str(end_tag)}))")
+        parser.append(f"\n{indent}code_lexer = Lexer(Scanner(SourceFile(source_file=source_file, source_code=source_code), template_tag={str(template_tag)}, end_tag={str(end_tag)}))")
     elif var_define:
         parser.append(f"\n{indent}code_lexer = Lexer(Scanner(SourceFile(source_file=source_file, source_code=source_code), var_define='{var_define}', end_tag={str(end_tag)}))")
     else:

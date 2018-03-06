@@ -10,12 +10,9 @@ class ReservedNames:
     by STRING grammar instead
     """
     names = {'and', 'assert', 'break', 'class', 'continue', 'def', 'del',
-             'elif',
-             'else', 'except', 'finally', 'for', 'from', 'global', 'if',
-             'import',
-             'in', 'is', 'lambda', 'not', 'or', 'pass', 'raise', 'return',
-             'try',
-             'while'}
+             'elif', 'else', 'except', 'finally', 'for', 'from', 'global',
+             'if', 'import', 'in', 'is', 'lambda', 'not', 'or', 'pass',
+             'raise', 'return', 'try', 'while'}
 
     @staticmethod
     def add_name(*names):
