@@ -1,8 +1,13 @@
 import re
+import ast
 from uni_parser.reserved_names import ReservedNames
 
 
-class TempliteSyntaxError(Exception):
+class XPLANSyntaxError(Exception):
+    pass
+
+
+class StmtError(Exception):
     pass
 
 
@@ -64,16 +69,19 @@ class ContextManager:
     pass
 
 
-class Templite:
+class XPLAN:
     """
     template function:
 
     """
-    def __init__(self, template_text: str, *func_contexts, template_tag: list):
+    def __init__(self, template_text: str, *func_contexts, template_tag: list,
+                 display_tag: str = None, var_define: str = None):
         self.template_text = template_text
         self.context = {}
         self.all_vars = set()
         self.loop_vars = set()
+        self.display_tag = display_tag
+        self.var_define = var_define
         for c in func_contexts:
             self.context.update(c)
         try:
@@ -83,9 +91,12 @@ class Templite:
             raise Exception('Invalid template tag')
 
     def _syntax_error(self, msg, token):
-        raise TempliteSyntaxError(f'{msg}: {repr(token)}')
+        raise XPLANSyntaxError(f'{msg}: {repr(token)}')
 
     def record_var_name(self, name, vars_set):
+        """
+        put a var_name into the target var_set
+        """
         if not re.match(r"[_a-zA-Z][_a-zA-Z0-9]*$", name):
             self._syntax_error('Invalid name', name)
         vars_set.add(name)
@@ -117,14 +128,66 @@ class Templite:
         re_string = f'(?s)({template_string})'
         return re.split(re_string, self.template_text)
 
-    def handle_stmt(self, stmt: str, test_keyword: bool = False):
+    def handle_print(self, stmt: str) -> str:
+        if not stmt.startswith(self.display_tag):
+            return ''
+
+    def handle_var_value(self, value: str):
+        re_keyword = '|'.join(f'\\b{word}\\b' for word in ReservedNames.names)
+        re_keyword = '|'.join([re_keyword, '|'.join(s for s in ReservedNames.operation_symbols)])
+
+        print(self.all_vars)
+        print(self.loop_vars)
+        print(self.context)
+
+        # if key word contains statements (like generator) in value, e.g.
+        #
+        # "[x for x in range(10)]"
+        # "2 + 4"
+        # "'abc' + 'efg'"
+        if re.search(re_keyword, value):
+            return eval(value)
+
+        # normal value, can be a simple int, str, list, or dict in str format
+        else:
+            return ast.literal_eval(value)
+
+    def handle_stmt(self, stmt: str, test_stmt: bool = False):
         """
         processing simple one-line statement: pipeline or dot operation
+
+        a stmt is the string between two template tags, e.g.:
+
+        let my_name= = 'huang'
+        =my_name|upper
+        user.username
         """
-        if test_keyword:
+        if test_stmt:
             re_keyword = '|'.join(f'\\b{word}\\b' for word in ReservedNames.names)
-            if stmt.startswith('end') or re.search(re_keyword, stmt):
-                raise Exception('Stmt contains keyword, switch to Expr')
+            if stmt.startswith('end') or (re.search(re_keyword, stmt) and not stmt.startswith('let')):
+                raise StmtError('Stmt contains keyword, switch to Expr')
+
+            # if current syntax is a stmt and display_tag is provided
+            if self.display_tag:
+
+                if not stmt.startswith(self.display_tag):
+                    # add variable to context if it's a var definition
+                    if self.var_define and stmt.startswith(self.var_define):
+                        stmt = re.sub(self.var_define, '', stmt).strip().split('=')
+                        if len(stmt) != 2:
+                            raise StmtError('Invalid variable creation syntax')
+                        var_name = stmt[0].strip()
+                        var_value = self.handle_var_value(stmt[1].strip())
+                        self.context[var_name] = var_value
+                        return ''
+
+                    # return None if the syntax has no display_tag
+                    else:
+                        return ''
+
+                # if the syntax has display_tag, handle it
+                else:
+                    stmt = re.sub(self.display_tag, '', stmt).strip()
 
         if '|' in stmt:
             pipes = stmt.split('|')
@@ -220,6 +283,7 @@ class Templite:
         ops_stack = []
         buffered = []
         tokens = self.split_template_text()
+
         for token in tokens:
 
             # skip comment lines
@@ -256,7 +320,7 @@ class Templite:
                     # expr
                     try:
                         stmt = self.handle_stmt(token[2:-2].strip(),
-                                                test_keyword=True)
+                                                test_stmt=True)
                     except:
                         # expressions
                         # statement tag is still self.template_tag[1] when only
@@ -297,22 +361,50 @@ class Templite:
 
 
 if __name__ == '__main__':
-    templite = Templite(
+    templite = XPLAN(
 '''
-Hello <:my_name|upper:>!
-<:#abc:>
+<:let abc = list(map(lambda x: x % 2, [1,2,3,4,5,6,7,8,9,0])):>
+<:let topics = ['ML', 'PY', 'DA']:>
+Hello <:=my_name|upper:>!
+Hello <:=my_name:>!
+<:=abc:>
 <: for topic in topics :>
-    You are interested in <:topic:>
+    You are interested in <:=topic:>
+    <:let bbs = [c for c in topic]:>
+    <:#let bbs = ['aa', 'bb', 'cc']:>
+    <: for bb in bbs :>
+        haha <:=bb:>
+    <:end:>
 <: end #end of for:>
 ''',
         {'upper': str.upper},
-        template_tag=['<::>']
+        template_tag=['<::>'],
+        display_tag='=',
+        var_define='let'
     )
 
     text = templite.render({
         'my_name': "abc",
-        'topics': ['ML', 'PY', 'DA'],
     },
         diff_end=False)
 
     print(text)
+
+
+def render_function(context, handle_dot):
+    result = []
+    append_result = result.append
+    extend_result = result.extend
+    c_my_name = context['my_name']
+    c_abc = context['abc']
+    c_topics = context['topics']
+    c_bbs = context['bbs']
+    c_upper = context['upper']
+    extend_result(['\n', str(), '\n', str(), '\nHello ', str(c_upper(c_my_name)), '!\nHello ', str(c_my_name), '!\n', str(c_abc), '\n'])
+    for c_topic in c_topics:
+        extend_result(['\n    You are interested in ', str(c_topic), '\n    ', '\n    ', str(), '\n    '])
+        for c_bb in c_bbs:
+            extend_result(['\n        haha ', str(c_bb), '\n    '])
+        append_result('\n')
+    append_result('\n')
+    return "".join(result)

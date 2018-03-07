@@ -14,6 +14,10 @@ class ReservedNames:
              'if', 'import', 'in', 'is', 'lambda', 'not', 'or', 'pass',
              'raise', 'return', 'try', 'while'}
 
+    operation_symbols = {
+        '\\+', '\\-', '\\*', '/', '%', '//', '\\*\\*'
+    }
+
     @staticmethod
     def add_name(*names):
         for name in names:
