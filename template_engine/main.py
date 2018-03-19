@@ -11,6 +11,10 @@ class StmtError(Exception):
     pass
 
 
+class ExprError(Exception):
+    pass
+
+
 class CodeBuilder:
     """
     basic code tools
@@ -60,7 +64,9 @@ class CodeBuilder:
 
         code = str(self)
         global_namespace = {}
+
         print(code)
+
         exec(code, global_namespace)
         return global_namespace
 
@@ -75,13 +81,28 @@ class XPLAN:
 
     """
     def __init__(self, template_text: str, *func_contexts, template_tag: list,
-                 display_tag: str = None, var_define: str = None):
+                 display_tag: str = None, instance_tag: str = None,
+                 imported:str = None, var_define: str = None):
         self.template_text = template_text
+        self.config(*func_contexts, template_tag=template_tag,
+                    display_tag=display_tag, instance_tag=instance_tag,
+                    imported=imported, var_define=var_define)
+
+    def load_template(self, template_text: str):
+        self.template_text = template_text
+
+    def config(self, *func_contexts, template_tag: list,
+               display_tag: str = None, instance_tag: str = None,
+               imported:str = None, var_define: str = None):
         self.context = {}
         self.all_vars = set()
         self.loop_vars = set()
         self.display_tag = display_tag
+        self.instance_tag = instance_tag
+        self.imported = imported
         self.var_define = var_define
+        self.module_name = None
+
         for c in func_contexts:
             self.context.update(c)
         try:
@@ -90,26 +111,60 @@ class XPLAN:
         except:
             raise Exception('Invalid template tag')
 
-    def _syntax_error(self, msg, token):
+        if not self.imported or not self.instance_tag:
+            self.instance_tag = None
+            self.imported = None
+
+        if self.imported:
+            try:
+                self.module_name = self.imported.split(' as ')[1].strip()
+            except IndexError:
+                self.instance_tag = None
+                self.imported = None
+
+    def syntax_error(self, msg, token):
         raise XPLANSyntaxError(f'{msg}: {repr(token)}')
 
-    def record_var_name(self, name, vars_set):
+    def record_var_name(self, name, vars_set: set):
         """
         put a var_name into the target var_set
         """
-        if not re.match(r"[_a-zA-Z][_a-zA-Z0-9]*$", name):
-            self._syntax_error('Invalid name', name)
-        vars_set.add(name)
+        if isinstance(name, str):
+            if not re.match(r"[_a-zA-Z][_a-zA-Z0-9]*$", name):
+                self.syntax_error('Invalid name', name)
+            vars_set.add(name)
+        elif isinstance(name, list):
+            for n in name:
+                n = re.sub(',', '', n)
+                if n:
+                    if not re.match(r"[_a-zA-Z][_a-zA-Z0-9]*$", n):
+                        self.syntax_error('Invalid name', n)
+                    vars_set.add(n)
 
     def handle_dot(self, value, *dots):
         for dot in dots:
+            # try to handle method
+            # e.g. my_method('abc', 'egf') ->
+            #      args: ['abc', 'egf'], dot: my_method
+            try:
+                matched = re.search(r'^([a-zA-Z_]+)\((.+)\)$', dot)
+                args = matched.group(2)
+                dot = matched.group(1)
+            except AttributeError:
+                args = ''
+                dot = re.sub('\(\)$', '', dot)
+            args = [arg.strip() for arg in args.split(',')]
+
             try:
                 value = getattr(value, dot)
             except AttributeError:
                 value = value[dot]
 
             if callable(value):
-                value = value()
+                value = value(*args)
+
+        if value is None:
+            return ''
         return value
 
     def flush_output(self, code: CodeBuilder, buffered: list):
@@ -136,23 +191,24 @@ class XPLAN:
         re_keyword = '|'.join(f'\\b{word}\\b' for word in ReservedNames.names)
         re_keyword = '|'.join([re_keyword, '|'.join(s for s in ReservedNames.operation_symbols)])
 
-        print(self.all_vars)
-        print(self.loop_vars)
-        print(self.context)
-
         # if key word contains statements (like generator) in value, e.g.
         #
         # "[x for x in range(10)]"
+        # "[x for x in var_name]"
         # "2 + 4"
         # "'abc' + 'efg'"
         if re.search(re_keyword, value):
-            return eval(value)
+            try:
+                return eval(value)
+            except NameError:
+                return value
 
         # normal value, can be a simple int, str, list, or dict in str format
         else:
             return ast.literal_eval(value)
 
-    def handle_stmt(self, stmt: str, test_stmt: bool = False):
+    def handle_stmt(self, stmt: str, test_stmt: bool = False,
+                    code: CodeBuilder = None):
         """
         processing simple one-line statement: pipeline or dot operation
 
@@ -161,27 +217,31 @@ class XPLAN:
         let my_name= = 'huang'
         =my_name|upper
         user.username
+        =$client.name
         """
+        # can access imported instance, use instance_tag to call instance
+        # replace all instance_tag with instance name
+        if self.instance_tag and self.module_name:
+            stmt = re.sub('\$([a-zA-Z_]+)', f'{self.module_name}.\\1', stmt)
+
         if test_stmt:
             re_keyword = '|'.join(f'\\b{word}\\b' for word in ReservedNames.names)
             if stmt.startswith('end') or (re.search(re_keyword, stmt) and not stmt.startswith('let')):
                 raise StmtError('Stmt contains keyword, switch to Expr')
 
-            # if current syntax is a stmt and display_tag is provided
+            # if display_tag is provided
             if self.display_tag:
-
+                # if the stmt has no display_tag
                 if not stmt.startswith(self.display_tag):
                     # add variable to context if it's a var definition
                     if self.var_define and stmt.startswith(self.var_define):
-                        stmt = re.sub(self.var_define, '', stmt).strip().split('=')
-                        if len(stmt) != 2:
-                            raise StmtError('Invalid variable creation syntax')
-                        var_name = stmt[0].strip()
-                        var_value = self.handle_var_value(stmt[1].strip())
-                        self.context[var_name] = var_value
-                        return ''
+                        if code:
+                            code.add_line(re.sub(self.var_define, '', stmt).strip())
+                            return '_VAR_DEF'
+                        else:
+                            return '_VAR_DEF'
 
-                    # return None if the syntax has no display_tag
+                    # return empty string if the syntax has no display_tag
                     else:
                         return ''
 
@@ -189,13 +249,24 @@ class XPLAN:
                 else:
                     stmt = re.sub(self.display_tag, '', stmt).strip()
 
+            # if no display_tag is provided, treat every stmt as "displayed"
+            else:
+                if self.var_define and stmt.startswith(self.var_define):
+                    if code:
+                        code.add_line(re.sub(self.var_define, '', stmt).strip())
+                        return '_VAR_DEF'
+                    else:
+                        return '_VAR_DEF'
+                else:
+                    stmt = stmt
+
         if '|' in stmt:
             pipes = stmt.split('|')
             code = self.handle_stmt(pipes[0])
             for pipe_func in pipes[1:]:
                 # put the piped function into var list
                 self.record_var_name(pipe_func, self.all_vars)
-                code = f'c_{pipe_func}({code})'
+                code = f'{pipe_func}({code})'
 
         elif '.' in stmt:
             # when doing `x.y` meas either `x.y` or `x[y]` in Python
@@ -209,8 +280,7 @@ class XPLAN:
             code = f'handle_dot({code}, {args})'
 
         else:
-            self.record_var_name(stmt, self.all_vars)
-            code = f'c_{stmt}'
+            code = f'{stmt}'
 
         return code
 
@@ -225,57 +295,73 @@ class XPLAN:
         a expr is a list of split token:
             ['for', 'topic', 'in', 'topics']
         """
+
+        # a if statement is:
+        # if expr
         if expr[0] == 'if':
-            if len(expr) != 2:
-                self._syntax_error('Invalid if condition', token)
             ops_stack.append('if')
-            code.add_line(f'if {self.handle_stmt(expr[1])}:')
+            code.add_line(f'if {" ".join(expr[1:])}:')
             code.indent()
 
+        # a for statement is:
+        # for var in expr
+        #
+        # e.g.
+        # for var1, var2 in expr
         elif expr[0] == 'for':
-            if len(expr) != 4:
-                self._syntax_error('Invalid for condition', token)
             ops_stack.append('for')
-            self.record_var_name(expr[1], self.loop_vars)
-            code.add_line(
-                f'for c_{expr[1]} in {self.handle_stmt(expr[3])}:'
-            )
+
+            if expr.index('in') != 2:
+                self.record_var_name(expr[1:expr.index('in')], self.loop_vars)
+                code.add_line(
+                    f'for {" ".join(expr[1:expr.index("in")])} in {self.handle_stmt(" ".join(expr[expr.index("in") + 1:]))}:'
+                )
+            else:
+                self.record_var_name(expr[1], self.loop_vars)
+                code.add_line(
+                    f'for {expr[1]} in {self.handle_stmt(expr[3])}:'
+                )
             code.indent()
 
         elif expr[0].startswith('end'):
             # an end tag can followed by a comment
             if len(expr) != 1 and not expr[1].startswith('#'):
-                self._syntax_error('Invalid end tad', token)
+                self.syntax_error('Invalid end tad', token)
 
             if not ops_stack:
-                self._syntax_error('Too many ends', token)
+                self.syntax_error('Too many ends', token)
             if diff_end:
                 end_what = expr[0][3:]
                 start_what = ops_stack.pop()
                 if start_what != end_what:
-                    self._syntax_error('Mismatched end tag', end_what)
+                    self.syntax_error('Mismatched end tag', end_what)
             else:
                 ops_stack.pop()
             code.dedent()
 
         else:
-            self._syntax_error('Unknown tag', expr[0])
+            self.syntax_error('Unknown tag', expr[0])
 
     def render(self, context = None, diff_end: bool = False):
         if context:
             self.context.update(context)
+            for key in context:
+                self.all_vars.add(key)
+
         self.builder(diff_end)
         return self._render_function(self.context, self.handle_dot)
 
     def builder(self, diff_end: bool):
         code = CodeBuilder()
-        code.add_line("def render_function(context, handle_dot):")
+        code.add_line('def render_function(context, handle_dot):')
         code.indent()
-        code.add_line("result = []")
+        if self.imported:
+            code.add_line(self.imported)
+        code.add_line('result = []')
         # var name `append_result` as function `list.append()`
         # var name `extend_result` as function `list.extend()`
-        code.add_line("append_result = result.append")
-        code.add_line("extend_result = result.extend")
+        code.add_line('append_result = result.append')
+        code.add_line('extend_result = result.extend')
 
         # code section for storing variable context
         vars_code = code.add_section()
@@ -295,8 +381,9 @@ class XPLAN:
                 if token.startswith(self.template_tag[0]):
                     # simple statement: variable/pipeline/dot operation
                     # statement tag is self.template_tag[0]
-                    stmt = self.handle_stmt(token[2:-2].strip())
-                    buffered.append(f'str({stmt})')
+                    stmt = self.handle_stmt(token[2:-2].strip(), code=code)
+                    if stmt != '_VAR_DEF':
+                        buffered.append(f'str({stmt})')
 
                 elif token.startswith(self.template_tag[1]):
                     # expressions
@@ -307,7 +394,7 @@ class XPLAN:
                     self.handle_expr(expr, token, ops_stack, code, diff_end)
 
                 else:
-                    if token:
+                    if token and token != '\n':
                         buffered.append(repr(token))
 
             # if only one tag is provided
@@ -316,13 +403,13 @@ class XPLAN:
                     # simple statement: variable/pipeline/dot operation
                     # statement tag is self.template_tag[0]
                     #
-                    # try to handle stmt, if exception raised, turn to handle
-                    # expr
+                    # try to handle stmt, set test_stmt flag to True
+                    # if exception raised, turn to handle_expr
                     try:
                         stmt = self.handle_stmt(token[2:-2].strip(),
-                                                test_stmt=True)
+                                                test_stmt=True, code=code)
                     except:
-                        # expressions
+                        # handle_expr
                         # statement tag is still self.template_tag[1] when only
                         # one tag provided
                         self.flush_output(code, buffered)
@@ -330,16 +417,16 @@ class XPLAN:
                         self.handle_expr(expr, token, ops_stack, code, diff_end)
 
                     else:
-                        # if no exception raised in try
-                        # proceed this stmt
-                        buffered.append(f'str({stmt})')
+                        # if no exception raised in try, proceed this stmt
+                        if stmt != '_VAR_DEF':
+                            buffered.append(f'str({stmt})')
 
                 else:
-                    if token:
+                    if token and token != '\n':
                         buffered.append(repr(token))
 
         if ops_stack:
-            self._syntax_error('Mismatched operation tag', ops_stack[-1])
+            self.syntax_error('Mismatched operation tag', ops_stack[-1])
 
         self.flush_output(code, buffered)
 
@@ -350,7 +437,7 @@ class XPLAN:
         #
         # hence all variable are in all_vars but not in loop_vars are needed
         for var_name in self.all_vars - self.loop_vars:
-            vars_code.add_line(f'c_{var_name} = context[{repr(var_name)}]')
+            vars_code.add_line(f'{var_name} = context[{repr(var_name)}]')
 
         code.add_line('return "".join(result)')
         code.dedent()
@@ -361,50 +448,38 @@ class XPLAN:
 
 
 if __name__ == '__main__':
-    templite = XPLAN(
+    xplan = XPLAN(
 '''
-<:let abc = list(map(lambda x: x % 2, [1,2,3,4,5,6,7,8,9,0])):>
-<:let topics = ['ML', 'PY', 'DA']:>
-Hello <:=my_name|upper:>!
+<:let abc = list(filter(lambda x: x % 2, [1,2,3,4,5,6,7,8,9,0])):>
+<:let topics = zip(['ML', 0, True],['PY', 1, False]):>
+Hello <:=my_name|upper|lower:>!
 Hello <:=my_name:>!
-<:=abc:>
-<: for topic in topics :>
-    You are interested in <:=topic:>
-    <:let bbs = [c for c in topic]:>
-    <:#let bbs = ['aa', 'bb', 'cc']:>
-    <: for bb in bbs :>
-        haha <:=bb:>
-    <:end:>
+<:=abc.append(99):>
+<: for i in abc :>
+    <:=i:>
 <: end #end of for:>
+<:for trust in $trust:>
+    <:let aa = 999999999:>
+    <:=trust.name:>
+    <:=trust:>
+<:=aa:>
+<:end:>
+<:let client = 1:>
+<:=client:>
+<:=$client:>
 ''',
-        {'upper': str.upper},
+        {'upper': str.upper, 'lower': str.lower},
         template_tag=['<::>'],
         display_tag='=',
+        instance_tag='$',  # call imported class instance
+        imported='import template_engine.global_context as entity',  # must be ended with "as xxx", in order to call module's content
         var_define='let'
     )
 
-    text = templite.render({
+    text = xplan.render({
         'my_name': "abc",
+        'my_ass': 'butt'
     },
         diff_end=False)
 
     print(text)
-
-
-def render_function(context, handle_dot):
-    result = []
-    append_result = result.append
-    extend_result = result.extend
-    c_my_name = context['my_name']
-    c_abc = context['abc']
-    c_topics = context['topics']
-    c_bbs = context['bbs']
-    c_upper = context['upper']
-    extend_result(['\n', str(), '\n', str(), '\nHello ', str(c_upper(c_my_name)), '!\nHello ', str(c_my_name), '!\n', str(c_abc), '\n'])
-    for c_topic in c_topics:
-        extend_result(['\n    You are interested in ', str(c_topic), '\n    ', '\n    ', str(), '\n    '])
-        for c_bb in c_bbs:
-            extend_result(['\n        haha ', str(c_bb), '\n    '])
-        append_result('\n')
-    append_result('\n')
-    return "".join(result)
