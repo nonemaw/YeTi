@@ -81,23 +81,23 @@ class XPLAN:
 
     """
     def __init__(self, template_text: str, *func_contexts, template_tag: list,
-                 display_tag: str = None, instance_tag: str = None,
+                 print_tag: str = None, instance_tag: str = None,
                  imported:str = None, var_define: str = None):
         self.template_text = template_text
         self.config(*func_contexts, template_tag=template_tag,
-                    display_tag=display_tag, instance_tag=instance_tag,
+                    print_tag=print_tag, instance_tag=instance_tag,
                     imported=imported, var_define=var_define)
 
     def load_template(self, template_text: str):
         self.template_text = template_text
 
     def config(self, *func_contexts, template_tag: list,
-               display_tag: str = None, instance_tag: str = None,
+               print_tag: str = None, instance_tag: str = None,
                imported:str = None, var_define: str = None):
         self.context = {}
         self.all_vars = set()
         self.loop_vars = set()
-        self.display_tag = display_tag
+        self.print_tag = print_tag
         self.instance_tag = instance_tag
         self.imported = imported
         self.var_define = var_define
@@ -141,7 +141,7 @@ class XPLAN:
                         self.syntax_error('Invalid name', n)
                     vars_set.add(n)
 
-    def handle_dot(self, value, *dots):
+    def handle_dot(self, instance, *dots):
         for dot in dots:
             # try to handle method
             # e.g. my_method('abc', 'egf') ->
@@ -151,21 +151,22 @@ class XPLAN:
                 args = matched.group(2)
                 dot = matched.group(1)
             except AttributeError:
-                args = ''
+                args = None
                 dot = re.sub('\(\)$', '', dot)
-            args = [arg.strip() for arg in args.split(',')]
+
+            args = [arg.strip() for arg in args.split(',')] if args else []
 
             try:
-                value = getattr(value, dot)
+                instance = getattr(instance, dot)
             except AttributeError:
-                value = value[dot]
+                instance = instance[dot]
 
-            if callable(value):
-                value = value(*args)
+            if callable(instance):
+                instance = instance(*args) if args else instance()
 
-        if value is None:
+        if instance is None:
             return ''
-        return value
+        return instance
 
     def flush_output(self, code: CodeBuilder, buffered: list):
         """
@@ -181,10 +182,34 @@ class XPLAN:
     def split_template_text(self):
         template_string = '|'.join(f'{tag1}.*?{tag2}' for tag1, tag2 in zip(self.template_tag, self.template_close))
         re_string = f'(?s)({template_string})'
-        return re.split(re_string, self.template_text)
+        tokens = re.split(re_string, self.template_text)
+
+        last_token = None
+        for index, token in enumerate(tokens):
+            # clean up newline in tokens right after variable definition
+            # and statements (such as if and for)
+            if last_token is None:
+                token_content = re.search('<:(.*):>', token)
+                last_token = token_content.group(1).strip() if token_content else ''
+                continue
+
+            if token.startswith('\n'):
+                # var define case, e.g.
+                # <:let a = 1:>
+                if last_token.startswith(self.var_define):
+                    tokens[index] = token[1:]
+
+                # statement case
+                if last_token.startswith('if') or last_token.startswith('for'):
+                    tokens[index] = token[1:]
+
+            token_content = re.search('<:(.*):>', token)
+            last_token = token_content.group(1).strip() if token_content else ''
+
+        return tokens
 
     def handle_print(self, stmt: str) -> str:
-        if not stmt.startswith(self.display_tag):
+        if not stmt.startswith(self.print_tag):
             return ''
 
     def handle_var_value(self, value: str):
@@ -229,10 +254,10 @@ class XPLAN:
             if stmt.startswith('end') or (re.search(re_keyword, stmt) and not stmt.startswith('let')):
                 raise StmtError('Stmt contains keyword, switch to Expr')
 
-            # if display_tag is provided
-            if self.display_tag:
-                # if the stmt has no display_tag
-                if not stmt.startswith(self.display_tag):
+            # if print_tag is provided
+            if self.print_tag:
+                # if the stmt has no print_tag
+                if not stmt.startswith(self.print_tag):
                     # add variable to context if it's a var definition
                     if self.var_define and stmt.startswith(self.var_define):
                         if code:
@@ -241,15 +266,15 @@ class XPLAN:
                         else:
                             return '_VAR_DEF'
 
-                    # return empty string if the syntax has no display_tag
+                    # return empty string if the syntax has no print_tag
                     else:
                         return ''
 
-                # if the syntax has display_tag, handle it
+                # if the syntax has print_tag, handle it
                 else:
-                    stmt = re.sub(self.display_tag, '', stmt).strip()
+                    stmt = re.sub(self.print_tag, '', stmt).strip()
 
-            # if no display_tag is provided, treat every stmt as "displayed"
+            # if no print_tag is provided, treat every stmt as "printed"
             else:
                 if self.var_define and stmt.startswith(self.var_define):
                     if code:
@@ -274,10 +299,20 @@ class XPLAN:
             # therefore, for example, doing `x.y.z`, we just throw `x`, `y` and
             # `z` to method `handle_dot()` as `handle_dot(x, y, z)` and try which
             # way will work
+            outsider = re.search('^([a-zA-Z_]+)\((.+\..+)\)', stmt)
+            outside_function = None
+            if outsider:
+                outside_function = outsider.group(1)
+                stmt = outsider.group(2)
+
             dots = stmt.split('.')
             code = self.handle_stmt(dots[0])
             args = ', '.join(repr(d) for d in dots[1:])
-            code = f'handle_dot({code}, {args})'
+
+            if not outside_function:
+                code = f'handle_dot({code}, {args})'
+            else:
+                code = f'{outside_function}(handle_dot({code}, {args}))'
 
         else:
             code = f'{stmt}'
@@ -394,8 +429,7 @@ class XPLAN:
                     self.handle_expr(expr, token, ops_stack, code, diff_end)
 
                 else:
-                    if token and token != '\n':
-                        buffered.append(repr(token))
+                    buffered.append(repr(token))
 
             # if only one tag is provided
             else:
@@ -422,8 +456,7 @@ class XPLAN:
                             buffered.append(f'str({stmt})')
 
                 else:
-                    if token and token != '\n':
-                        buffered.append(repr(token))
+                    buffered.append(repr(token))
 
         if ops_stack:
             self.syntax_error('Mismatched operation tag', ops_stack[-1])
@@ -452,25 +485,26 @@ if __name__ == '__main__':
 '''
 <:let abc = list(filter(lambda x: x % 2, [1,2,3,4,5,6,7,8,9,0])):>
 <:let topics = zip(['ML', 0, True],['PY', 1, False]):>
-Hello <:=my_name|upper|lower:>!
-Hello <:=my_name:>!
+<:=my_name|upper|lower:>!
+<:=my_name:>!
 <:=abc.append(99):>
 <: for i in abc :>
     <:=i:>
 <: end #end of for:>
 <:for trust in $trust:>
-    <:let aa = 999999999:>
+<:let aa = 999999999:>
     <:=trust.name:>
     <:=trust:>
-<:=aa:>
+    <:=aa:>
 <:end:>
 <:let client = 1:>
 <:=client:>
-<:=$client:>
+<:=$client.sample_method('abcd').upper().lower():>
+<:=len($trust):>
 ''',
         {'upper': str.upper, 'lower': str.lower},
         template_tag=['<::>'],
-        display_tag='=',
+        print_tag='=',
         instance_tag='$',  # call imported class instance
         imported='import template_engine.global_context as entity',  # must be ended with "as xxx", in order to call module's content
         var_define='let'

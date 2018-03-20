@@ -12,6 +12,9 @@ class BaseEntity:
         for key in context:
             setattr(self, key, context.get(key))
 
+    def sample_method(self, text):
+        return text
+
 
 class BaseOtherEntity:
     def __init__(self, context):
