@@ -1,4 +1,5 @@
 from fuzzier.jison import Jison
+from template_engine.features import *
 
 
 class BaseEntity:

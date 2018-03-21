@@ -82,18 +82,21 @@ class XPLAN:
     """
     def __init__(self, template_text: str, *func_contexts, template_tag: list,
                  print_tag: str = None, instance_tag: str = None,
-                 imported:str = None, var_define: str = None):
+                 imported: str = None, var_define: str = None,
+                 iter_to_list: bool = False):
         self.template_text = template_text
         self.config(*func_contexts, template_tag=template_tag,
                     print_tag=print_tag, instance_tag=instance_tag,
-                    imported=imported, var_define=var_define)
+                    imported=imported, var_define=var_define,
+                    iter_to_list=iter_to_list)
 
     def load_template(self, template_text: str):
         self.template_text = template_text
 
     def config(self, *func_contexts, template_tag: list,
                print_tag: str = None, instance_tag: str = None,
-               imported:str = None, var_define: str = None):
+               imported: str = None, var_define: str = None,
+               iter_to_list: bool = False):
         self.context = {}
         self.all_vars = set()
         self.loop_vars = set()
@@ -101,6 +104,8 @@ class XPLAN:
         self.instance_tag = instance_tag
         self.imported = imported
         self.var_define = var_define
+        self.iter_to_list = iter_to_list
+
         self.module_name = None
 
         for c in func_contexts:
@@ -232,6 +237,49 @@ class XPLAN:
         else:
             return ast.literal_eval(value)
 
+    def handle_iter_to_list(self, stmt: str):
+        """
+        convert map, reduce, filter to list, for a compatibility with
+        Python2.*'s operation, e.g. filter(func, iter)[0]
+
+        e.g.
+
+        map(func, filter(lambda x: str(x) in '0123456789', [1,2,3,4,5,99]))
+        to
+        list(map(func, list(filter(lambda x: str(x) in '0123456789', [1,2,3,4,5,99]))))
+        """
+        search = re.search(r"[^a-zA-Z]*(map|reduce|filter)[^a-zA-Z]", stmt)
+        if search:
+            start = search.start(1)
+            end = search.end(1)
+            func = search.group(1)
+
+            # find the position of closed brackets
+            temp = stmt[end:]
+            stack = 0
+            str_stack = []
+            closed_position = 0
+            for index, c in enumerate(temp):
+                if (c == '(' or c == '{' or c == '[') and not str_stack:
+                    stack += 1
+
+                if (c == ')' or c == '}' or c == ']') and not str_stack:
+                    stack -= 1
+
+                if c == "'" or c == '"':
+                    if str_stack and str_stack[-1] == c:
+                        str_stack.pop()
+                    else:
+                        str_stack.append(c)
+
+                if not stack:
+                    closed_position = index + 1 + end
+                    break
+
+            return f'{stmt[:start]}list({func}{self.handle_iter_to_list(stmt[end:closed_position])}){self.handle_iter_to_list(stmt[closed_position:])}'
+        else:
+            return stmt
+
     def handle_stmt(self, stmt: str, test_stmt: bool = False,
                     code: CodeBuilder = None):
         """
@@ -239,7 +287,7 @@ class XPLAN:
 
         a stmt is the string between two template tags, e.g.:
 
-        let my_name= = 'huang'
+        let my_name = 'huang'
         =my_name|upper
         user.username
         =$client.name
@@ -250,8 +298,7 @@ class XPLAN:
             stmt = re.sub('\$([a-zA-Z_]+)', f'{self.module_name}.\\1', stmt)
 
         if test_stmt:
-            re_keyword = '|'.join(f'\\b{word}\\b' for word in ReservedNames.names)
-            if stmt.startswith('end') or (re.search(re_keyword, stmt) and not stmt.startswith('let')):
+            if stmt.startswith('end') or stmt.startswith('if') or stmt.startswith('for') and not stmt.startswith('let'):
                 raise StmtError('Stmt contains keyword, switch to Expr')
 
             # if print_tag is provided
@@ -293,26 +340,26 @@ class XPLAN:
                 self.record_var_name(pipe_func, self.all_vars)
                 code = f'{pipe_func}({code})'
 
-        elif '.' in stmt:
-            # when doing `x.y` meas either `x.y` or `x[y]` in Python
-            #
-            # therefore, for example, doing `x.y.z`, we just throw `x`, `y` and
-            # `z` to method `handle_dot()` as `handle_dot(x, y, z)` and try which
-            # way will work
-            outsider = re.search('^([a-zA-Z_]+)\((.+\..+)\)', stmt)
-            outside_function = None
-            if outsider:
-                outside_function = outsider.group(1)
-                stmt = outsider.group(2)
-
-            dots = stmt.split('.')
-            code = self.handle_stmt(dots[0])
-            args = ', '.join(repr(d) for d in dots[1:])
-
-            if not outside_function:
-                code = f'handle_dot({code}, {args})'
-            else:
-                code = f'{outside_function}(handle_dot({code}, {args}))'
+        # elif '.' in stmt:
+        #     # when doing `x.y` meas either `x.y` or `x['y']`
+        #     #
+        #     # therefore, for example, doing `x.y.z`, we just throw `x`, `y` and
+        #     # `z` to method `handle_dot()` as `handle_dot(x, y, z)` and try which
+        #     # way will work
+        #     outsider = re.search('^([a-zA-Z_]+)\((.+\..+)\)', stmt)
+        #     outside_function = None
+        #     if outsider:
+        #         outside_function = outsider.group(1)
+        #         stmt = outsider.group(2)
+        #
+        #     dots = stmt.split('.')
+        #     code = self.handle_stmt(dots[0])
+        #     args = ', '.join(repr(d) for d in dots[1:])
+        #
+        #     if not outside_function:
+        #         code = f'handle_dot({code}, {args})'
+        #     else:
+        #         code = f'{outside_function}(handle_dot({code}, {args}))'
 
         else:
             code = f'{stmt}'
@@ -331,18 +378,18 @@ class XPLAN:
             ['for', 'topic', 'in', 'topics']
         """
 
-        # a if statement is:
-        # if expr
+        # a if expression is:
+        # if stmt
         if expr[0] == 'if':
             ops_stack.append('if')
-            code.add_line(f'if {" ".join(expr[1:])}:')
+            code.add_line(f'if {self.handle_stmt(" ".join(expr[1:]))}:')
             code.indent()
 
-        # a for statement is:
-        # for var in expr
+        # a for expression is:
+        # for var in stmt
         #
         # e.g.
-        # for var1, var2 in expr
+        # for var1, var2 in stmt
         elif expr[0] == 'for':
             ops_stack.append('for')
 
@@ -497,17 +544,25 @@ if __name__ == '__main__':
     <:=trust:>
     <:=aa:>
 <:end:>
-<:let client = 1:>
-<:=client:>
-<:=$client.sample_method('abcd').upper().lower():>
-<:=len($trust):>
+<:let client = 'abcd':>
+<:=client.upper().lower():>
+<:=$client.sample_method('abcd').upper():>
+<:=str(list(filter(lambda x: x % 2, map(int, [1, 2, 3, 4, 5, 6, 7])))).upper():>
+
+
+
+
+<:if float(list(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, list(filter(lambda x: x in '0123456789.(', $client.sample_method(['1', '2', '3', '4', '5'])))))[0]):>
+fdsafsdfd
+<:end:>
 ''',
         {'upper': str.upper, 'lower': str.lower},
         template_tag=['<::>'],
         print_tag='=',
         instance_tag='$',  # call imported class instance
         imported='import template_engine.global_context as entity',  # must be ended with "as xxx", in order to call module's content
-        var_define='let'
+        var_define='let',
+        iter_to_list=True
     )
 
     text = xplan.render({
@@ -517,3 +572,4 @@ if __name__ == '__main__':
         diff_end=False)
 
     print(text)
+
