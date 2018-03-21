@@ -20,6 +20,7 @@ class CodeBuilder:
     basic code tools
     """
     INDENT_STEP = 4
+
     def __init__(self, indent: int = 0):
         self.code = []
         self.indent_level = indent
@@ -80,6 +81,7 @@ class XPLAN:
     template function:
 
     """
+
     def __init__(self, template_text: str, *func_contexts, template_tag: list,
                  print_tag: str = None, instance_tag: str = None,
                  imported: str = None, var_define: str = None,
@@ -185,7 +187,8 @@ class XPLAN:
         del buffered[:]
 
     def split_template_text(self):
-        template_string = '|'.join(f'{tag1}.*?{tag2}' for tag1, tag2 in zip(self.template_tag, self.template_close))
+        template_string = '|'.join(f'{tag1}.*?{tag2}' for tag1, tag2 in
+                                   zip(self.template_tag, self.template_close))
         re_string = f'(?s)({template_string})'
         tokens = re.split(re_string, self.template_text)
 
@@ -195,7 +198,8 @@ class XPLAN:
             # and statements (such as if and for)
             if last_token is None:
                 token_content = re.search('<:(.*):>', token)
-                last_token = token_content.group(1).strip() if token_content else ''
+                last_token = token_content.group(
+                    1).strip() if token_content else ''
                 continue
 
             if token.startswith('\n'):
@@ -209,7 +213,8 @@ class XPLAN:
                     tokens[index] = token[1:]
 
             token_content = re.search('<:(.*):>', token)
-            last_token = token_content.group(1).strip() if token_content else ''
+            last_token = token_content.group(
+                1).strip() if token_content else ''
 
         return tokens
 
@@ -219,7 +224,8 @@ class XPLAN:
 
     def handle_var_value(self, value: str):
         re_keyword = '|'.join(f'\\b{word}\\b' for word in ReservedNames.names)
-        re_keyword = '|'.join([re_keyword, '|'.join(s for s in ReservedNames.operation_symbols)])
+        re_keyword = '|'.join(
+            [re_keyword, '|'.join(s for s in ReservedNames.operation_symbols)])
 
         # if key word contains statements (like generator) in value, e.g.
         #
@@ -239,13 +245,13 @@ class XPLAN:
 
     def handle_iter_to_list(self, stmt: str):
         """
-        convert map, reduce, filter to list, for a compatibility with
-        Python2.*'s operation, e.g. filter(func, iter)[0]
+        convert map, reduce, filter from iterator to list, for a compatibility
+        with Python2.*'s operation, e.g. filter(func, iter)[0]
 
-        e.g.
+        examplt:
 
         map(func, filter(lambda x: str(x) in '0123456789', [1,2,3,4,5,99]))
-        to
+        ===>
         list(map(func, list(filter(lambda x: str(x) in '0123456789', [1,2,3,4,5,99]))))
         """
         search = re.search(r"[^a-zA-Z]*(map|reduce|filter)[^a-zA-Z]", stmt)
@@ -297,8 +303,13 @@ class XPLAN:
         if self.instance_tag and self.module_name:
             stmt = re.sub('\$([a-zA-Z_]+)', f'{self.module_name}.\\1', stmt)
 
+        if self.iter_to_list:
+            stmt = self.handle_iter_to_list(stmt)
+
         if test_stmt:
-            if stmt.startswith('end') or stmt.startswith('if') or stmt.startswith('for') and not stmt.startswith('let'):
+            if stmt.startswith('end') or stmt.startswith(
+                    'if') or stmt.startswith('for') and not stmt.startswith(
+                    'let'):
                 raise StmtError('Stmt contains keyword, switch to Expr')
 
             # if print_tag is provided
@@ -308,7 +319,8 @@ class XPLAN:
                     # add variable to context if it's a var definition
                     if self.var_define and stmt.startswith(self.var_define):
                         if code:
-                            code.add_line(re.sub(self.var_define, '', stmt).strip())
+                            code.add_line(
+                                re.sub(self.var_define, '', stmt).strip())
                             return '_VAR_DEF'
                         else:
                             return '_VAR_DEF'
@@ -325,7 +337,8 @@ class XPLAN:
             else:
                 if self.var_define and stmt.startswith(self.var_define):
                     if code:
-                        code.add_line(re.sub(self.var_define, '', stmt).strip())
+                        code.add_line(
+                            re.sub(self.var_define, '', stmt).strip())
                         return '_VAR_DEF'
                     else:
                         return '_VAR_DEF'
@@ -424,7 +437,7 @@ class XPLAN:
         else:
             self.syntax_error('Unknown tag', expr[0])
 
-    def render(self, context = None, diff_end: bool = False):
+    def render(self, context=None, diff_end: bool = False):
         if context:
             self.context.update(context)
             for key in context:
@@ -455,7 +468,8 @@ class XPLAN:
         for token in tokens:
 
             # skip comment lines
-            if any(token.startswith(''.join([tag, '#'])) for tag in self.template_tag):
+            if any(token.startswith(''.join([tag, '#'])) for tag in
+                   self.template_tag):
                 continue
 
             # if both stmt tag and expr tag are provided
@@ -495,7 +509,8 @@ class XPLAN:
                         # one tag provided
                         self.flush_output(code, buffered)
                         expr = token[2:-2].strip().split()
-                        self.handle_expr(expr, token, ops_stack, code, diff_end)
+                        self.handle_expr(expr, token, ops_stack, code,
+                                         diff_end)
 
                     else:
                         # if no exception raised in try, proceed this stmt
@@ -528,39 +543,43 @@ class XPLAN:
 
 
 if __name__ == '__main__':
+    text = \
+        '''
+        <:let abc = list(filter(lambda x: x % 2, [1,2,3,4,5,6,7,8,9,0])):>
+        <:let topics = zip(['ML', 0, True],['PY', 1, False]):>
+        <:=my_name|upper|lower:>!
+        <:=my_name:>!
+        <:=abc.append(99):>
+        <: for i in abc :>
+            <:=i:>
+        <: end #end of for:>
+        <:for trust in $trust:>
+        <:let aa = 999999999:>
+            <:=trust.name:>
+            <:=trust:>
+            <:=aa:>
+        <:end:>
+        <:let client = 'abcd':>
+        <:=client.upper().lower():>
+        <:=$client.sample_method('abcd').upper():>
+        <:=str(list(filter(lambda x: x % 2, map(int, [1, 2, 3, 4, 5, 6, 7])))).upper():>
+        
+        
+        
+        
+        <:if float(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, filter(lambda x: x in '0123456789.(', $client.sample_method(['1', '2', '3', '4', '5'])))[0]):>
+        iteration to list
+        <:end:>
+        '''
+
     xplan = XPLAN(
-'''
-<:let abc = list(filter(lambda x: x % 2, [1,2,3,4,5,6,7,8,9,0])):>
-<:let topics = zip(['ML', 0, True],['PY', 1, False]):>
-<:=my_name|upper|lower:>!
-<:=my_name:>!
-<:=abc.append(99):>
-<: for i in abc :>
-    <:=i:>
-<: end #end of for:>
-<:for trust in $trust:>
-<:let aa = 999999999:>
-    <:=trust.name:>
-    <:=trust:>
-    <:=aa:>
-<:end:>
-<:let client = 'abcd':>
-<:=client.upper().lower():>
-<:=$client.sample_method('abcd').upper():>
-<:=str(list(filter(lambda x: x % 2, map(int, [1, 2, 3, 4, 5, 6, 7])))).upper():>
-
-
-
-
-<:if float(list(map(lambda x: x.startswith('(') and ('-'+x[1:]) or x, list(filter(lambda x: x in '0123456789.(', $client.sample_method(['1', '2', '3', '4', '5'])))))[0]):>
-fdsafsdfd
-<:end:>
-''',
+        text,
         {'upper': str.upper, 'lower': str.lower},
         template_tag=['<::>'],
         print_tag='=',
         instance_tag='$',  # call imported class instance
-        imported='import template_engine.global_context as entity',  # must be ended with "as xxx", in order to call module's content
+        imported='import template_engine.global_context as entity',
+        # must be ended with "as xxx", in order to call module's content
         var_define='let',
         iter_to_list=True
     )
@@ -572,4 +591,3 @@ fdsafsdfd
         diff_end=False)
 
     print(text)
-
