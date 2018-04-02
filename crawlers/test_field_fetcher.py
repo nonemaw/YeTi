@@ -38,6 +38,9 @@ class FieldFetcher(Fetcher):
         entry point task: (0, field_page_url, data={'type': 'field_page', 'save': False}, 0, 0)
         """
         # if save is 'True', skip operation and return data directly
+
+        print(data)
+
         if data.get('save'):
             return 1, data, (200, '', '')
 
@@ -47,12 +50,12 @@ class FieldFetcher(Fetcher):
             response = session.get(url, timeout=(3.05, 10))
             return 1, data, (response.status_code, response.url, response.text)
 
-        # if the type is Multi or Choice, then
-        # get the page of target variable
+        # if the type is Multi or Choice, then get the page of target variable
         elif data.get('type') == 'var_page':
             var_type = data.get('var_type')
             if var_type == 'Multi' or var_type == 'Choice':
-                response = session.get(url, timeout=(3.05, 10))
+                session.get(url)
+                response = session.get(f'https://{self.company}.xplan.iress.com.au/ufield/list_options', timeout=(3.05, 10))
                 return 1, data, (response.status_code, response.url, response.text)
             else:
                 return 1, data, (200, '', '')
@@ -138,11 +141,13 @@ class FieldParser(Parser):
 
                 if var_type == 'Multi' or var_type == 'Choice':
                     new_data.update({'save': False})
+                    urls.append((
+                        f'https://{self.company}.xplan.iress.com.au{href}',
+                        new_data,
+                        priority + 1))
                 else:
                     new_data.update({'save': True, 'multi': None})
-                urls.append((f'https://{self.company}.xplan.iress.com.au{href}',
-                             new_data,
-                             priority + 1))
+                    urls.append(('', new_data, priority + 1))
 
             stamp = (f'Group Page {group_name}', datetime.now())
             return 1, urls, stamp
@@ -186,6 +191,7 @@ class FieldSaver(Saver):
             self.pipe = f'{self.pipe}.json'
 
     def save(self, url: str, data, stamp: tuple):
+        print(data)
         if isinstance(self.pipe, str):
             with open(self.pipe, 'a') as F:
                 F.write(f'{json.dumps(data)},\n')

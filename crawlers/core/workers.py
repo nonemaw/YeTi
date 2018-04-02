@@ -45,7 +45,6 @@ class Fetcher:
 
         try:
             fetch_result, data, content = self.fetch(url, data, session)
-
         except Exception as e:
             import sys, os
             exc_type, exc_obj, exc_tb = sys.exc_info()

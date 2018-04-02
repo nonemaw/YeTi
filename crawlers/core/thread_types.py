@@ -45,6 +45,7 @@ class FetcherThread(BaseThread):
         content: (status_code, url, html_text)
         '''
         priority, url, data, deep, repeat = self._thread_pool.get_task(FLAGS.FETCH)
+        print(data)
         fetch_result, data, content = self._worker.working(url, data, repeat, self.session)
 
         # fetch success, update FETCH counter, add task to task_queue_p, for
@@ -77,20 +78,20 @@ class ParserThread(BaseThread):
         '''
         priority, url, data, deep, content = self._thread_pool.get_task(FLAGS.PARSE)
         parse_result = 1
-        url_list = []
+        urls = []
         stamp = ()
 
         # if data is negative or data has a negative 'save' value, parse the
         # html, otherwise skip
         if not data or not data.get('save'):
-            parse_result, url_list, stamp = self._worker.working(priority, url, data, deep, content)
+            parse_result, urls, stamp = self._worker.working(priority, url, data, deep, content)
 
         if parse_result > 0:
             self._thread_pool.update_flag(FLAGS.PARSE, 1)
 
             # add each url in urls list into task_queue_f, waiting for
             # fetcher's further process
-            for _url, _data, _priority in url_list:
+            for _url, _data, _priority in urls:
                 self._thread_pool.add_task(FLAGS.FETCH, (_priority, _url, _data, deep + 1, 0))
 
             # add current url (already fetched/parsed) into task_queue_s,
