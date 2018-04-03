@@ -31,15 +31,14 @@ class ThreadPool:
         self.flag_dict[key] += value
         self.lock.release()
 
-    def add_task(self, task_name: FLAGS, task_content: tuple):
-        '''
+    def put_task(self, task_name: FLAGS, task_content: tuple):
+        """
         add a task to queue based on name
         task_content is a tuple: (priority, url, data, deep, repeat)
 
         Queue.put_nowait(item) equals to Queue.put(item, block=False, timeout=None)
-        '''
+        """
         # add task to fetch queue
-
         if task_name == FLAGS.FETCH and (not self.filter or self.filter.check_repetition(task_content[1])):
             self.task_queue_f.put(task_content, block=False)
             self.update_flag(FLAGS.NOT_FETCH, 1)
@@ -55,7 +54,7 @@ class ThreadPool:
             self.update_flag(FLAGS.NOT_SAVE, 1)
 
     def get_task(self, task_name: FLAGS) -> tuple:
-        '''
+        """
         get a task from queue based on name and return content
         task_content is a tuple: (priority, url, data, deep, repeat)
 
@@ -67,7 +66,7 @@ class ThreadPool:
         within that time. Otherwise (block is false), return an item if one is
         immediately available, else raise the Empty exception (timeout is
         ignored in that case).
-        '''
+        """
 
         task_content = None
         # get task from fetch queue
@@ -87,7 +86,7 @@ class ThreadPool:
         return task_content
 
     def finish_task(self, task_name: FLAGS):
-        '''
+        """
         finish an enqueued task based on name (just tell the queue task is
         done)
 
@@ -96,7 +95,7 @@ class ThreadPool:
         consumer threads. For each get() used to fetch a task, a subsequent
         call to task_done() tells the queue that the processing on the task is
         complete.
-        '''
+        """
 
         if task_name == FLAGS.FETCH:
             self.task_queue_f.task_done()
@@ -107,14 +106,14 @@ class ThreadPool:
         self.update_flag(FLAGS.RUNNING, -1)
 
     def all_done(self):
-        '''
+        """
         check if all tasks are done, when:
 
         tasks_running == 0
         NOT_FETCH == 0
         NOT_PARSE == 0
         NOT_SAVE == 0
-        '''
+        """
         done = False if self.flag_dict[FLAGS.RUNNING] \
                      or self.flag_dict[FLAGS.NOT_FETCH] \
                      or self.flag_dict[FLAGS.NOT_PARSE] \
@@ -140,7 +139,7 @@ class ThreadPool:
         logging.warning(f'{self.__class__.__name__} ThreadPool started: fetcher_num={self.fetcher_num}')
 
         # push tasks to queue, (priority, url, data, deep, repeat) is a task's content
-        self.add_task(FLAGS.FETCH, (priority, url, initial_data, deep, repeat))
+        self.put_task(FLAGS.FETCH, (priority, url, initial_data, deep, repeat))
 
         # assume fetcher_num == 10, then:
         # fetcher_thread_list is a list with 10 threads, and each thread has

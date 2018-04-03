@@ -32,11 +32,11 @@ class Fetcher:
         return 1, data, (response.status_code, response.url, response.text)
 
     def working(self, url: str, data: dict, repeat: int, session=None):
-        '''
+        """
         -1 (fetch failed and reach max_repeat),
          0 (need repeat),
          1 (fetch success)
-        '''
+        """
         logging.warning(f'{self.__class__.__name__} work: data={data}, repeat={repeat}, url={url}')
 
         # sleep for a random time if data or data's 'save' are negative
@@ -66,7 +66,7 @@ class Parser:
         self.max_deep = max_deep
 
     def parse(self, priority: int, url: str, data: dict, deep: int, content: tuple):
-        '''
+        """
         a base case of getting all urls from current page text
 
         A <a href> attribute specifies the link's destination, e.g:
@@ -76,7 +76,7 @@ class Parser:
         stamp: (title, timestamp)
 
         <rewritable>
-        '''
+        """
         *_, html_text = content
         urls = []
 

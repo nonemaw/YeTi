@@ -38,9 +38,6 @@ class FieldFetcher(Fetcher):
         entry point task: (0, field_page_url, data={'type': 'field_page', 'save': False}, 0, 0)
         """
         # if save is 'True', skip operation and return data directly
-
-        print(data)
-
         if data.get('save'):
             return 1, data, (200, '', '')
 
@@ -50,7 +47,7 @@ class FieldFetcher(Fetcher):
             response = session.get(url, timeout=(3.05, 10))
             return 1, data, (response.status_code, response.url, response.text)
 
-        # if the type is Multi or Choice, then get the page of target variable
+        # if the type is Multi or Choice, then get the page of choices
         elif data.get('type') == 'var_page':
             var_type = data.get('var_type')
             if var_type == 'Multi' or var_type == 'Choice':
@@ -59,6 +56,9 @@ class FieldFetcher(Fetcher):
                 return 1, data, (response.status_code, response.url, response.text)
             else:
                 return 1, data, (200, '', '')
+
+        else:
+            raise Exception(f'Invalid data type: type={data.get("type")}')
 
 
 class FieldParser(Parser):
@@ -80,12 +80,12 @@ class FieldParser(Parser):
                 group_var = group['value']
                 group_name = group.text
 
-                new_data = {
+                new_data = json.dumps({
                     'type': 'group_page',
                     'group_var': group_var,
                     'group_name': group_name,
                     'save': False
-                }
+                })
                 urls.append((f'https://{self.company}.xplan.iress.com.au/ufield/list_iframe?group={group_var}',
                              new_data,
                              priority + 1))
@@ -106,6 +106,17 @@ class FieldParser(Parser):
                 try:
                     var_detail = var_entry.find_all('td')[1:3]
                     var_type = var_detail[-1].text
+
+                    # try if var_type is invalid (type int)
+                    try:
+                        int(var_type)
+                    # exception happens, var_type is not an int, valid
+                    except:
+                        pass
+                    # no exception happens, var_type is an int, invalid, raise exception
+                    else:
+                        raise Exception
+
                     var_detail = var_detail[0].find('a')
                     href = var_detail['href']
                     var = href.split('/')[-1]
@@ -141,12 +152,14 @@ class FieldParser(Parser):
 
                 if var_type == 'Multi' or var_type == 'Choice':
                     new_data.update({'save': False})
+                    new_data = json.dumps(new_data)
                     urls.append((
                         f'https://{self.company}.xplan.iress.com.au{href}',
                         new_data,
                         priority + 1))
                 else:
                     new_data.update({'save': True, 'multi': None})
+                    new_data = json.dumps(new_data)
                     urls.append(('', new_data, priority + 1))
 
             stamp = (f'Group Page {group_name}', datetime.now())
@@ -176,6 +189,7 @@ class FieldParser(Parser):
                     index += 1
 
                 new_data.update({'multi': multi, 'save': True})
+                new_data = json.dumps(new_data)
 
             urls = [('', new_data, priority + 1)]
             stamp = (f'Multi Choice Var {var_name}', datetime.now())
@@ -191,10 +205,9 @@ class FieldSaver(Saver):
             self.pipe = f'{self.pipe}.json'
 
     def save(self, url: str, data, stamp: tuple):
-        print(data)
         if isinstance(self.pipe, str):
             with open(self.pipe, 'a') as F:
-                F.write(f'{json.dumps(data)},\n')
+                F.write(f'{data},\n')
 
         else:
             try:
@@ -239,10 +252,10 @@ if __name__ == "__main__":
     fetcher = FieldFetcher(company)
     parser = FieldParser(company)
     saver = FieldSaver(pipe='tttttttttttt')
-    filter = Filter(bloom_capacity=1000)
+    filter = None
 
     spider = ThreadPool(fetcher, parser, saver, filter, fetcher_num=1)
-    spider.run(url, initial_data={'type': 'field_page'}, priority=0, deep=0, session=session)
+    spider.run(url, initial_data=json.dumps({'type': 'field_page'}), priority=0, deep=0, session=session)
 
     logout(session, company)
 
