@@ -14,6 +14,17 @@ from crawlers.core.config import get_url_legal, make_random_useragent,\
 
 
 class Fetcher:
+    """
+    Fetcher worker
+
+    by sending GET to fetch url's html content / json response
+
+    return: (fetch_result, data, content) to parent thread
+
+    fetch_result: a fetch result code
+    data: {'data1': xxx, 'data2': xxx, ...}, indicating needed page data, parsed from Parser
+    content: (status code, url, html text)
+    """
     def __init__(self, max_repeat: int = 3, sleep_time: int = 0):
         self.max_repeat = max_repeat
         self.sleep_time = sleep_time
@@ -22,7 +33,7 @@ class Fetcher:
         """
         a base case of fetching page text
 
-        <rewritable>
+        <re-write this method for usage>
         """
         if session is not None:
             response = session.get(url, headers={'User-Agent': make_random_useragent(), 'Accept-Encoding': 'gzip'}, timeout=(3.05, 10))
@@ -62,6 +73,17 @@ class Fetcher:
 
 
 class Parser:
+    """
+    Parser worker
+
+    parsing html content to get required data
+
+    return: (parse_result, urls, stamp) to parent thread
+
+    parse_result: a parse result code
+    urls: [(sub_url, sub_url's data, priority), (), ...]
+    stamp: (parsed page title, timestamp)
+    """
     def __init__(self, max_deep: int = -1):
         self.max_deep = max_deep
 
@@ -74,8 +96,6 @@ class Parser:
 
         content: (status_code, url, html_text)
         stamp: (title, timestamp)
-
-        <rewritable>
         """
         *_, html_text = content
         urls = []
@@ -109,11 +129,9 @@ class Saver:
 
     def save(self, url: str, data, stamp: tuple):
         """
-        a base case of saving data into file or somewhere else
+        a base case of saving data/url into file or somewhere else
 
         stamp: (title_of_page, parsed_timestamp)
-
-        <rewritable>
         """
         if isinstance(self.pipe, str):
             stamp_temp = [i for i in stamp]

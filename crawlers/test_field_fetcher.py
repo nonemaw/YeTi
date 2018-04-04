@@ -10,9 +10,11 @@ from app.models import Group, SubGroup
 from fuzzier.jison import Jison
 
 
-from crawlers.core.workers import Fetcher, Parser, Saver, Filter
+from crawlers.core.workers import Fetcher, Parser, Saver
 from crawlers.core.thread_pool import ThreadPool
 from crawlers.core.config import get_url_legal
+
+from flask import Request, Response
 
 
 """
