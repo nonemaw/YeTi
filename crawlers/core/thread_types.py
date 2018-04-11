@@ -59,7 +59,8 @@ class FetcherThread(BaseThread):
 
         # fetch success, update FETCH counter, add task to task_queue_p, for
         # parser's further process
-        data = json.dumps(data)
+        if isinstance(data, dict):
+            data = json.dumps(data)
         if fetch_result == 1:
             self._thread_pool.update_flag(FLAGS.FETCH, 1)
             self._thread_pool.put_task(FLAGS.PARSE, (priority, url, data, deep, content))
@@ -106,6 +107,8 @@ class ParserThread(BaseThread):
             # add each url in urls list into task_queue_f, waiting for
             # fetcher's further process
             for _url, _data, _priority in urls:
+                if isinstance(_data, dict):
+                    _data = json.dumps(_data)
                 self._thread_pool.put_task(FLAGS.FETCH, (_priority, _url, _data, deep + 1, 0))
 
             # add current url (already fetched/parsed) into task_queue_s,

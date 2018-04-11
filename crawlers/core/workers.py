@@ -33,6 +33,8 @@ class Fetcher:
         """
         a base case of fetching page text
 
+        :return: int, dict, tuple
+
         <re-write this method for usage>
         """
         if session is not None:
@@ -89,13 +91,9 @@ class Parser:
 
     def parse(self, priority: int, url: str, data: dict, deep: int, content: tuple):
         """
-        a base case of getting all urls from current page text
-
-        A <a href> attribute specifies the link's destination, e.g:
-            <a href='https://www.sample.com'>Visitor</a>
+        a base case of parsing form required info (e.g. urls or data) from content
 
         content: (status_code, url, html_text)
-        stamp: (title, timestamp)
         """
         *_, html_text = content
         urls = []

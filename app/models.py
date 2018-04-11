@@ -200,7 +200,7 @@ class InterfaceNode:
         else:
             db = current_user.db
 
-        # TODO: FIX ME
+        # TODO: FIX ME, too buggy
         legacy = db.InterfaceNode.find_one(
             {'id': self.node.get('id')})
         if not legacy:

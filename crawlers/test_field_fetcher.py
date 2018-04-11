@@ -73,6 +73,7 @@ class FieldParser(Parser):
         urls = []
 
         # get all groups' urls, send to task_queue_f
+        # field_page -> group_page
         if data.get('type') == 'field_page':
             field_page = html_text
             soup = BeautifulSoup(field_page, 'lxml')
@@ -82,12 +83,12 @@ class FieldParser(Parser):
                 group_var = group['value']
                 group_name = group.text
 
-                new_data = json.dumps({
+                new_data = {
                     'type': 'group_page',
                     'group_var': group_var,
                     'group_name': group_name,
                     'save': False
-                })
+                }
                 urls.append((f'https://{self.company}.xplan.iress.com.au/ufield/list_iframe?group={group_var}',
                              new_data,
                              priority + 1))
@@ -96,6 +97,7 @@ class FieldParser(Parser):
             return 1, urls, stamp
 
         # get all variables' urls under this group, send to task_queue_f
+        # group_page -> var_page
         if data.get('type') == 'group_page':
             group_page = html_text
             group_name = data.get('group_name')
@@ -154,20 +156,19 @@ class FieldParser(Parser):
 
                 if var_type == 'Multi' or var_type == 'Choice':
                     new_data.update({'save': False})
-                    new_data = json.dumps(new_data)
                     urls.append((
                         f'https://{self.company}.xplan.iress.com.au{href}',
                         new_data,
                         priority + 1))
                 else:
                     new_data.update({'save': True, 'multi': None})
-                    new_data = json.dumps(new_data)
                     urls.append(('', new_data, priority + 1))
 
             stamp = (f'Group Page {group_name}', datetime.now())
             return 1, urls, stamp
 
         # get variable detailed information if type is Multi/Choice
+        # var_page unchanged
         if data.get('type') == 'var_page':
             var_type = data.get('var_type')
             var_name = data.get('var_name')
@@ -191,7 +192,6 @@ class FieldParser(Parser):
                     index += 1
 
                 new_data.update({'multi': multi, 'save': True})
-                new_data = json.dumps(new_data)
 
             urls = [('', new_data, priority + 1)]
             stamp = (f'Multi Choice Var {var_name}', datetime.now())
