@@ -144,8 +144,7 @@ class InterfaceFetcher:
 
     def r_dump_interface(self, menu_path: str,
                          session: requests.sessions.Session,
-                         node_id: str = None, specific: list = None,
-                         debug: bool = False) -> list:
+                         specific: list = None, debug: bool = False) -> list:
         """
         get `children` under current `menu_path`
 
