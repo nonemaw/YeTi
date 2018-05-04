@@ -2,28 +2,19 @@ import requests
 import re
 import copy
 import json
-import os
 from datetime import datetime
 from bs4 import BeautifulSoup
-from bson import ObjectId
-from app.models import Group, SubGroup
 from fuzzier.jison import Jison
 
 
 from crawlers.core.workers import Fetcher, Parser, Saver
 from crawlers.core.thread_pool import ThreadPool
-from crawlers.core.config import get_url_legal
-
-from flask import Request, Response
-
 
 """
 initial task:
 
 (priority=0, url=f'https://{company}.xplan.iress.com.au/ufield/list', data={'type': 'main_list'}, deep=0, repeat=0)
 """
-
-
 class FieldFetcher(Fetcher):
     def __init__(self, company: str, jison: Jison = None, db=None,
                  max_repeat: int = 3, sleep_time: int = 0):
@@ -247,13 +238,13 @@ def logout(session, company: str):
 if __name__ == "__main__":
     company = 'ytml'
     username = 'ytml2'
-    password = 'Passw0rdOCT'
+    password = ''
     session = login(username, password, company)
 
     url = f'https://{company}.xplan.iress.com.au/ufield/list'
     fetcher = FieldFetcher(company)
     parser = FieldParser(company)
-    saver = FieldSaver(pipe='tttttttttttt')
+    saver = FieldSaver(pipe='test')
     filter = None
 
     spider = ThreadPool(fetcher, parser, saver, filter, fetcher_num=1)
