@@ -7,7 +7,7 @@ from collections import Iterator, Iterable, OrderedDict
 class CL:
     def __init__(self, obj):
         try:
-            assert obj and isinstance(obj, (Iterator, Iterable)), 'Invalid object for ChainLightning to work'
+            assert obj and isinstance(obj, (Iterator, Iterable))
         except AssertionError:
             obj = list(obj)
 
@@ -35,11 +35,11 @@ class CL:
         self_obj_type = str(type(self.__obj))
         self_id = '0x{:02x}'.format(id(self))
         if self.type == 1:
-            return f'<ChainLightning object at {self_id}>, value={self_obj}, type=1<Iterator>'
+            return f'<ChainLightning object at {self_id}>, value={self_obj}, type=Iterator'
         elif self.type == 2:
-            return f'<ChainLightning object at {self_id}>, value={self_obj}, type=2<Iterable>'
+            return f'<ChainLightning object at {self_id}>, value={self_obj}, type=Iterable'
 
-        return f'<ChainLightning object at {self_id}>, value={self_obj}, type=0<{self_obj_type}>'
+        return f'<ChainLightning object at {self_id}>, value={self_obj}, type={self_obj_type}'
 
     def __repr__(self):
         return str(self)
@@ -51,6 +51,44 @@ class CL:
 
     def __enter__(self):
         return iter(self)
+
+    def __call__(self, func_name: str, *args, **kwargs):
+        if hasattr(self, func_name):
+            return getattr(self, func_name)(*args, **kwargs)
+
+    def __getitem__(self, item):
+        """
+        enable
+        >>> CL([1, 2, 3, 4, 5])[1:2]
+        """
+        if not isinstance(item, (int, slice)):
+            raise TypeError(f'Indices must be integers or slices, not {type(item)}')
+
+        if self.type == 2:
+            # Iterable case
+            return self.__obj.__getitem__(item)
+        elif self.type == 1:
+            # Iterator case
+            if isinstance(item, int):
+                # int case
+                counter = 0
+                for i in self:
+                    if counter == item:
+                        return i
+                    else:
+                        counter += 1
+            else:
+                # slice case
+
+
+
+
+
+
+
+            res = list(self.__obj).__getitem__(item)
+            self.__restore_from_cache()
+            return res
 
     def __update_type_n_cache(self):
         """
@@ -81,7 +119,9 @@ class CL:
 
         return: func's legal number of arguments
         """
-        assert callable(func), 'Parameter "func" got a non-callable object'
+        if not callable(func):
+            raise TypeError('Argument "func" got a non-callable object')
+
         # _args is the total number of func's arguments
         _args = len(inspect.getfullargspec(func).args)
         # _kwargs is the total number of func's kw-arguments
@@ -207,7 +247,8 @@ class CL:
             self.__assert_func(key, arg_num=1)
 
         if reverse is not None and not isinstance(self.__obj, dict):
-            assert isinstance(reverse, (bool, int)), f'Argument "reverse" should be in type of bool/int, but got {type(reverse)}'
+            if not isinstance(reverse, (bool, int)):
+                raise TypeError(f'Argument "reverse" should be in type of bool/int, but got {type(reverse)}')
             self.__obj = sorted(self.__obj, key=key, reverse=reverse)
         elif reverse and not isinstance(self.__obj, dict):
             self.__obj = sorted(self.__obj, key=key)
@@ -315,7 +356,7 @@ class CL:
         else:
             func = lambda x: x
 
-        for item in self.__obj:
+        for item in self:
             try:
                 if res is None and tmp is None:
                     res = item
