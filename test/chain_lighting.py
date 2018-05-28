@@ -1,23 +1,66 @@
 import copy
 import inspect
 from functools import reduce
+from itertools import islice
 from collections import Iterator, Iterable, OrderedDict
+
+
+class Table(dict):
+    """
+    enabling dot operation instead of 'get()'
+    Example:
+    >>> t = Table({'key1': 1, 'key2': {'key3': 3, 'key4': 4}})
+    >>> t.key2.key3
+    3
+    >>> t.key2.key5 = 5
+    >>> t.key2.key5
+    5
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.items():
+                    self[k] = Table(v) if isinstance(v, dict) else v
+
+            if kwargs:
+                for k, v in kwargs.items():
+                    self[k] = Table(v) if isinstance(v, dict) else v
+
+    def __getattr__(self, item):
+        """
+        enable
+        >>> t.key
+        """
+        return self.get(item)
+
+    def __setattr__(self, key, value):
+        """
+        enable
+        >>> t.key2 = 2
+        """
+        self.__setitem__(key, value)
+
+    def __delattr__(self, item):
+        """
+        enable
+        >>> del t.key3
+        """
+        self.__delitem__(item)
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        del self.__dict__[key]
 
 
 class CL:
     def __init__(self, obj):
-        try:
-            assert obj and isinstance(obj, (Iterator, Iterable))
-        except AssertionError:
-            obj = list(obj)
-
-        if isinstance(obj, dict) and not isinstance(obj, OrderedDict):
-            tmp = OrderedDict()
-            for key in obj:
-                tmp[key] = obj.get(key)
-            obj = tmp
-
-        self.__obj = obj
+        self.__obj = self.__assert_obj(obj)
         self.__cache = copy.deepcopy(obj)
         if isinstance(obj, Iterator):
             self.type = 1  # type 1 is Iterator
@@ -26,28 +69,28 @@ class CL:
 
     def __iter__(self):
         if self.type == 1:
-            return self.__obj
+            return copy.deepcopy(self.__obj)
 
         return iter(self.__obj)
 
     def __str__(self):
-        self_obj = str(self.__obj)
-        self_obj_type = str(type(self.__obj))
+        if self.type == 1:
+            self_obj = str(list(self))
+        else:
+            self_obj = str(self.__obj)
         self_id = '0x{:02x}'.format(id(self))
         if self.type == 1:
-            return f'<ChainLightning object at {self_id}>, value={self_obj}, type=Iterator'
+            return f'<ChainLightning object at {self_id}> value={self_obj} type=Iterator'
         elif self.type == 2:
-            return f'<ChainLightning object at {self_id}>, value={self_obj}, type=Iterable'
+            return f'<ChainLightning object at {self_id}> value={self_obj} type=Iterable'
 
-        return f'<ChainLightning object at {self_id}>, value={self_obj}, type={self_obj_type}'
+        return f'<ChainLightning object at {self_id}> value={self_obj} type={str(type(self.__obj))}'
 
     def __repr__(self):
         return str(self)
 
     def __len__(self):
-        length = self.reduce(func=lambda x, _: x + 1, initial=0)
-        self.__restore_from_cache()
-        return length
+        return self.reduce(func=lambda x, _: x + 1, initial=0)
 
     def __enter__(self):
         return iter(self)
@@ -59,36 +102,32 @@ class CL:
     def __getitem__(self, item):
         """
         enable
-        >>> CL([1, 2, 3, 4, 5])[1:2]
+        >>> CL(iter([1, 2, 3, 4, 5]))[::2]
         """
         if not isinstance(item, (int, slice)):
-            raise TypeError(f'Indices must be integers or slices, not {type(item)}')
+            raise TypeError(
+                f'Indices must be an integer or slice, not {type(item)}'
+            )
 
+        # Iterable case, pass item directly
         if self.type == 2:
-            # Iterable case
             return self.__obj.__getitem__(item)
+        # Iterator case
         elif self.type == 1:
-            # Iterator case
-            if isinstance(item, int):
-                # int case
+            # slice case, "item" is a built-in slice object
+            if isinstance(item, slice):
+                res = islice(self, item.start, item.stop, item.step)
+                return res
+            # int case
+            else:
                 counter = 0
                 for i in self:
                     if counter == item:
                         return i
                     else:
                         counter += 1
-            else:
-                # slice case
-
-
-
-
-
-
-
-            res = list(self.__obj).__getitem__(item)
-            self.__restore_from_cache()
-            return res
+                else:
+                    raise IndexError('Index out of range')
 
     def __update_type_n_cache(self):
         """
@@ -110,6 +149,20 @@ class CL:
         if self.type == 1:
             self.__obj = copy.deepcopy(self.__cache)
 
+    def __assert_obj(self, obj):
+        try:
+            assert obj and isinstance(obj, (Iterator, Iterable))
+        except AssertionError:
+            obj = list(obj)
+
+        if isinstance(obj, dict) and not isinstance(obj, OrderedDict):
+            tmp = OrderedDict()
+            for key in obj:
+                tmp[key] = obj.get(key)
+            obj = tmp
+
+        return obj
+
     def __assert_func(self, func, arg_num: int = None):
         """
         assert whether the "func" is a valid function
@@ -122,110 +175,149 @@ class CL:
         if not callable(func):
             raise TypeError('Argument "func" got a non-callable object')
 
-        # _args is the total number of func's arguments
-        _args = len(inspect.getfullargspec(func).args)
-        # _kwargs is the total number of func's kw-arguments
-        try:
-            _kwargs = len(inspect.getfullargspec(func).defaults)
-        except:
-            _kwargs = 0
-
         # the given number of arg_num should pass one of the assert()
         if arg_num is not None:
+            # _args is the total number of func's arguments
+            _args = len(inspect.getfullargspec(func).args)
+            # _kwargs is the total number of func's kw-arguments
+            try:
+                _kwargs = len(inspect.getfullargspec(func).defaults)
+            except:
+                _kwargs = 0
+
             try:
                 assert _args - _kwargs == arg_num
                 return _args - _kwargs
             except AssertionError:
-                assert _args == arg_num
-                return _args
+                try:
+                    assert _args == arg_num
+                    return _args
+                except AssertionError:
+                    raise TypeError(
+                        f'{func.__name__}() takes {_args} args and {_kwargs} kwargs, but expecting {arg_num} args'
+                    )
 
-    # def __build_lambda(self, func, arg_num: int = None):
-    #     arg_num = self.__assert_func(func, arg_num)
-    #
-    #     if arg_num == 0:
-    #         return lambda a, b, c: func()
-    #     elif arg_num == 1:
-    #         return lambda a, b, c: func(a)
-    #     elif arg_num == 2:
-    #         return lambda a, b, c: func(a, b)
-    #     elif arg_num == 3:
-    #         return lambda a, b, c: func(a, b, c)
-    #     else:
-    #         raise TypeError('Function can only has 3 arguments at most')
-
-    # property tools:
-    # reverse()
-    # sort()
-    # rsort()
-    # length()
-    # done() -> self.__obj
-    # iter() -> iter(self.__obj)
-    @property
-    def reverse(self):
-        return self.reversed().done
-
-    @property
-    def sort(self):
-        return self.sorted().done
-
-    @property
-    def rsort(self):
-        return self.sorted(reverse=True).done
-
-    @property
+    ###################### tools: ######################
+    # length()        -> len(self)
+    # done()          -> self.__obj
+    # get_iter()      -> Iterator
+    # get_reverse()   -> self.__obj
+    # get_sort()      -> self.__obj
+    # has_duplicate() -> bool
+    # check()         -> self.__obj
     def length(self) -> int:
         return len(self)
 
-    @property
     def done(self):
         """
         retrieve self.__obj's value when user's operation is done, e.g.:
-        CL(xxx).sorted(x).map(x).foldl(x).filter(x).group_by(x).done
+        CL(xxx).sorted(x).map(x).filter(x).group_by(x).done()
         """
         return self.__obj
 
-    @property
-    def iter(self) -> Iterator:
+    def get_iter(self) -> Iterator:
         """
         obtain an iterator from self
         """
         return iter(self)
 
-    # basic operations:
-    # any() -> res
-    # all() -> res
-    #
-    # map() -> self
-    # filter() -> self
-    # sorted() -> self
-    # reversed() -> self
-    #
-    # reduce() -> res
-    # foldl() -> res
-    # foldr() -> res
-    def any(self, func=None) -> bool:
-        if not func:
-            res = any(self.__obj)
+    def get_reverse(self):
+        """
+        obtain a reversed version of current object's value, and it won't
+        modify the object's value
+        """
+        # an Iterable
+        if self.type == 2 and not isinstance(self.__obj, dict):
+            return list(reversed(self.__obj))
+        # an Iterator, not reversible, convert to list for reversed()
+        elif self.type == 1 and not isinstance(self.__obj, dict):
+            return reversed(list(self))
+        # an dict
+        elif isinstance(self.__obj, dict):
+            res = reversed(self.__obj)
+            tmp = OrderedDict()
+            for key in res:
+                tmp[key] = self.__obj.get(key)
+            return tmp
+
+    def get_sort(self, key=None, reverse=None):
+        """
+        obtain a sorted version of current object's value, and it won't
+        modify the object's value
+        """
+        if key:
+            self.__assert_func(key, arg_num=1)
+
+        # sorted() with reverse flag
+        if reverse is not None and not isinstance(self.__obj, dict):
+            if not isinstance(reverse, (bool, int)):
+                raise TypeError(
+                    f'Argument "reverse" should be in type of bool/int, but got {type(reverse)}'
+                )
+            return sorted(self, key=key, reverse=reverse)
+        # sorted without reverse flag
+        elif not reverse and not isinstance(self.__obj, dict):
+            return sorted(self, key=key)
+        # a dict
+        elif isinstance(self.__obj, dict):
+            if reverse is not None:
+                res = sorted(self, key=key, reverse=reverse)
+            else:
+                res = sorted(self, key=key)
+            tmp = OrderedDict()
+            for key in res:
+                tmp[key] = self.__obj.get(key)
+            return tmp
+
+    def get_rsort(self, key=None):
+        """
+        obtain a reversely sorted version of current object's value, and it
+        won't modify the object's value
+        """
+        return self.get_sort(key, reverse=True)
+
+    def has_duplicate(self):
+        """
+        if there exists duplicate items
+        """
+        return not (len(self) == len(set(self)))
+
+    def check(self, _type=None):
+        """
+        enable a quick check to __obj's human-readable value
+        """
+        if self.type == 1:
+            if _type is not None and callable(_type):
+                return _type(self)
+            return list(self)
         else:
-            self.__assert_func(func, arg_num=1)
-            res = any(map(func, self.__obj))
-        self.__restore_from_cache()
+            return self.__obj
 
-        return res
-
-    def all(self, func=None) -> bool:
-        if not func:
-            res = all(self.__obj)
-        else:
-            self.__assert_func(func, arg_num=1)
-            res = all(map(func, self.__obj))
-        self.__restore_from_cache()
-
-        return res
-
+    ###################### pipelines: ######################
+    # map()        -> self
+    # zip()        -> self
+    # filter()     -> self
+    # sorted()     -> self
+    # reversed()   -> self
+    # flatten()    -> self
+    #
+    # key_only()   -> self
+    # value_only() -> self
+    #
+    # reset()      -> self
     def map(self, func) -> 'CL':
         self.__assert_func(func, arg_num=1)
         self.__obj = map(func, self.__obj)
+        self.__update_type_n_cache()
+
+        return self
+
+    def zip(self, obj=None) -> 'CL':
+        """
+        zip current object with another Iterator/Iterable or None
+        """
+        assert isinstance(obj, (Iterator, Iterable))
+        self.__obj = zip(self, obj)
         self.__update_type_n_cache()
 
         return self
@@ -239,24 +331,28 @@ class CL:
 
     def sorted(self, key=None, reverse=None) -> 'CL':
         """
-        doing sorted() operation, but will modify self.__obj's value and return
-        self for further possible operations, using "done" to retrieve result
-        value
+        doing sorted() operation, and it will modify object's value and
+        return self as a pipeline
         """
         if key:
             self.__assert_func(key, arg_num=1)
 
+        # sorted() with reverse flag
         if reverse is not None and not isinstance(self.__obj, dict):
             if not isinstance(reverse, (bool, int)):
-                raise TypeError(f'Argument "reverse" should be in type of bool/int, but got {type(reverse)}')
-            self.__obj = sorted(self.__obj, key=key, reverse=reverse)
-        elif reverse and not isinstance(self.__obj, dict):
-            self.__obj = sorted(self.__obj, key=key)
+                raise TypeError(
+                    f'Argument "reverse" should be in type of bool/int, but got {type(reverse)}'
+                )
+            self.__obj = sorted(self, key=key, reverse=reverse)
+        # sorted without reverse flag
+        elif not reverse and not isinstance(self.__obj, dict):
+            self.__obj = sorted(self, key=key)
+        # a dict
         elif isinstance(self.__obj, dict):
             if reverse is not None:
-                res = sorted(self.__obj, key=key, reverse=reverse)
+                res = sorted(self, key=key, reverse=reverse)
             else:
-                res = sorted(self.__obj, key=key)
+                res = sorted(self, key=key)
             tmp = OrderedDict()
             for key in res:
                 tmp[key] = self.__obj.get(key)
@@ -265,17 +361,21 @@ class CL:
 
         return self
 
+    def rsorted(self, key=None) -> 'CL':
+        return self.sorted(key, reverse=True)
+
     def reversed(self) -> 'CL':
         """
-        doing reversed() operation, but will modify self.__obj's value and
-        return self for further possible operations, using "done" to retrieve
-        result value
+        doing reversed() operation, and it will modify object's value and
+        return itself as a pipeline
         """
+        # an Iterable
         if self.type == 2 and not isinstance(self.__obj, dict):
             self.__obj = reversed(self.__obj)
+        # an Iterator, not reversible, convert to list for reversed()
         elif self.type == 1 and not isinstance(self.__obj, dict):
-            # iterator is not reversible, convert to list for reversed()
-            self.__obj = reversed(list(self.__obj))
+            self.__obj = reversed(list(self))
+        # an dict
         elif isinstance(self.__obj, dict):
             res = reversed(self.__obj)
             tmp = OrderedDict()
@@ -286,19 +386,92 @@ class CL:
 
         return self
 
+    def __flatten(self, obj):
+        for i in obj:
+            if isinstance(i, Iterable) and not isinstance(i, (str, bytes)):
+                yield from self.__flatten(i)
+            else:
+                yield i
+
+    def flatten(self) -> 'CL':
+        """
+        make object "flat" and return itself as a pipeline
+
+        CL([1,2,[3,4,[5,6],7,[8,9]]]).flatten() => CL([1,2,3,4,5,6,7,8,9])
+        """
+        self.__obj = iter([_ for _ in self.__flatten(self)])
+        self.__update_type_n_cache()
+        return self
+
+    def key_only(self) -> 'CL':
+        """
+        only work when object's value is a dict and return itself as a pipeline
+        """
+        if isinstance(self.__obj, dict):
+            self.__obj = [_ for _ in self]
+            self.__update_type_n_cache()
+
+        return self
+
+    def value_only(self) -> 'CL':
+        """
+        only work when object's value is a dict and return itself as a pipeline
+        """
+        if isinstance(self.__obj, dict):
+            self.__obj = [self.__obj.get(_) for _ in self]
+            self.__update_type_n_cache()
+
+        return self
+
+    def reset(self, obj=None) -> 'CL':
+        """
+        reset object's value if error occurs
+
+        e.g.:
+        >>> t = CL([1,2,3])
+        >>> t.map(lambda x: x[0])
+        >>> print(t)
+        it will continuously raise TypeError whenever you call the object, as
+        closure of map() only invokes when object is being called, the wrong
+        lambda function is just stored in memory before being called
+
+        in this case use reset to update object's value to try other methods
+        """
+        self.__obj = self.__assert_obj(obj)
+        self.__update_type_n_cache()
+        return self
+
+    ###################### basic operations: ######################
+    # any()    -> res
+    # all()    -> res
+    # reduce() -> res
+    # foldl()  -> res
+    # foldr()  -> res
+    def any(self, func=None) -> bool:
+        if not func:
+            res = any(self)
+        else:
+            self.__assert_func(func, arg_num=1)
+            res = any(map(func, self))
+
+        return res
+
+    def all(self, func=None) -> bool:
+        if not func:
+            res = all(self)
+        else:
+            self.__assert_func(func, arg_num=1)
+            res = all(map(func, self))
+
+        return res
+
     def reduce(self, func, initial=None):
         """
         reduce / foldl method
         """
         self.__assert_func(func, arg_num=2)
 
-        if initial is None:
-            res = reduce(func, self.__obj)
-        else:
-            res = reduce(func, self.__obj, initial)
-        self.__restore_from_cache()
-
-        return res
+        return reduce(func, self, initial)
 
     def fold_left(self, func, initial=None):
         return self.reduce(func, initial)
@@ -312,22 +485,16 @@ class CL:
         """
         self.__assert_func(func, arg_num=2)
 
-        if initial is None:
-            res = reduce(func, self.reversed())
-        else:
-            res = reduce(func, self.reversed(), initial)
-        self.__restore_from_cache()
-
-        return res
+        return reduce(func, self.reversed(), initial)
 
     def foldr(self, func, initial=None):
         return self.fold_right(func, initial)
 
-    # math operations:
-    # sum() -> res
+    ###################### math operations: ######################
+    # sum()     -> res
     # average() -> res
-    # max() -> res
-    # min() -> res
+    # max()     -> res
+    # min()     -> res
     def sum(self):
         try:
             return self.reduce(func=lambda x, y: x + y)
@@ -347,9 +514,11 @@ class CL:
 
         e.g.: max(func=lambda x: len(x)) for find the longest string in an
         Iterator/Iterable
+
+        if "min" is set to True, then it will return a minimum value
         """
         res = None
-        tmp = None
+        cmp = None
 
         if func is not None:
             self.__assert_func(func, arg_num=1)
@@ -358,18 +527,21 @@ class CL:
 
         for item in self:
             try:
-                if res is None and tmp is None:
+                if res is None and cmp is None:
                     res = item
-                    tmp = func(item)
+                    cmp = func(item)
                 else:
+                    new_cmp = func(item)
                     if min:
-                        res = item if func(item) < tmp else res
+                        if new_cmp < cmp:
+                            res = item
+                            cmp = new_cmp
                     else:
-                        res = item if func(item) > tmp else res
+                        if new_cmp > cmp:
+                            res = item
+                            cmp = new_cmp
             except:
-                res = None
-                break
-        self.__restore_from_cache()
+                return None
 
         return res
 
@@ -382,19 +554,35 @@ class CL:
         """
         return self.max(func=func, min=True)
 
-    # advancing operations:
+    ###################### advance operations: ######################
     # sort_by()
     # group_by()
     # count_by()
     # distinct_by()
+    # flatten()
+    # first()
+    # first_not()
     def sort_by(self):
         pass
 
-    def group_by(self, func):
-        pass
+    def group_by(self, key, attr, func):
+        if key is None and func is None and attr is None:
+            raise ValueError(
+                'CL.group_by() should accept at least one argument')
+
+        res = {}
+        if key:
+            pass
+        elif attr:
+            pass
+        else:
+            pass
+
+        return res
 
     def count_by(self):
         pass
 
     def distinct_by(self):
         pass
+
