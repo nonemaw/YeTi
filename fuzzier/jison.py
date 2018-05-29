@@ -1,5 +1,6 @@
 import os
 import re
+from collections import Mapping
 
 
 class JsonSyntaxError(Exception):
@@ -35,16 +36,12 @@ class JsonToken:
 
 class Table(dict):
     """
-    enabling dot operation instead of 'get()'
+    enabling dot operation for dict/OrderedDict
     Example:
-
     >>> t = Table({'key1': 1, 'key2': {'key3': 3, 'key4': 4}})
-    >>> print(t.key2.key3)
-    3
     >>> t.key2.key5 = 5
-    >>> print(t.key2.key5)
-    5
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for arg in args:
@@ -68,6 +65,9 @@ class Table(dict):
         enable
         >>> t.key2 = 2
         """
+        # convert value to Table type before passing to __setitem__
+        if isinstance(value, dict):
+            value = Table(value)
         self.__setitem__(key, value)
 
     def __delattr__(self, item):
@@ -78,12 +78,34 @@ class Table(dict):
         self.__delitem__(item)
 
     def __setitem__(self, key, value):
+        """
+        signature not matched, but it works good
+        """
         super().__setitem__(key, value)
         self.__dict__.update({key: value})
 
     def __delitem__(self, key):
+        """
+        signature not matched, but it works good
+        """
         super().__delitem__(key)
         del self.__dict__[key]
+
+    def update(self, m: Mapping = None, **kwargs):
+        """
+        override dict's update method for Table: when updating mappings,
+        convert them into Table first rather than pass dict directly
+        """
+        if m is not None:
+            for k, v in m.items() if isinstance(m, Mapping) else m:
+                if isinstance(v, dict):
+                    v = Table(v)
+                self[k] = v
+
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                v = Table(v)
+            self[k] = v
 
 
 class Jison:

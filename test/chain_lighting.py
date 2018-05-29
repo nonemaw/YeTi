@@ -2,19 +2,16 @@ import copy
 import inspect
 from functools import reduce
 from itertools import islice
-from collections import Iterator, Iterable, OrderedDict
+from reprlib import recursive_repr
+from collections import Iterator, Iterable, OrderedDict, Mapping
 
 
-class Table(dict):
+class Table(OrderedDict):
     """
-    enabling dot operation instead of 'get()'
+    enabling dot operation for dict/OrderedDict
     Example:
     >>> t = Table({'key1': 1, 'key2': {'key3': 3, 'key4': 4}})
-    >>> t.key2.key3
-    3
     >>> t.key2.key5 = 5
-    >>> t.key2.key5
-    5
     """
 
     def __init__(self, *args, **kwargs):
@@ -28,6 +25,12 @@ class Table(dict):
                 for k, v in kwargs.items():
                     self[k] = Table(v) if isinstance(v, dict) else v
 
+    @recursive_repr()
+    def __repr__(self):
+        if not self:
+            return 'OrderedDict()'
+        return f'OrderedDict({list(self.items())})'
+
     def __getattr__(self, item):
         """
         enable
@@ -40,6 +43,9 @@ class Table(dict):
         enable
         >>> t.key2 = 2
         """
+        # convert value to Table type before passing to __setitem__
+        if isinstance(value, dict):
+            value = Table(value)
         self.__setitem__(key, value)
 
     def __delattr__(self, item):
@@ -50,15 +56,58 @@ class Table(dict):
         self.__delitem__(item)
 
     def __setitem__(self, key, value):
+        """
+        signature not matched, but it works good
+        """
         super().__setitem__(key, value)
         self.__dict__.update({key: value})
 
     def __delitem__(self, key):
+        """
+        signature not matched, but it works good
+        """
         super().__delitem__(key)
         del self.__dict__[key]
 
+    def update(self, m: Mapping = None, **kwargs):
+        """
+        override dict's update method for Table: when updating mappings,
+        convert them into Table first rather than pass dict directly
+        """
+        if m is not None:
+            for k, v in m.items() if isinstance(m, Mapping) else m:
+                if isinstance(v, dict):
+                    v = Table(v)
+                self[k] = v
+
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                v = Table(v)
+            self[k] = v
+
+    def append(self, item=None, **kwargs):
+        """
+        append one or multiple key-value pairs to the end of dict
+        """
+        if item is not None:
+            if isinstance(item, list):
+                for i in item:
+                    self.update(i)
+            elif isinstance(item, Mapping):
+                self.update(item)
+
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                v = Table(v)
+            self[k] = v
+
 
 class CL:
+    """
+    ChainLightning provides convenient function chain mechanisms, which also
+    allows you to modify Iterable/Iterator directly at same time
+    """
+
     def __init__(self, obj):
         self.__obj = self.__assert_obj(obj)
         self.__cache = copy.deepcopy(obj)
@@ -80,11 +129,11 @@ class CL:
             self_obj = str(self.__obj)
         self_id = '0x{:02x}'.format(id(self))
         if self.type == 1:
-            return f'<ChainLightning object at {self_id}> value={self_obj} type=Iterator'
+            return f'<ChainLightning at {self_id}> value={self_obj} type=Iterator'
         elif self.type == 2:
-            return f'<ChainLightning object at {self_id}> value={self_obj} type=Iterable'
+            return f'<ChainLightning at {self_id}> value={self_obj} type=Iterable'
 
-        return f'<ChainLightning object at {self_id}> value={self_obj} type={str(type(self.__obj))}'
+        return f'<ChainLightning at {self_id}> value={self_obj} type={str(type(self.__obj))}'
 
     def __repr__(self):
         return str(self)
@@ -155,8 +204,8 @@ class CL:
         except AssertionError:
             obj = list(obj)
 
-        if isinstance(obj, dict) and not isinstance(obj, OrderedDict):
-            tmp = OrderedDict()
+        if isinstance(obj, dict) and not isinstance(obj, Table):
+            tmp = Table()
             for key in obj:
                 tmp[key] = obj.get(key)
             obj = tmp
@@ -228,14 +277,15 @@ class CL:
         """
         # an Iterable
         if self.type == 2 and not isinstance(self.__obj, dict):
-            return list(reversed(self.__obj))
+            return reversed(self)
         # an Iterator, not reversible, convert to list for reversed()
         elif self.type == 1 and not isinstance(self.__obj, dict):
             return reversed(list(self))
         # an dict
         elif isinstance(self.__obj, dict):
+            # FIXME: why I cannot use reversed(self) in here?
             res = reversed(self.__obj)
-            tmp = OrderedDict()
+            tmp = Table()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             return tmp
@@ -264,7 +314,7 @@ class CL:
                 res = sorted(self, key=key, reverse=reverse)
             else:
                 res = sorted(self, key=key)
-            tmp = OrderedDict()
+            tmp = Table()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             return tmp
@@ -304,10 +354,17 @@ class CL:
     # key_only()   -> self
     # value_only() -> self
     #
+    # append()     -> self
+    # extend()     -> self
+    # insert()     -> self
+    # remove()     -> self
+    # pop()        -> self
+    # update()     -> self
+    #
     # reset()      -> self
     def map(self, func) -> 'CL':
         self.__assert_func(func, arg_num=1)
-        self.__obj = map(func, self.__obj)
+        self.__obj = map(func, self)
         self.__update_type_n_cache()
 
         return self
@@ -324,7 +381,7 @@ class CL:
 
     def filter(self, func) -> 'CL':
         self.__assert_func(func, arg_num=1)
-        self.__obj = filter(func, self.__obj)
+        self.__obj = filter(func, self)
         self.__update_type_n_cache()
 
         return self
@@ -353,7 +410,7 @@ class CL:
                 res = sorted(self, key=key, reverse=reverse)
             else:
                 res = sorted(self, key=key)
-            tmp = OrderedDict()
+            tmp = Table()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             self.__obj = tmp
@@ -371,14 +428,16 @@ class CL:
         """
         # an Iterable
         if self.type == 2 and not isinstance(self.__obj, dict):
+            # FIXME: why I cannot use reversed(self) in here?
             self.__obj = reversed(self.__obj)
         # an Iterator, not reversible, convert to list for reversed()
         elif self.type == 1 and not isinstance(self.__obj, dict):
             self.__obj = reversed(list(self))
         # an dict
         elif isinstance(self.__obj, dict):
+            # FIXME: why I cannot use reversed(self) in here?
             res = reversed(self.__obj)
-            tmp = OrderedDict()
+            tmp = Table()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             self.__obj = tmp
@@ -423,6 +482,42 @@ class CL:
 
         return self
 
+    def append(self, item) -> 'CL':
+        """
+        append an item to the end of Iterable/Iterator/Dict
+        """
+        pass
+
+    def extend(self) -> 'CL':
+        """
+        extend a list of items to the end of Iterable/Iterator/Dict
+        """
+        pass
+
+    def insert(self) -> 'CL':
+        """
+        insert an item to designated position of Iterable/Iterator/Dict
+        """
+        pass
+
+    def remove(self) -> 'CL':
+        """
+        remove an item from designated position of Iterable/Iterator/Dict
+        """
+        pass
+
+    def pop(self) -> 'CL':
+        """
+        pop an item from designated position of Iterable/Iterator/Dict
+        """
+        pass
+
+    def update(self) -> 'CL':
+        """
+        update an item to designated position of Iterable/Iterator/Dict
+        """
+        pass
+
     def reset(self, obj=None) -> 'CL':
         """
         reset object's value if error occurs
@@ -433,9 +528,10 @@ class CL:
         >>> print(t)
         it will continuously raise TypeError whenever you call the object, as
         closure of map() only invokes when object is being called, the wrong
-        lambda function is just stored in memory before being called
+        lambda function will be stored in memory until the map iterator has
+        been consumed
 
-        in this case use reset to update object's value to try other methods
+        in this case use reset() to reset object's value
         """
         self.__obj = self.__assert_obj(obj)
         self.__update_type_n_cache()
@@ -586,3 +682,7 @@ class CL:
     def distinct_by(self):
         pass
 
+
+if __name__ == '__main__':
+    t = CL({'a': 1, 'b': 2, 'c': 3})
+    print(t)
