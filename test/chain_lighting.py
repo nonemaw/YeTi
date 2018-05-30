@@ -6,11 +6,11 @@ from reprlib import recursive_repr
 from collections import Iterator, Iterable, OrderedDict, Mapping
 
 
-class Table(OrderedDict):
+class OrderedTable(OrderedDict):
     """
     enabling dot operation for dict/OrderedDict
     Example:
-    >>> t = Table({'key1': 1, 'key2': {'key3': 3, 'key4': 4}})
+    >>> t = OrderedTable({'key1': 1, 'key2': {'key3': 3, 'key4': 4}})
     >>> t.key2.key5 = 5
     """
 
@@ -19,17 +19,17 @@ class Table(OrderedDict):
         for arg in args:
             if isinstance(arg, dict):
                 for k, v in arg.items():
-                    self[k] = Table(v) if isinstance(v, dict) else v
+                    self[k] = OrderedTable(v) if isinstance(v, dict) else v
 
             if kwargs:
                 for k, v in kwargs.items():
-                    self[k] = Table(v) if isinstance(v, dict) else v
+                    self[k] = OrderedTable(v) if isinstance(v, dict) else v
 
     @recursive_repr()
     def __repr__(self):
         if not self:
-            return 'OrderedDict()'
-        return f'OrderedDict({list(self.items())})'
+            return 'OrderedTable()'
+        return f'OrderedTable({list(self.items())})'
 
     def __getattr__(self, item):
         """
@@ -45,7 +45,7 @@ class Table(OrderedDict):
         """
         # convert value to Table type before passing to __setitem__
         if isinstance(value, dict):
-            value = Table(value)
+            value = OrderedTable(value)
         self.__setitem__(key, value)
 
     def __delattr__(self, item):
@@ -77,17 +77,23 @@ class Table(OrderedDict):
         if m is not None:
             for k, v in m.items() if isinstance(m, Mapping) else m:
                 if isinstance(v, dict):
-                    v = Table(v)
+                    v = OrderedTable(v)
                 self[k] = v
 
         for k, v in kwargs.items():
             if isinstance(v, dict):
-                v = Table(v)
+                v = OrderedTable(v)
             self[k] = v
+
+    def append_keys(self, keys: Iterable, default=None):
+        for k in keys:
+            self.update({k: default})
 
     def append(self, item=None, **kwargs):
         """
         append one or multiple key-value pairs to the end of dict
+
+        the operation will be converted to update() if same key appears
         """
         if item is not None:
             if isinstance(item, list):
@@ -98,8 +104,17 @@ class Table(OrderedDict):
 
         for k, v in kwargs.items():
             if isinstance(v, dict):
-                v = Table(v)
+                v = OrderedTable(v)
             self[k] = v
+
+    def extend(self, items:Iterable):
+        """
+        extend multiple key-value pairs to the end of dict
+
+        the operation will be converted to update() if same key appears
+        """
+        for i in items:
+            self.update(i)
 
 
 class CL:
@@ -133,7 +148,8 @@ class CL:
         elif self.type == 2:
             return f'<ChainLightning at {self_id}> value={self_obj} type=Iterable'
 
-        return f'<ChainLightning at {self_id}> value={self_obj} type={str(type(self.__obj))}'
+        self_type = str(type(self.__obj))
+        return f'<ChainLightning at {self_id}> value={self_obj} type={self_type}'
 
     def __repr__(self):
         return str(self)
@@ -204,8 +220,8 @@ class CL:
         except AssertionError:
             obj = list(obj)
 
-        if isinstance(obj, dict) and not isinstance(obj, Table):
-            tmp = Table()
+        if isinstance(obj, dict) and not isinstance(obj, OrderedTable):
+            tmp = OrderedTable()
             for key in obj:
                 tmp[key] = obj.get(key)
             obj = tmp
@@ -281,11 +297,11 @@ class CL:
         # an Iterator, not reversible, convert to list for reversed()
         elif self.type == 1 and not isinstance(self.__obj, dict):
             return reversed(list(self))
-        # an dict
+        # a dict
         elif isinstance(self.__obj, dict):
             # FIXME: why I cannot use reversed(self) in here?
             res = reversed(self.__obj)
-            tmp = Table()
+            tmp = OrderedTable()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             return tmp
@@ -314,7 +330,7 @@ class CL:
                 res = sorted(self, key=key, reverse=reverse)
             else:
                 res = sorted(self, key=key)
-            tmp = Table()
+            tmp = OrderedTable()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             return tmp
@@ -410,7 +426,7 @@ class CL:
                 res = sorted(self, key=key, reverse=reverse)
             else:
                 res = sorted(self, key=key)
-            tmp = Table()
+            tmp = OrderedTable()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             self.__obj = tmp
@@ -433,11 +449,11 @@ class CL:
         # an Iterator, not reversible, convert to list for reversed()
         elif self.type == 1 and not isinstance(self.__obj, dict):
             self.__obj = reversed(list(self))
-        # an dict
+        # a dict
         elif isinstance(self.__obj, dict):
             # FIXME: why I cannot use reversed(self) in here?
             res = reversed(self.__obj)
-            tmp = Table()
+            tmp = OrderedTable()
             for key in res:
                 tmp[key] = self.__obj.get(key)
             self.__obj = tmp
@@ -486,37 +502,61 @@ class CL:
         """
         append an item to the end of Iterable/Iterator/Dict
         """
-        pass
+        # an Iterable or a dict
+        if self.type == 2:
+            self.__obj.append(item)
+        # an Iterator
+        elif self.type == 1:
+            tmp = list(self.__obj)
+            tmp.append(item)
+            self.__obj = iter(tmp)
 
-    def extend(self) -> 'CL':
+        return self
+
+    def extend(self, items) -> 'CL':
         """
         extend a list of items to the end of Iterable/Iterator/Dict
         """
-        pass
+        if not isinstance(items, (list, tuple, dict)):
+            try:
+                items = list(items)
+            except:
+                return self
+
+        # an Iterable or a dict
+        if self.type == 2:
+            self.__obj.extend(items)
+        # an Iterator
+        elif self.type == 1:
+            tmp = list(self.__obj)
+            tmp.extend(items)
+            self.__obj = iter(tmp)
+
+        return self
 
     def insert(self) -> 'CL':
         """
         insert an item to designated position of Iterable/Iterator/Dict
         """
-        pass
+        return self
 
     def remove(self) -> 'CL':
         """
         remove an item from designated position of Iterable/Iterator/Dict
         """
-        pass
+        return self
 
     def pop(self) -> 'CL':
         """
         pop an item from designated position of Iterable/Iterator/Dict
         """
-        pass
+        return self
 
     def update(self) -> 'CL':
         """
         update an item to designated position of Iterable/Iterator/Dict
         """
-        pass
+        return self
 
     def reset(self, obj=None) -> 'CL':
         """
@@ -684,5 +724,6 @@ class CL:
 
 
 if __name__ == '__main__':
-    t = CL({'a': 1, 'b': 2, 'c': 3})
+    t = CL([1,2,3,4,5])
+    t.append('fdsafsdfdsf')
     print(t)

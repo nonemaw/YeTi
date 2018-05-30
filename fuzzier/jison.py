@@ -56,7 +56,7 @@ class Table(dict):
     def __getattr__(self, item):
         """
         enable
-        >>> t.key
+        >>> t.key1
         """
         return self.get(item)
 
